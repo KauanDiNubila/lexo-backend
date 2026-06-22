@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: lexo-backend
+
+  # Perfil padrao usa PostgreSQL. Para subir sem banco local, ative o perfil "dev"
+  # (H2 em memoria): --spring.profiles.active=dev
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/lexo_dev}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+server:
+  port: ${PORT:8080}
+
+lexo:
+  # Chave de assinatura do JWT (HS256). Em producao, defina AUTH_SECRET com >=32 bytes.
+  auth-secret: ${AUTH_SECRET:troque-esta-chave-em-producao-com-no-minimo-32-bytes}
+  # Validade do token de sessao (em minutos).
+  jwt-expiration-minutes: ${JWT_EXP_MINUTES:720}
+  # Chave de cifragem dos segredos TOTP em repouso (AES-256-GCM). Cai para auth-secret se ausente.
+  totp-enc-key: ${TOTP_ENC_KEY:}
+  # URL base usada nos links de convite por email.
+  base-url: ${BASE_URL:http://localhost:8080}
+
+logging:
+  level:
+    org.springframework.security: INFO
+
+---
+# Perfil de desenvolvimento: H2 em memoria, sem Postgres.
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:lexo;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
