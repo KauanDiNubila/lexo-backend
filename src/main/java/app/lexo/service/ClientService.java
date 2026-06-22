@@ -6,7 +6,7 @@ import app.lexo.dto.ClientDtos.ClientResponse;
 import app.lexo.repository.ClientRepository;
 import app.lexo.security.AuthUser;
 import app.lexo.util.DocumentValidator;
-import app.lexo.web.ApiException;
+import app.lexo.controller.ApiException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

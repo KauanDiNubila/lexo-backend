@@ -1,4 +1,4 @@
-package app.lexo.web;
+package app.lexo.controller;
 
 import app.lexo.dto.TotpDtos.AuditLogResponse;
 import app.lexo.repository.AuditLogRepository;

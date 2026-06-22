@@ -1,4 +1,4 @@
-package app.lexo.web;
+package app.lexo.controller;
 
 import app.lexo.dto.TeamDtos.InviteRequest;
 import app.lexo.dto.TeamDtos.InviteResponse;

@@ -1,14 +1,16 @@
-package app.lexo.web;
+package app.lexo.controller;
 
-import app.lexo.dto.CaseDtos.CaseRequest;
-import app.lexo.dto.CaseDtos.CaseResponse;
+import app.lexo.dto.DeadlineDtos.DeadlineRequest;
+import app.lexo.dto.DeadlineDtos.DeadlineResponse;
+import app.lexo.dto.DeadlineDtos.StatusRequest;
 import app.lexo.security.AuthUser;
-import app.lexo.service.CaseService;
+import app.lexo.service.DeadlineService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,37 +21,39 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/** Agenda (prazos/compromissos). */
 @RestController
-@RequestMapping("/api/processos")
-public class CaseController {
+@RequestMapping("/api/agenda")
+public class DeadlineController {
 
-    private final CaseService service;
+    private final DeadlineService service;
 
-    public CaseController(CaseService service) {
+    public DeadlineController(DeadlineService service) {
         this.service = service;
     }
 
     @GetMapping
-    public List<CaseResponse> list(@AuthenticationPrincipal AuthUser me) {
+    public List<DeadlineResponse> list(@AuthenticationPrincipal AuthUser me) {
         return service.list(me);
-    }
-
-    @GetMapping("/{id}")
-    public CaseResponse get(@AuthenticationPrincipal AuthUser me, @PathVariable String id) {
-        return service.get(me, id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CaseResponse create(@AuthenticationPrincipal AuthUser me,
-                               @Valid @RequestBody CaseRequest req) {
+    public DeadlineResponse create(@AuthenticationPrincipal AuthUser me,
+                                   @Valid @RequestBody DeadlineRequest req) {
         return service.create(me, req);
     }
 
     @PutMapping("/{id}")
-    public CaseResponse update(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
-                               @Valid @RequestBody CaseRequest req) {
+    public DeadlineResponse update(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
+                                   @Valid @RequestBody DeadlineRequest req) {
         return service.update(me, id, req);
+    }
+
+    @PatchMapping("/{id}/status")
+    public DeadlineResponse toggleStatus(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
+                                         @RequestBody StatusRequest req) {
+        return service.toggleStatus(me, id, req.completed());
     }
 
     @DeleteMapping("/{id}")

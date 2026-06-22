@@ -1,4 +1,4 @@
-package app.lexo.web;
+package app.lexo.controller;
 
 import org.springframework.http.HttpStatus;
 

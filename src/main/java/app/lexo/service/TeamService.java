@@ -12,7 +12,7 @@ import app.lexo.repository.OrganizationRepository;
 import app.lexo.repository.UserInviteRepository;
 import app.lexo.repository.UserRepository;
 import app.lexo.security.AuthUser;
-import app.lexo.web.ApiException;
+import app.lexo.controller.ApiException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

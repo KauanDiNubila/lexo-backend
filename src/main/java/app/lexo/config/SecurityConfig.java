@@ -39,14 +39,16 @@ public class SecurityConfig {
                                 "/api/convites/aceitar",
                                 "/api/convites/info/**",
                                 "/api/health",
-                                "/h2-console/**"
+                                // Swagger / OpenAPI
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
                         ).permitAll()
                         // Endpoint de cron protegido por segredo proprio (CRON_SECRET), nao por JWT.
                         .requestMatchers("/api/cron/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .anyRequest().authenticated()
                 )
-                .headers(h -> h.frameOptions(f -> f.sameOrigin())) // libera o H2 console em dev
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

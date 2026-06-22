@@ -7,7 +7,7 @@ import app.lexo.repository.CaseRepository;
 import app.lexo.repository.ClientRepository;
 import app.lexo.repository.UserRepository;
 import app.lexo.security.AuthUser;
-import app.lexo.web.ApiException;
+import app.lexo.controller.ApiException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -7,7 +7,7 @@ import app.lexo.dto.AuthDtos;
 import app.lexo.repository.OrganizationRepository;
 import app.lexo.repository.UserRepository;
 import app.lexo.security.JwtService;
-import app.lexo.web.ApiException;
+import app.lexo.controller.ApiException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

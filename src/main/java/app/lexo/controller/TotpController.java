@@ -1,4 +1,4 @@
-package app.lexo.web;
+package app.lexo.controller;
 
 import app.lexo.dto.TotpDtos.CodeRequest;
 import app.lexo.dto.TotpDtos.InitiateResponse;

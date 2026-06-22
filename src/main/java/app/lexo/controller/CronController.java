@@ -1,4 +1,4 @@
-package app.lexo.web;
+package app.lexo.controller;
 
 import app.lexo.service.DeadlineNotificationService;
 import org.springframework.beans.factory.annotation.Value;
