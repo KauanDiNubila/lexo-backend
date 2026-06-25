@@ -30,6 +30,7 @@
         <module>auth-service</module>
         <module>cliente-service</module>
         <module>auditoria-service</module>
+        <module>notificacao-service</module>
         <module>monolito</module>
     </modules>
 
