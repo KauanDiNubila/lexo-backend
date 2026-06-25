@@ -2,6 +2,8 @@ package app.lexo.service;
 
 import app.lexo.domain.Deadline;
 import app.lexo.domain.enums.DeadlineStatus;
+import app.lexo.email.EnfileiradorEmail;
+import app.lexo.email.TarefaEmail;
 import app.lexo.repository.DeadlineRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +25,11 @@ public class NotificacaoPrazosService {
     private static final Logger log = LoggerFactory.getLogger(NotificacaoPrazosService.class);
 
     private final DeadlineRepository repo;
-    private final EmailService email;
+    private final EnfileiradorEmail enfileiradorEmail;
 
-    public NotificacaoPrazosService(DeadlineRepository repo, EmailService email) {
+    public NotificacaoPrazosService(DeadlineRepository repo, EnfileiradorEmail enfileiradorEmail) {
         this.repo = repo;
-        this.email = email;
+        this.enfileiradorEmail = enfileiradorEmail;
     }
 
     /** Roda todo dia as 08:00 (horario do servidor). */
@@ -41,7 +43,10 @@ public class NotificacaoPrazosService {
                 DeadlineStatus.PENDENTE, now, limit);
 
         for (Deadline d : due) {
-            email.sendDeadlineReminder(d.getTitle(), d.getDate());
+            enfileiradorEmail.enfileirar(new TarefaEmail(
+                    "LEMBRETE_PRAZO", "advogado-responsavel",
+                    "Prazo próximo: " + d.getTitle(),
+                    "O prazo \"" + d.getTitle() + "\" vence em " + d.getDate()));
             d.setNotifiedAt(now);
         }
         repo.saveAll(due);

@@ -8,6 +8,8 @@ import app.lexo.dto.TeamDtos.InviteRequest;
 import app.lexo.dto.TeamDtos.InviteResponse;
 import app.lexo.dto.TeamDtos.UpdateRoleRequest;
 import app.lexo.dto.TeamDtos.UserResponse;
+import app.lexo.email.EnfileiradorEmail;
+import app.lexo.email.TarefaEmail;
 import app.lexo.repository.OrganizationRepository;
 import app.lexo.repository.UserInviteRepository;
 import app.lexo.repository.UserRepository;
@@ -29,19 +31,19 @@ public class EquipeService {
     private final UserInviteRepository inviteRepo;
     private final OrganizationRepository orgRepo;
     private final PasswordEncoder passwordEncoder;
-    private final EmailService email;
+    private final EnfileiradorEmail enfileiradorEmail;
     private final AuditoriaService audit;
     private final String baseUrl;
 
     public EquipeService(UserRepository userRepo, UserInviteRepository inviteRepo,
                        OrganizationRepository orgRepo, PasswordEncoder passwordEncoder,
-                       EmailService email, AuditoriaService audit,
+                       EnfileiradorEmail enfileiradorEmail, AuditoriaService audit,
                        @Value("${lexo.base-url}") String baseUrl) {
         this.userRepo = userRepo;
         this.inviteRepo = inviteRepo;
         this.orgRepo = orgRepo;
         this.passwordEncoder = passwordEncoder;
-        this.email = email;
+        this.enfileiradorEmail = enfileiradorEmail;
         this.audit = audit;
         this.baseUrl = baseUrl;
     }
@@ -82,7 +84,10 @@ public class EquipeService {
         String orgName = orgRepo.findById(me.organizationId())
                 .map(o -> o.getName()).orElse("Lexo");
         String acceptUrl = baseUrl + "/convite/" + invite.getToken();
-        email.sendInvite(req.email(), orgName, req.name(), acceptUrl);
+        enfileiradorEmail.enfileirar(new TarefaEmail(
+                "CONVITE", req.email(),
+                "Convite para " + orgName + " no Lexo",
+                "Olá " + req.name() + ", você foi convidado para " + orgName + ". Acesse: " + acceptUrl));
 
         audit.registrar(me.organizationId(), me.id(), nomeDe(me), "CONVIDOU_USUARIO", "USUARIO", null,
                 "Convidou " + req.name() + " (" + req.email() + ") como " + req.role());
