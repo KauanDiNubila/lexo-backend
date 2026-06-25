@@ -19,6 +19,25 @@ services:
       timeout: 5s
       retries: 5
 
+  auth-db:
+    image: postgres:16-alpine
+    container_name: lexo-auth-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lexo_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      # banco proprio do auth-service (database-per-service)
+      - "5434:5432"
+    volumes:
+      - lexo_authdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lexo_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     container_name: lexo-redis
@@ -80,3 +99,4 @@ services:
 
 volumes:
   lexo_pgdata:
+  lexo_authdata:

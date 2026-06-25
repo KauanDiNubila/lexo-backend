@@ -1,5 +1,6 @@
 package app.lexo.security;
 
+import app.lexo.domain.enums.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,17 +14,23 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/** Le o Bearer token, valida e popula o SecurityContext com o AuthUser. */
+/**
+ * Autenticacao por headers de confianca injetados pelo gateway (X-User-*).
+ * O gateway ja validou o JWT; aqui apenas reconstruimos o AuthUser a partir dos headers.
+ * Em producao, os servicos so devem ser acessiveis pela rede interna (atras do gateway).
+ */
 @Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
-
-    public JwtAuthenticationFilter(JwtService jwtService) {
-        this.jwtService = jwtService;
-    }
+    private static final String H_USER_ID = "X-User-Id";
+    private static final String H_ORG_ID = "X-Org-Id";
+    private static final String H_ROLE = "X-User-Role";
+    private static final String H_NAME = "X-User-Name";
+    private static final String H_EMAIL = "X-User-Email";
 
     @Override
     protected void doFilterInternal(
@@ -31,18 +38,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
+        String userId = request.getHeader(H_USER_ID);
+        String orgId = request.getHeader(H_ORG_ID);
+        String role = request.getHeader(H_ROLE);
+
+        if (userId != null && orgId != null && role != null) {
             try {
-                AuthUser user = jwtService.parse(token);
+                String name = request.getHeader(H_NAME);
+                name = name == null ? null : URLDecoder.decode(name, StandardCharsets.UTF_8);
+                String email = request.getHeader(H_EMAIL);
+
+                AuthUser user = new AuthUser(userId, orgId, name, email, Role.valueOf(role));
                 var authority = new SimpleGrantedAuthority("ROLE_" + user.role().name());
                 var authentication = new UsernamePasswordAuthenticationToken(
                         user, null, List.of(authority));
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {
-                // Token invalido/expirado: segue sem autenticacao; o acesso sera negado adiante.
                 SecurityContextHolder.clearContext();
             }
         }
