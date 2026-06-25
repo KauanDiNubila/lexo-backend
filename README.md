@@ -1,93 +1,204 @@
-# Lexo Backend (Java + Spring Boot)
+# Lexo — Backend em Microserviços (Java + Spring Boot)
 
-Porte do **backend** do Lexo (originalmente Next.js + TypeScript) para **Java 21 + Spring Boot 3.4**.
-Este módulo cobre o **núcleo**: domínio, autenticação/2FA e multi-tenancy. As integrações
-externas (Stripe, Resend/email, IA) ficaram como *stubs* para uma fase seguinte.
+Sistema de gestão para escritórios de advocacia (SaaS multi-tenant), construído como uma
+**arquitetura de microserviços** com Java 21, Spring Boot 3.4 e Spring Cloud.
+
+O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e foi **decomposto
+incrementalmente** em serviços independentes — cada um com seu próprio banco, comunicando-se
+de forma síncrona (Feign) e assíncrona (Kafka e RabbitMQ).
+
+---
+
+## Arquitetura
+
+```
+                          ┌─────────────────┐
+        Cliente / Front ─▶│   API Gateway   │  valida JWT, injeta identidade (X-User-*)
+                          │   (porta 8080)  │
+                          └────────┬────────┘
+                                   │  descobre serviços via Eureka
+        ┌──────────────┬───────────┼───────────────┬──────────────────┐
+        ▼              ▼           ▼               ▼                  ▼
+  ┌───────────┐ ┌────────────┐ ┌────────────┐ ┌──────────┐   (consumidores)
+  │auth-service│ │cliente-svc │ │auditoria   │ │ monólito │   ┌───────────────┐
+  │   8082     │ │   8083     │ │  8084      │ │  8081    │   │ notificacao   │
+  │ users/2FA  │ │ clientes   │ │ audit log  │ │processos │   │   8085        │
+  │ db 5434    │ │ db 5435    │ │ db 5436    │ │agenda/   │   │ (sem banco)   │
+  └─────┬──────┘ └─────┬──────┘ └─────▲──────┘ │financeiro│   └───────▲───────┘
+        │              │              │        │ db 5433  │           │
+        │              └── publica ───┤        └────┬─────┘           │
+        │                  eventos    │             │ publica         │
+        │                             │             │ eventos         │
+        │                          ┌──┴─────────────┴──┐              │
+        │                          │       KAFKA        │             │
+        │                          └────────────────────┘             │
+        └──── Feign (responsavelId) ──┐   ┌── enfileira e-mail ────────┘
+              Feign (clientId) ───────┤   │      RABBITMQ
+                                      ▼   ▼
+                              (validação síncrona / fila de tarefas)
+```
+
+### Serviços
+
+| Serviço | Porta | Banco | Responsabilidade |
+|---------|-------|-------|------------------|
+| **discovery-server** | 8761 | — | Eureka: registro e descoberta de serviços |
+| **api-gateway** | 8080 | — | Porta de entrada única; valida JWT e roteia |
+| **auth-service** | 8082 | `lexo-auth-db` (5434) | Autenticação, usuários, organizações, 2FA, equipe |
+| **cliente-service** | 8083 | `lexo-cliente-db` (5435) | Gestão de clientes (CPF/CNPJ) |
+| **auditoria-service** | 8084 | `lexo-auditoria-db` (5436) | Log de auditoria (consome eventos do Kafka) |
+| **notificacao-service** | 8085 | — | Envio de e-mails (consome fila do RabbitMQ) |
+| **monolito** | 8081 | `lexo-db` (5433) | Processos, agenda, financeiro (a desmembrar) |
+
+> O `monolito` é o que sobrou do sistema original e contém os domínios ainda não extraídos.
+> A decomposição foi feita pela **estratégia strangler**: extrair um domínio por vez, sem
+> parar o sistema.
+
+---
+
+## Padrões de comunicação
+
+| Padrão | Tecnologia | Onde |
+|--------|-----------|------|
+| **Síncrono** | OpenFeign (REST + load balancing via Eureka) | monólito → auth-service (valida `responsavelId`) e → cliente-service (valida `clientId`) |
+| **Eventos de domínio** | Apache Kafka | cliente-service e monólito **publicam** fatos (`CLIENTE_CRIADO`, `PROCESSO_CRIADO`); auditoria-service **consome** |
+| **Filas de tarefas** | RabbitMQ (com retry + dead-letter queue) | auth-service e monólito **enfileiram** e-mails; notificacao-service **consome** |
+| **Cache** | Redis | cache de leitura (chave por tenant) + rate limiting de login |
+
+---
+
+## Segurança distribuída
+
+- O **gateway** é o único ponto que valida o **JWT** (HS256, segredo compartilhado).
+- Após validar, injeta a identidade em headers de confiança: `X-User-Id`, `X-Org-Id`,
+  `X-User-Role`, `X-User-Name`, `X-User-Email`.
+- Os serviços **confiam nesses headers** (via `HeaderAuthenticationFilter`) — não revalidam o token.
+- **Anti-spoofing**: o gateway **remove** quaisquer headers `X-User-*` enviados pelo cliente,
+  impedindo que alguém se passe por outro usuário.
+- **Multi-tenancy**: toda query filtra por `organizationId` — um escritório nunca vê dados de outro.
+
+---
 
 ## Stack
 
 | Camada | Tecnologia |
-|---|---|
+|--------|-----------|
 | Linguagem | Java 21 |
-| Framework | Spring Boot 3.4 (Web, Data JPA, Security, Validation) |
-| Banco | PostgreSQL (perfil padrão) — H2 em memória no perfil `dev` |
-| Auth | JWT (jjwt, HS256) + BCrypt + TOTP (`dev.samstevens.totp`) |
-| Build | Maven |
+| Framework | Spring Boot 3.4 |
+| Microserviços | Spring Cloud 2024.0.0 (Eureka, Gateway, OpenFeign, LoadBalancer) |
+| Bancos | PostgreSQL (um por serviço) |
+| Cache | Redis |
+| Mensageria | Apache Kafka (KRaft) + RabbitMQ |
+| Segurança | JWT (jjwt) + BCrypt + TOTP (2FA) |
+| Build | Maven (multi-módulo) |
+| Testes | JUnit 5 + MockMvc + H2 (em memória) |
 
-## O que foi portado
-
-- **Domínio (10 entidades JPA)**: Organization, User, Client, Case (processo), Deadline (prazo),
-  Invoice (honorário), UserInvite, AuditLog, ActivityLog, RateHit — espelhando o `schema.prisma`.
-- **CRUD multi-tenant** de clientes, processos, agenda e financeiro. Toda query filtra por
-  `organizationId`; nenhum dado vaza entre escritórios.
-- **Autenticação**: registro de organização, login com BCrypt, **rate limiting** de login
-  (10 tentativas / 15 min, persistido no banco), e **2FA/TOTP** com segredo cifrado em repouso
-  (AES-256-GCM, portado de `lib/crypto.ts`).
-- **Autorização no ponto de uso**: financeiro exige `ADMIN`/`ADVOGADO` (SECRETARIA barrada);
-  gestão de equipe e auditoria exigem `ADMIN` — via `@PreAuthorize`, não só no roteamento.
-- **Convites por email** com link temporário e aceite público.
-- **Logs de auditoria e atividade**, **score de risco de prazo** (`lib/risk.ts`),
-  **validação de CPF/CNPJ** (`lib/document.ts`) e **cron de notificação de prazos**.
-
-## Stubs (a implementar na fase 2)
-
-- `EmailService` — apenas registra em log (substituir por client da Resend / JavaMailSender).
-- Stripe (billing) e funcionalidades de IA (minutas, resumo, extração de PDF, pesquisa jurídica).
+---
 
 ## Como rodar
 
-### Modo rápido (sem banco — H2 em memória)
+### 1. Suba a infraestrutura (Docker)
 
 ```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
+docker compose up -d
 ```
 
-Sobe em `http://localhost:8080`. Console do H2 em `/h2-console`.
+Sobe: 4 bancos PostgreSQL, Redis, Kafka e RabbitMQ.
 
-### Com PostgreSQL
+> **Observação:** ao subir vários containers de uma vez, um banco pode ficar no estado
+> "Created" sem iniciar. Se acontecer, rode `docker compose up -d --force-recreate <nome-do-db>`.
+
+### 2. Compile
 
 ```bash
-# variáveis de ambiente (ou edite application.yml)
-export DATABASE_URL="jdbc:postgresql://localhost:5432/lexo_dev"
-export DB_USERNAME=postgres
-export DB_PASSWORD=postgres
-export AUTH_SECRET="uma-string-aleatoria-com-no-minimo-32-bytes"
-
-mvn spring-boot:run
+mvn clean package
 ```
 
-## Endpoints principais
+### 3. Suba os serviços (nesta ordem)
 
-| Método | Rota | Acesso |
-|---|---|---|
-| POST | `/api/auth/register` | público |
-| POST | `/api/auth/login` | público |
-| GET/POST/PUT/DELETE | `/api/clientes` | autenticado |
-| GET/POST/PUT/DELETE | `/api/processos` | autenticado |
-| GET/POST/PUT/DELETE + PATCH `/status` | `/api/agenda` | autenticado |
-| GET/POST/PUT/DELETE + `/relatorio` | `/api/financeiro` | ADMIN/ADVOGADO |
-| GET/POST/DELETE | `/api/usuarios`, `/api/usuarios/convites` | ADMIN |
-| GET `/info/{token}`, POST `/aceitar` | `/api/convites` | público |
-| POST | `/api/2fa/iniciar` `/confirmar` `/desativar` | autenticado |
-| GET | `/api/auditoria` | ADMIN |
-| POST | `/api/cron/notify-deadlines` | header `Authorization: Bearer $CRON_SECRET` |
+O Eureka primeiro; os demais podem subir em qualquer ordem depois.
 
-### Autenticação
-
-Login retorna `{ "token": "...", "user": {...} }`. Envie o token nas demais chamadas:
-
-```
-Authorization: Bearer <token>
+```bash
+java -jar discovery-server/target/discovery-server-0.1.0.jar   # 8761 (primeiro!)
+java -jar api-gateway/target/api-gateway-0.1.0.jar             # 8080
+java -jar auth-service/target/auth-service-0.1.0.jar           # 8082
+java -jar cliente-service/target/cliente-service-0.1.0.jar     # 8083
+java -jar auditoria-service/target/auditoria-service-0.1.0.jar # 8084
+java -jar notificacao-service/target/notificacao-service-0.1.0.jar # 8085
+java -jar monolito/target/monolito-0.1.0.jar                   # 8081
 ```
 
-## Variáveis de ambiente
+> Pelo IntelliJ, basta abrir o `pom.xml` da raiz e dar *Run* em cada classe `*Application`.
+> Após subir, o registro no Eureka leva ~30s para propagar (heartbeat + fetch).
 
-| Var | Default | Uso |
-|---|---|---|
-| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/lexo_dev` | conexão JDBC |
-| `DB_USERNAME` / `DB_PASSWORD` | `postgres` / `postgres` | credenciais |
-| `AUTH_SECRET` | (placeholder) | assinatura do JWT e fallback da cifra TOTP (≥32 bytes) |
-| `TOTP_ENC_KEY` | — | chave dedicada da cifra TOTP (opcional) |
-| `JWT_EXP_MINUTES` | `720` | validade do token |
-| `BASE_URL` | `http://localhost:8080` | base dos links de convite |
-| `CRON_SECRET` | — | protege o disparo manual do cron |
+### 4. Use a API (tudo pelo gateway, porta 8080)
+
+```bash
+# Registrar (rota pública)
+curl -X POST http://localhost:8080/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"organizationName":"Meu Escritório","name":"Ana","email":"ana@x.com",
+       "password":"senha12345","confirmPassword":"senha12345"}'
+
+# Usar o token retornado nas rotas protegidas
+curl http://localhost:8080/api/clientes -H "Authorization: Bearer <TOKEN>"
+```
+
+| Recurso | Rota | Vai para |
+|---------|------|----------|
+| Auth / usuários / convites / 2FA | `/api/auth`, `/api/usuarios`, `/api/convites`, `/api/2fa` | auth-service |
+| Clientes | `/api/clientes` | cliente-service |
+| Auditoria | `/api/auditoria` | auditoria-service |
+| Processos, agenda, financeiro | `/api/processos`, `/api/agenda`, `/api/financeiro` | monólito |
+
+Painéis úteis: **Eureka** em http://localhost:8761 · **RabbitMQ** em http://localhost:15673
+(guest/guest).
+
+---
+
+## Portas (referência rápida)
+
+| Porta | O quê |
+|-------|-------|
+| 8080 | API Gateway (entrada única) |
+| 8081–8085 | Serviços (monólito, auth, cliente, auditoria, notificacao) |
+| 8761 | Eureka |
+| 5433–5436 | Bancos PostgreSQL (um por serviço) |
+| 6380 | Redis |
+| 9094 | Kafka |
+| 5673 / 15673 | RabbitMQ / painel |
+
+---
+
+## Testes
+
+```bash
+mvn test
+```
+
+Testes unitários (validação CPF/CNPJ, risco de prazo, JWT) e de integração (CRUD,
+multi-tenancy) rodam sobre **H2 em memória** — sem Docker.
+
+---
+
+## Estrutura do repositório
+
+```
+lexo-backend/
+├── pom.xml                 # POM pai (multi-módulo + BOM Spring Cloud)
+├── docker-compose.yml      # infraestrutura (bancos, Redis, Kafka, RabbitMQ)
+├── discovery-server/       # Eureka
+├── api-gateway/            # Spring Cloud Gateway + validação de JWT
+├── auth-service/           # autenticação, usuários, 2FA
+├── cliente-service/        # clientes
+├── auditoria-service/      # auditoria (event-driven)
+├── notificacao-service/    # e-mails (consumidor RabbitMQ)
+└── monolito/               # domínios ainda não extraídos
+```
+
+## Status / próximos passos
+
+- ✅ Extraídos: auth, cliente, auditoria, notificacao.
+- ⏳ A extrair do monólito: **processo** (com agenda) e **financeiro**.
+- 🔭 Evoluções possíveis: tracing distribuído (Zipkin), resiliência (Resilience4j),
+  config server, e autenticação serviço-a-serviço nos endpoints `/internal/**`.
