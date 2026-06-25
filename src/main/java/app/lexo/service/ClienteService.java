@@ -4,6 +4,8 @@ import app.lexo.domain.Client;
 import app.lexo.dto.ClientDtos.ClientRequest;
 import app.lexo.dto.ClientDtos.ClientResponse;
 import app.lexo.repository.ClientRepository;
+import app.lexo.evento.EventoDominio;
+import app.lexo.evento.PublicadorEventos;
 import app.lexo.security.AuthUser;
 import app.lexo.util.DocumentValidator;
 import app.lexo.controller.ApiException;
@@ -21,9 +23,11 @@ public class ClienteService {
     private static final String CACHE = "clientes";
 
     private final ClientRepository repo;
+    private final PublicadorEventos eventos;
 
-    public ClienteService(ClientRepository repo) {
+    public ClienteService(ClientRepository repo, PublicadorEventos eventos) {
         this.repo = repo;
+        this.eventos = eventos;
     }
 
     @Cacheable(value = CACHE, key = "#me.organizationId()")
@@ -47,7 +51,11 @@ public class ClienteService {
         Client c = new Client();
         c.setOrganizationId(me.organizationId());
         preencher(c, req);
-        return ClientResponse.from(repo.save(c));
+        c = repo.save(c);
+
+        eventos.publicar(EventoDominio.de("CLIENTE_CRIADO", me.organizationId(), "CLIENTE",
+                c.getId(), "Cliente criado: " + c.getName(), me.id(), nomeDe(me)));
+        return ClientResponse.from(c);
     }
 
     @CacheEvict(value = CACHE, key = "#me.organizationId()")
@@ -82,5 +90,10 @@ public class ClienteService {
 
     private String vazioParaNulo(String s) {
         return (s == null || s.isBlank()) ? null : s;
+    }
+
+    private String nomeDe(AuthUser me) {
+        if (me.name() != null) return me.name();
+        return me.email() != null ? me.email() : "Sistema";
     }
 }

@@ -6,6 +6,8 @@ import app.lexo.dto.CaseDtos.CaseResponse;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.ClientRepository;
 import app.lexo.repository.UserRepository;
+import app.lexo.evento.EventoDominio;
+import app.lexo.evento.PublicadorEventos;
 import app.lexo.security.AuthUser;
 import app.lexo.controller.ApiException;
 import org.springframework.cache.annotation.CacheEvict;
@@ -25,13 +27,16 @@ public class ProcessoService {
     private final ClientRepository clientRepo;
     private final UserRepository userRepo;
     private final AtividadeService activity;
+    private final PublicadorEventos eventos;
 
     public ProcessoService(CaseRepository repo, ClientRepository clientRepo,
-                       UserRepository userRepo, AtividadeService activity) {
+                       UserRepository userRepo, AtividadeService activity,
+                       PublicadorEventos eventos) {
         this.repo = repo;
         this.clientRepo = clientRepo;
         this.userRepo = userRepo;
         this.activity = activity;
+        this.eventos = eventos;
     }
 
     @Cacheable(value = CACHE, key = "#me.organizationId()")
@@ -56,6 +61,8 @@ public class ProcessoService {
         c = repo.save(c);
 
         activity.registrar(me.organizationId(), c.getId(), me.id(), nomeDe(me), "Processo criado");
+        eventos.publicar(EventoDominio.de("PROCESSO_CRIADO", me.organizationId(), "PROCESSO",
+                c.getId(), "Processo criado: " + c.getNumber(), me.id(), nomeDe(me)));
         return CaseResponse.from(c);
     }
 
@@ -69,6 +76,8 @@ public class ProcessoService {
 
         activity.registrar(me.organizationId(), c.getId(), me.id(), nomeDe(me),
                 "Processo atualizado — status: " + req.status());
+        eventos.publicar(EventoDominio.de("PROCESSO_ATUALIZADO", me.organizationId(), "PROCESSO",
+                c.getId(), "Processo atualizado: " + c.getNumber(), me.id(), nomeDe(me)));
         return CaseResponse.from(c);
     }
 
