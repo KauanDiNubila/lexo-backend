@@ -1,12 +1,12 @@
 package app.lexo.service;
 
+import app.lexo.client.ClienteServiceClient;
 import app.lexo.domain.Invoice;
 import app.lexo.domain.enums.InvoiceStatus;
 import app.lexo.dto.InvoiceDtos.FinancialReport;
 import app.lexo.dto.InvoiceDtos.InvoiceRequest;
 import app.lexo.dto.InvoiceDtos.InvoiceResponse;
 import app.lexo.repository.CaseRepository;
-import app.lexo.repository.ClientRepository;
 import app.lexo.repository.InvoiceRepository;
 import app.lexo.security.AuthUser;
 import app.lexo.controller.ApiException;
@@ -25,12 +25,12 @@ import java.util.List;
 public class FinanceiroService {
 
     private final InvoiceRepository repo;
-    private final ClientRepository clientRepo;
+    private final ClienteServiceClient clienteClient;
     private final CaseRepository caseRepo;
 
-    public FinanceiroService(InvoiceRepository repo, ClientRepository clientRepo, CaseRepository caseRepo) {
+    public FinanceiroService(InvoiceRepository repo, ClienteServiceClient clienteClient, CaseRepository caseRepo) {
         this.repo = repo;
-        this.clientRepo = clientRepo;
+        this.clienteClient = clienteClient;
         this.caseRepo = caseRepo;
     }
 
@@ -102,7 +102,9 @@ public class FinanceiroService {
     }
 
     private void validarReferencias(AuthUser me, InvoiceRequest req) {
-        if (!clientRepo.existsByIdAndOrganizationId(req.clientId(), me.organizationId())) {
+        // O cliente agora vive no cliente-service: valida via chamada Feign.
+        if (!Boolean.TRUE.equals(
+                clienteClient.clienteExiste(req.clientId(), me.organizationId()).get("existe"))) {
             throw ApiException.notFound("Cliente não encontrado");
         }
         if (req.caseId() != null && !req.caseId().isBlank()

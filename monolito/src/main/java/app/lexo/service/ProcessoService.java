@@ -1,11 +1,11 @@
 package app.lexo.service;
 
 import app.lexo.client.AuthServiceClient;
+import app.lexo.client.ClienteServiceClient;
 import app.lexo.domain.Case;
 import app.lexo.dto.CaseDtos.CaseRequest;
 import app.lexo.dto.CaseDtos.CaseResponse;
 import app.lexo.repository.CaseRepository;
-import app.lexo.repository.ClientRepository;
 import app.lexo.evento.EventoDominio;
 import app.lexo.evento.PublicadorEventos;
 import app.lexo.security.AuthUser;
@@ -24,16 +24,16 @@ public class ProcessoService {
     private static final String CACHE = "processos";
 
     private final CaseRepository repo;
-    private final ClientRepository clientRepo;
+    private final ClienteServiceClient clienteClient;
     private final AuthServiceClient authClient;
     private final AtividadeService activity;
     private final PublicadorEventos eventos;
 
-    public ProcessoService(CaseRepository repo, ClientRepository clientRepo,
+    public ProcessoService(CaseRepository repo, ClienteServiceClient clienteClient,
                        AuthServiceClient authClient, AtividadeService activity,
                        PublicadorEventos eventos) {
         this.repo = repo;
-        this.clientRepo = clientRepo;
+        this.clienteClient = clienteClient;
         this.authClient = authClient;
         this.activity = activity;
         this.eventos = eventos;
@@ -93,7 +93,9 @@ public class ProcessoService {
     }
 
     private void validarReferencias(AuthUser me, CaseRequest req) {
-        if (!clientRepo.existsByIdAndOrganizationId(req.clientId(), me.organizationId())) {
+        // O cliente agora vive no cliente-service: valida via chamada Feign.
+        if (!Boolean.TRUE.equals(
+                clienteClient.clienteExiste(req.clientId(), me.organizationId()).get("existe"))) {
             throw ApiException.notFound("Cliente não encontrado");
         }
         // O responsavel (usuario) agora vive no auth-service: valida via chamada Feign.
