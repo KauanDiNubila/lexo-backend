@@ -13,65 +13,65 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-public class ClientService {
+public class ClienteService {
 
     private final ClientRepository repo;
 
-    public ClientService(ClientRepository repo) {
+    public ClienteService(ClientRepository repo) {
         this.repo = repo;
     }
 
     @Transactional(readOnly = true)
-    public List<ClientResponse> list(AuthUser me) {
+    public List<ClientResponse> listar(AuthUser me) {
         return repo.findByOrganizationIdOrderByNameAsc(me.organizationId())
                 .stream().map(ClientResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
-    public ClientResponse get(AuthUser me, String id) {
+    public ClientResponse buscar(AuthUser me, String id) {
         Client c = repo.findByIdAndOrganizationId(id, me.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Cliente não encontrado"));
         return ClientResponse.from(c);
     }
 
     @Transactional
-    public ClientResponse create(AuthUser me, ClientRequest req) {
-        validateDocument(req.document());
+    public ClientResponse criar(AuthUser me, ClientRequest req) {
+        validarDocumento(req.document());
         Client c = new Client();
         c.setOrganizationId(me.organizationId());
-        apply(c, req);
+        preencher(c, req);
         return ClientResponse.from(repo.save(c));
     }
 
     @Transactional
-    public ClientResponse update(AuthUser me, String id, ClientRequest req) {
-        validateDocument(req.document());
+    public ClientResponse atualizar(AuthUser me, String id, ClientRequest req) {
+        validarDocumento(req.document());
         Client c = repo.findByIdAndOrganizationId(id, me.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Cliente não encontrado"));
-        apply(c, req);
+        preencher(c, req);
         return ClientResponse.from(repo.save(c));
     }
 
     @Transactional
-    public void delete(AuthUser me, String id) {
+    public void excluir(AuthUser me, String id) {
         repo.deleteByIdAndOrganizationId(id, me.organizationId());
     }
 
-    private void validateDocument(String document) {
+    private void validarDocumento(String document) {
         if (document != null && !document.isBlank() && !DocumentValidator.isValid(document)) {
             throw ApiException.badRequest("CPF ou CNPJ inválido");
         }
     }
 
-    private void apply(Client c, ClientRequest req) {
+    private void preencher(Client c, ClientRequest req) {
         c.setName(req.name());
-        c.setDocument(blankToNull(req.document()));
-        c.setEmail(blankToNull(req.email()));
-        c.setPhone(blankToNull(req.phone()));
-        c.setNotes(blankToNull(req.notes()));
+        c.setDocument(vazioParaNulo(req.document()));
+        c.setEmail(vazioParaNulo(req.email()));
+        c.setPhone(vazioParaNulo(req.phone()));
+        c.setNotes(vazioParaNulo(req.notes()));
     }
 
-    private String blankToNull(String s) {
+    private String vazioParaNulo(String s) {
         return (s == null || s.isBlank()) ? null : s;
     }
 }

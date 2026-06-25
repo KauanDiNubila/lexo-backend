@@ -5,7 +5,7 @@ import app.lexo.dto.InvoiceDtos.InvoiceRequest;
 import app.lexo.dto.InvoiceDtos.InvoiceResponse;
 import app.lexo.dto.InvoiceDtos.StatusRequest;
 import app.lexo.security.AuthUser;
-import app.lexo.service.InvoiceService;
+import app.lexo.service.FinanceiroService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -33,42 +33,42 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/financeiro")
 @PreAuthorize("hasAnyRole('ADMIN','ADVOGADO')")
-public class InvoiceController {
+public class FinanceiroController {
 
-    private final InvoiceService service;
+    private final FinanceiroService service;
 
-    public InvoiceController(InvoiceService service) {
+    public FinanceiroController(FinanceiroService service) {
         this.service = service;
     }
 
     @GetMapping
     public List<InvoiceResponse> list(@AuthenticationPrincipal AuthUser me) {
-        return service.list(me);
+        return service.listar(me);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public InvoiceResponse create(@AuthenticationPrincipal AuthUser me,
                                   @Valid @RequestBody InvoiceRequest req) {
-        return service.create(me, req);
+        return service.criar(me, req);
     }
 
     @PutMapping("/{id}")
     public InvoiceResponse update(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
                                   @Valid @RequestBody InvoiceRequest req) {
-        return service.update(me, id, req);
+        return service.atualizar(me, id, req);
     }
 
     @PatchMapping("/{id}/status")
-    public InvoiceResponse updateStatus(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
+    public InvoiceResponse atualizarStatus(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
                                         @Valid @RequestBody StatusRequest req) {
-        return service.updateStatus(me, id, req.status());
+        return service.atualizarStatus(me, id, req.status());
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal AuthUser me, @PathVariable String id) {
-        service.delete(me, id);
+        service.excluir(me, id);
     }
 
     @GetMapping("/relatorio")
@@ -76,6 +76,6 @@ public class InvoiceController {
             @AuthenticationPrincipal AuthUser me,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant end) {
-        return service.report(me, start, end);
+        return service.relatorio(me, start, end);
     }
 }

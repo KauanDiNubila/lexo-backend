@@ -4,7 +4,7 @@ import app.lexo.dto.DeadlineDtos.DeadlineRequest;
 import app.lexo.dto.DeadlineDtos.DeadlineResponse;
 import app.lexo.dto.DeadlineDtos.StatusRequest;
 import app.lexo.security.AuthUser;
-import app.lexo.service.DeadlineService;
+import app.lexo.service.AgendaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,41 +24,41 @@ import java.util.List;
 /** Agenda (prazos/compromissos). */
 @RestController
 @RequestMapping("/api/agenda")
-public class DeadlineController {
+public class AgendaController {
 
-    private final DeadlineService service;
+    private final AgendaService service;
 
-    public DeadlineController(DeadlineService service) {
+    public AgendaController(AgendaService service) {
         this.service = service;
     }
 
     @GetMapping
     public List<DeadlineResponse> list(@AuthenticationPrincipal AuthUser me) {
-        return service.list(me);
+        return service.listar(me);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public DeadlineResponse create(@AuthenticationPrincipal AuthUser me,
                                    @Valid @RequestBody DeadlineRequest req) {
-        return service.create(me, req);
+        return service.criar(me, req);
     }
 
     @PutMapping("/{id}")
     public DeadlineResponse update(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
                                    @Valid @RequestBody DeadlineRequest req) {
-        return service.update(me, id, req);
+        return service.atualizar(me, id, req);
     }
 
     @PatchMapping("/{id}/status")
-    public DeadlineResponse toggleStatus(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
+    public DeadlineResponse alternarStatus(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
                                          @RequestBody StatusRequest req) {
-        return service.toggleStatus(me, id, req.completed());
+        return service.alternarStatus(me, id, req.completed());
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal AuthUser me, @PathVariable String id) {
-        service.delete(me, id);
+        service.excluir(me, id);
     }
 }

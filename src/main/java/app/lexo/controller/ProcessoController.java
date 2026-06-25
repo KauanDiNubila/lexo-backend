@@ -3,7 +3,7 @@ package app.lexo.controller;
 import app.lexo.dto.CaseDtos.CaseRequest;
 import app.lexo.dto.CaseDtos.CaseResponse;
 import app.lexo.security.AuthUser;
-import app.lexo.service.CaseService;
+import app.lexo.service.ProcessoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,40 +21,40 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/processos")
-public class CaseController {
+public class ProcessoController {
 
-    private final CaseService service;
+    private final ProcessoService service;
 
-    public CaseController(CaseService service) {
+    public ProcessoController(ProcessoService service) {
         this.service = service;
     }
 
     @GetMapping
     public List<CaseResponse> list(@AuthenticationPrincipal AuthUser me) {
-        return service.list(me);
+        return service.listar(me);
     }
 
     @GetMapping("/{id}")
     public CaseResponse get(@AuthenticationPrincipal AuthUser me, @PathVariable String id) {
-        return service.get(me, id);
+        return service.buscar(me, id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CaseResponse create(@AuthenticationPrincipal AuthUser me,
                                @Valid @RequestBody CaseRequest req) {
-        return service.create(me, req);
+        return service.criar(me, req);
     }
 
     @PutMapping("/{id}")
     public CaseResponse update(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
                                @Valid @RequestBody CaseRequest req) {
-        return service.update(me, id, req);
+        return service.atualizar(me, id, req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal AuthUser me, @PathVariable String id) {
-        service.delete(me, id);
+        service.excluir(me, id);
     }
 }

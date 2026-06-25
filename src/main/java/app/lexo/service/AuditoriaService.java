@@ -11,17 +11,17 @@ import org.springframework.stereotype.Service;
  * principal, mas e sempre observavel (nunca silenciosa).
  */
 @Service
-public class AuditService {
+public class AuditoriaService {
 
-    private static final Logger log = LoggerFactory.getLogger(AuditService.class);
+    private static final Logger log = LoggerFactory.getLogger(AuditoriaService.class);
 
     private final AuditLogRepository repo;
 
-    public AuditService(AuditLogRepository repo) {
+    public AuditoriaService(AuditLogRepository repo) {
         this.repo = repo;
     }
 
-    public void log(String organizationId, String userId, String userName,
+    public void registrar(String organizationId, String userId, String userName,
                     String action, String entityType, String entityId, String description) {
         try {
             AuditLog entry = new AuditLog();
@@ -38,7 +38,7 @@ public class AuditService {
         }
     }
 
-    public void log(String organizationId, String userId, String userName, String action, String description) {
-        log(organizationId, userId, userName, action, null, null, description);
+    public void registrar(String organizationId, String userId, String userName, String action, String description) {
+        registrar(organizationId, userId, userName, action, null, null, description);
     }
 }

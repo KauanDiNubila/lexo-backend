@@ -14,15 +14,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-public class CaseService {
+public class ProcessoService {
 
     private final CaseRepository repo;
     private final ClientRepository clientRepo;
     private final UserRepository userRepo;
-    private final ActivityService activity;
+    private final AtividadeService activity;
 
-    public CaseService(CaseRepository repo, ClientRepository clientRepo,
-                       UserRepository userRepo, ActivityService activity) {
+    public ProcessoService(CaseRepository repo, ClientRepository clientRepo,
+                       UserRepository userRepo, AtividadeService activity) {
         this.repo = repo;
         this.clientRepo = clientRepo;
         this.userRepo = userRepo;
@@ -30,51 +30,51 @@ public class CaseService {
     }
 
     @Transactional(readOnly = true)
-    public List<CaseResponse> list(AuthUser me) {
+    public List<CaseResponse> listar(AuthUser me) {
         return repo.findByOrganizationIdOrderByCreatedAtDesc(me.organizationId())
                 .stream().map(CaseResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
-    public CaseResponse get(AuthUser me, String id) {
-        return CaseResponse.from(load(me, id));
+    public CaseResponse buscar(AuthUser me, String id) {
+        return CaseResponse.from(carregar(me, id));
     }
 
     @Transactional
-    public CaseResponse create(AuthUser me, CaseRequest req) {
-        validateRefs(me, req);
+    public CaseResponse criar(AuthUser me, CaseRequest req) {
+        validarReferencias(me, req);
         Case c = new Case();
         c.setOrganizationId(me.organizationId());
-        apply(c, req);
+        preencher(c, req);
         c = repo.save(c);
 
-        activity.log(me.organizationId(), c.getId(), me.id(), nameOf(me), "Processo criado");
+        activity.registrar(me.organizationId(), c.getId(), me.id(), nomeDe(me), "Processo criado");
         return CaseResponse.from(c);
     }
 
     @Transactional
-    public CaseResponse update(AuthUser me, String id, CaseRequest req) {
-        validateRefs(me, req);
-        Case c = load(me, id);
-        apply(c, req);
+    public CaseResponse atualizar(AuthUser me, String id, CaseRequest req) {
+        validarReferencias(me, req);
+        Case c = carregar(me, id);
+        preencher(c, req);
         c = repo.save(c);
 
-        activity.log(me.organizationId(), c.getId(), me.id(), nameOf(me),
+        activity.registrar(me.organizationId(), c.getId(), me.id(), nomeDe(me),
                 "Processo atualizado — status: " + req.status());
         return CaseResponse.from(c);
     }
 
     @Transactional
-    public void delete(AuthUser me, String id) {
+    public void excluir(AuthUser me, String id) {
         repo.deleteByIdAndOrganizationId(id, me.organizationId());
     }
 
-    private Case load(AuthUser me, String id) {
+    private Case carregar(AuthUser me, String id) {
         return repo.findByIdAndOrganizationId(id, me.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Processo não encontrado"));
     }
 
-    private void validateRefs(AuthUser me, CaseRequest req) {
+    private void validarReferencias(AuthUser me, CaseRequest req) {
         if (!clientRepo.existsByIdAndOrganizationId(req.clientId(), me.organizationId())) {
             throw ApiException.notFound("Cliente não encontrado");
         }
@@ -84,20 +84,20 @@ public class CaseService {
         }
     }
 
-    private void apply(Case c, CaseRequest req) {
+    private void preencher(Case c, CaseRequest req) {
         c.setClientId(req.clientId());
         c.setNumber(req.number());
-        c.setArea(blankToNull(req.area()));
+        c.setArea(vazioParaNulo(req.area()));
         c.setStatus(req.status());
-        c.setDescription(blankToNull(req.description()));
-        c.setResponsavelId(blankToNull(req.responsavelId()));
+        c.setDescription(vazioParaNulo(req.description()));
+        c.setResponsavelId(vazioParaNulo(req.responsavelId()));
     }
 
-    private String blankToNull(String s) {
+    private String vazioParaNulo(String s) {
         return (s == null || s.isBlank()) ? null : s;
     }
 
-    private String nameOf(AuthUser me) {
+    private String nomeDe(AuthUser me) {
         return me.name() != null ? me.name() : "Usuário";
     }
 }

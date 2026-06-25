@@ -5,7 +5,7 @@ import app.lexo.dto.TeamDtos.InviteResponse;
 import app.lexo.dto.TeamDtos.UpdateRoleRequest;
 import app.lexo.dto.TeamDtos.UserResponse;
 import app.lexo.security.AuthUser;
-import app.lexo.service.TeamService;
+import app.lexo.service.EquipeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,47 +26,47 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/usuarios")
 @PreAuthorize("hasRole('ADMIN')")
-public class TeamController {
+public class EquipeController {
 
-    private final TeamService service;
+    private final EquipeService service;
 
-    public TeamController(TeamService service) {
+    public EquipeController(EquipeService service) {
         this.service = service;
     }
 
     @GetMapping
-    public List<UserResponse> listUsers(@AuthenticationPrincipal AuthUser me) {
-        return service.listUsers(me);
+    public List<UserResponse> listarUsuarios(@AuthenticationPrincipal AuthUser me) {
+        return service.listarUsuarios(me);
     }
 
     @GetMapping("/convites")
     public List<InviteResponse> listInvites(@AuthenticationPrincipal AuthUser me) {
-        return service.listPendingInvites(me);
+        return service.listarConvitesPendentes(me);
     }
 
     @PostMapping("/convites")
     @ResponseStatus(HttpStatus.CREATED)
     public InviteResponse invite(@AuthenticationPrincipal AuthUser me,
                                  @Valid @RequestBody InviteRequest req) {
-        return service.invite(me, req);
+        return service.convidar(me, req);
     }
 
     @DeleteMapping("/convites/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void revokeInvite(@AuthenticationPrincipal AuthUser me, @PathVariable String id) {
-        service.revokeInvite(me, id);
+    public void revogarConvite(@AuthenticationPrincipal AuthUser me, @PathVariable String id) {
+        service.revogarConvite(me, id);
     }
 
     @PatchMapping("/papel")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateRole(@AuthenticationPrincipal AuthUser me,
+    public void alterarPapel(@AuthenticationPrincipal AuthUser me,
                            @Valid @RequestBody UpdateRoleRequest req) {
-        service.updateRole(me, req);
+        service.alterarPapel(me, req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeUser(@AuthenticationPrincipal AuthUser me, @PathVariable String id) {
-        service.removeUser(me, id);
+    public void removerUsuario(@AuthenticationPrincipal AuthUser me, @PathVariable String id) {
+        service.removerUsuario(me, id);
     }
 }

@@ -16,19 +16,19 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 @Service
-public class AuthService {
+public class AutenticacaoService {
 
     private final UserRepository userRepo;
     private final OrganizationRepository orgRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final RateLimitService rateLimit;
-    private final CryptoService crypto;
+    private final LimiteRequisicoesService rateLimit;
+    private final CriptografiaService crypto;
     private final TotpProvider totp;
 
-    public AuthService(UserRepository userRepo, OrganizationRepository orgRepo,
+    public AutenticacaoService(UserRepository userRepo, OrganizationRepository orgRepo,
                        PasswordEncoder passwordEncoder, JwtService jwtService,
-                       RateLimitService rateLimit, CryptoService crypto, TotpProvider totp) {
+                       LimiteRequisicoesService rateLimit, CriptografiaService crypto, TotpProvider totp) {
         this.userRepo = userRepo;
         this.orgRepo = orgRepo;
         this.passwordEncoder = passwordEncoder;
@@ -39,7 +39,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthDtos.AuthResponse register(AuthDtos.RegisterRequest req) {
+    public AuthDtos.AuthResponse registrar(AuthDtos.RegisterRequest req) {
         if (!req.password().equals(req.confirmPassword())) {
             throw ApiException.badRequest("As senhas não coincidem");
         }
@@ -60,7 +60,7 @@ public class AuthService {
         user.setRole(Role.ADMIN);
         user = userRepo.save(user);
 
-        return new AuthDtos.AuthResponse(jwtService.issue(user), toInfo(user));
+        return new AuthDtos.AuthResponse(jwtService.issue(user), paraInfo(user));
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +68,7 @@ public class AuthService {
         // Trava brute force/credential stuffing por email: 10 tentativas / 15 min.
         // Retorna o mesmo erro de credencial invalida para nao revelar o bloqueio.
         String key = "login:" + req.email().toLowerCase();
-        if (!rateLimit.check(key, 10, 15 * 60)) {
+        if (!rateLimit.verificar(key, 10, 15 * 60)) {
             throw ApiException.unauthorized("Email ou senha inválidos");
         }
 
@@ -81,16 +81,16 @@ public class AuthService {
             if (req.totpCode() == null || req.totpCode().isBlank()) {
                 throw ApiException.unauthorized("Código de verificação em dois fatores obrigatório");
             }
-            String secret = crypto.decrypt(user.getTotpSecret());
+            String secret = crypto.decifrar(user.getTotpSecret());
             if (!totp.verify(secret, req.totpCode())) {
                 throw ApiException.unauthorized("Código de verificação inválido");
             }
         }
 
-        return new AuthDtos.AuthResponse(jwtService.issue(user), toInfo(user));
+        return new AuthDtos.AuthResponse(jwtService.issue(user), paraInfo(user));
     }
 
-    private AuthDtos.UserInfo toInfo(User u) {
+    private AuthDtos.UserInfo paraInfo(User u) {
         return new AuthDtos.UserInfo(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getOrganizationId());
     }
 }

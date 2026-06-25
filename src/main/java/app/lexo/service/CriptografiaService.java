@@ -20,7 +20,7 @@ import java.util.Base64;
  * (sem o prefixo) continuam validos para nao causar lockout.
  */
 @Service
-public class CryptoService {
+public class CriptografiaService {
 
     private static final String PREFIX = "enc:v1:";
     private static final int IV_LENGTH = 12;
@@ -29,7 +29,7 @@ public class CryptoService {
     private final SecretKey key;
     private final SecureRandom random = new SecureRandom();
 
-    public CryptoService(
+    public CriptografiaService(
             @Value("${lexo.totp-enc-key:}") String totpEncKey,
             @Value("${lexo.auth-secret}") String authSecret) {
         String secret = (totpEncKey != null && !totpEncKey.isBlank()) ? totpEncKey : authSecret;
@@ -37,10 +37,10 @@ public class CryptoService {
             throw new IllegalStateException(
                     "TOTP_ENC_KEY/AUTH_SECRET nao configurado — impossivel cifrar segredo TOTP");
         }
-        this.key = deriveKey(secret);
+        this.key = derivarChave(secret);
     }
 
-    private SecretKey deriveKey(String secret) {
+    private SecretKey derivarChave(String secret) {
         try {
             // Deriva 32 bytes deterministicos da chave (salt fixo; o IV por mensagem garante aleatoriedade).
             byte[] salt = "lexo-totp-kdf-v1".getBytes(StandardCharsets.UTF_8);
@@ -53,11 +53,11 @@ public class CryptoService {
         }
     }
 
-    public boolean isEncrypted(String value) {
+    public boolean estaCifrado(String value) {
         return value != null && value.startsWith(PREFIX);
     }
 
-    public String encrypt(String plain) {
+    public String cifrar(String plain) {
         try {
             byte[] iv = new byte[IV_LENGTH];
             random.nextBytes(iv);
@@ -72,9 +72,9 @@ public class CryptoService {
         }
     }
 
-    public String decrypt(String stored) {
+    public String decifrar(String stored) {
         // Compatibilidade: segredos legados em texto puro continuam validos.
-        if (!isEncrypted(stored)) {
+        if (!estaCifrado(stored)) {
             return stored;
         }
         try {

@@ -23,19 +23,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
-public class TeamService {
+public class EquipeService {
 
     private final UserRepository userRepo;
     private final UserInviteRepository inviteRepo;
     private final OrganizationRepository orgRepo;
     private final PasswordEncoder passwordEncoder;
     private final EmailService email;
-    private final AuditService audit;
+    private final AuditoriaService audit;
     private final String baseUrl;
 
-    public TeamService(UserRepository userRepo, UserInviteRepository inviteRepo,
+    public EquipeService(UserRepository userRepo, UserInviteRepository inviteRepo,
                        OrganizationRepository orgRepo, PasswordEncoder passwordEncoder,
-                       EmailService email, AuditService audit,
+                       EmailService email, AuditoriaService audit,
                        @Value("${lexo.base-url}") String baseUrl) {
         this.userRepo = userRepo;
         this.inviteRepo = inviteRepo;
@@ -47,19 +47,19 @@ public class TeamService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponse> listUsers(AuthUser me) {
+    public List<UserResponse> listarUsuarios(AuthUser me) {
         return userRepo.findByOrganizationIdOrderByNameAsc(me.organizationId())
                 .stream().map(UserResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
-    public List<InviteResponse> listPendingInvites(AuthUser me) {
+    public List<InviteResponse> listarConvitesPendentes(AuthUser me) {
         return inviteRepo.findByOrganizationIdAndAcceptedAtIsNullOrderByCreatedAtDesc(me.organizationId())
                 .stream().map(InviteResponse::from).toList();
     }
 
     @Transactional
-    public InviteResponse invite(AuthUser me, InviteRequest req) {
+    public InviteResponse convidar(AuthUser me, InviteRequest req) {
         if (userRepo.existsByEmail(req.email())) {
             throw ApiException.conflict("Já existe um usuário com este email");
         }
@@ -84,25 +84,25 @@ public class TeamService {
         String acceptUrl = baseUrl + "/convite/" + invite.getToken();
         email.sendInvite(req.email(), orgName, req.name(), acceptUrl);
 
-        audit.log(me.organizationId(), me.id(), nameOf(me), "CONVIDOU_USUARIO", "USUARIO", null,
+        audit.registrar(me.organizationId(), me.id(), nomeDe(me), "CONVIDOU_USUARIO", "USUARIO", null,
                 "Convidou " + req.name() + " (" + req.email() + ") como " + req.role());
 
         return InviteResponse.from(invite);
     }
 
     @Transactional
-    public void revokeInvite(AuthUser me, String inviteId) {
+    public void revogarConvite(AuthUser me, String inviteId) {
         UserInvite invite = inviteRepo.findByIdAndOrganizationId(inviteId, me.organizationId())
                 .orElse(null);
         inviteRepo.deleteByIdAndOrganizationId(inviteId, me.organizationId());
         if (invite != null) {
-            audit.log(me.organizationId(), me.id(), nameOf(me), "REVOGOU_CONVITE", "USUARIO", null,
+            audit.registrar(me.organizationId(), me.id(), nomeDe(me), "REVOGOU_CONVITE", "USUARIO", null,
                     "Revogou convite de " + invite.getEmail());
         }
     }
 
     @Transactional
-    public void updateRole(AuthUser me, UpdateRoleRequest req) {
+    public void alterarPapel(AuthUser me, UpdateRoleRequest req) {
         if (req.userId().equals(me.id())) {
             throw ApiException.badRequest("Você não pode alterar seu próprio papel");
         }
@@ -111,12 +111,12 @@ public class TeamService {
         user.setRole(req.role());
         userRepo.save(user);
 
-        audit.log(me.organizationId(), me.id(), nameOf(me), "ALTEROU_PAPEL", "USUARIO", req.userId(),
+        audit.registrar(me.organizationId(), me.id(), nomeDe(me), "ALTEROU_PAPEL", "USUARIO", req.userId(),
                 "Alterou papel do usuário para " + req.role());
     }
 
     @Transactional
-    public void removeUser(AuthUser me, String userId) {
+    public void removerUsuario(AuthUser me, String userId) {
         if (userId.equals(me.id())) {
             throw ApiException.badRequest("Você não pode remover a si mesmo");
         }
@@ -124,12 +124,12 @@ public class TeamService {
                 .orElseThrow(() -> ApiException.notFound("Usuário não encontrado"));
         userRepo.delete(target);
 
-        audit.log(me.organizationId(), me.id(), nameOf(me), "REMOVEU_USUARIO", "USUARIO", userId,
+        audit.registrar(me.organizationId(), me.id(), nomeDe(me), "REMOVEU_USUARIO", "USUARIO", userId,
                 "Removeu " + target.getName() + " (" + target.getEmail() + ")");
     }
 
     @Transactional(readOnly = true)
-    public InviteInfo inviteInfo(String token) {
+    public InviteInfo infoConvite(String token) {
         UserInvite invite = inviteRepo.findByToken(token).orElse(null);
         if (invite == null) {
             return new InviteInfo(null, null, null, false, "Convite inválido");
@@ -146,7 +146,7 @@ public class TeamService {
     }
 
     @Transactional
-    public void acceptInvite(AcceptInviteRequest req) {
+    public void aceitarConvite(AcceptInviteRequest req) {
         if (!req.password().equals(req.confirmPassword())) {
             throw ApiException.badRequest("As senhas não coincidem");
         }
@@ -174,7 +174,7 @@ public class TeamService {
         inviteRepo.save(invite);
     }
 
-    private String nameOf(AuthUser me) {
+    private String nomeDe(AuthUser me) {
         if (me.name() != null) return me.name();
         if (me.email() != null) return me.email();
         return "Admin";

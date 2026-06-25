@@ -14,20 +14,20 @@ import java.time.temporal.ChronoUnit;
  * Falha ABERTO se o store estiver indisponivel — nunca derruba a autenticacao por causa do limiter.
  */
 @Service
-public class RateLimitService {
+public class LimiteRequisicoesService {
 
-    private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
+    private static final Logger log = LoggerFactory.getLogger(LimiteRequisicoesService.class);
 
     private final RateHitRepository repo;
 
-    public RateLimitService(RateHitRepository repo) {
+    public LimiteRequisicoesService(RateHitRepository repo) {
         this.repo = repo;
     }
 
     /**
      * @return true se a requisicao esta dentro do limite; false se deve ser bloqueada.
      */
-    public boolean check(String key, int max, long windowSeconds) {
+    public boolean verificar(String key, int max, long windowSeconds) {
         Instant since = Instant.now().minus(windowSeconds, ChronoUnit.SECONDS);
         try {
             repo.deleteExpired(key, since);

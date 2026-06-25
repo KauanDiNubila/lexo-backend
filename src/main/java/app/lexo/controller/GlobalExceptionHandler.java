@@ -1,41 +1,70 @@
 package app.lexo.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
+import java.util.stream.Collectors;
 
-/** Converte excecoes em { "error": "mensagem" }, espelhando o ActionResult do projeto original. */
+/**
+ * Tratamento centralizado de excecoes. Converte qualquer erro num ErrorResponse
+ * padronizado, registra o que importa em log e nunca vaza stacktrace ao cliente.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /** Erros de negocio previstos (ApiException) — 4xx com mensagem amigavel. */
     @ExceptionHandler(ApiException.class)
-    public ResponseEntity<Map<String, String>> handleApi(ApiException ex) {
-        return ResponseEntity.status(ex.getStatus()).body(Map.of("error", ex.getMessage()));
+    public ResponseEntity<ErrorResponse> handleApi(ApiException ex, HttpServletRequest req) {
+        return build(ex.getStatus(), ex.getMessage(), req);
     }
 
+    /** Falha de validacao de DTO (@Valid) — junta todas as mensagens dos campos. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
-        FieldError first = ex.getBindingResult().getFieldErrors().stream().findFirst().orElse(null);
-        String message = first != null ? first.getDefaultMessage() : "Dados inválidos";
-        return ResponseEntity.badRequest().body(Map.of("error", message));
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex,
+                                                           HttpServletRequest req) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(f -> f.getDefaultMessage())
+                .distinct()
+                .collect(Collectors.joining("; "));
+        if (message.isBlank()) {
+            message = "Dados inválidos";
+        }
+        return build(HttpStatus.BAD_REQUEST, message, req);
     }
 
+    /** Corpo da requisicao ilegivel (JSON malformado, enum invalido, etc.). */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex,
+                                                           HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido", req);
+    }
+
+    /** Acesso negado por papel/permissao (@PreAuthorize). */
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Acesso negado"));
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex,
+                                                            HttpServletRequest req) {
+        return build(HttpStatus.FORBIDDEN, "Acesso negado", req);
     }
 
+    /** Qualquer erro nao previsto — 500 generico ao cliente, detalhe completo no log. */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGeneric(Exception ex) {
-        // Nao vaza detalhes internos ao cliente; o stacktrace fica no log do servidor.
-        ex.printStackTrace();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Erro interno. Tente novamente."));
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest req) {
+        log.error("Erro nao tratado em {} {}", req.getMethod(), req.getRequestURI(), ex);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno. Tente novamente.", req);
+    }
+
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest req) {
+        ErrorResponse body = ErrorResponse.of(status.value(), message, req.getRequestURI());
+        return ResponseEntity.status(status).body(body);
     }
 }

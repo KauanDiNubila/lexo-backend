@@ -1,6 +1,6 @@
 package app.lexo.controller;
 
-import app.lexo.service.DeadlineNotificationService;
+import app.lexo.service.NotificacaoPrazosService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -17,10 +17,10 @@ import java.util.Map;
 @RequestMapping("/api/cron")
 public class CronController {
 
-    private final DeadlineNotificationService notifier;
+    private final NotificacaoPrazosService notifier;
     private final String cronSecret;
 
-    public CronController(DeadlineNotificationService notifier,
+    public CronController(NotificacaoPrazosService notifier,
                           @Value("${CRON_SECRET:}") String cronSecret) {
         this.notifier = notifier;
         this.cronSecret = cronSecret;
@@ -33,7 +33,7 @@ public class CronController {
                 || !("Bearer " + cronSecret).equals(authorization)) {
             throw ApiException.unauthorized("Não autorizado");
         }
-        int sent = notifier.run();
+        int sent = notifier.executar();
         return Map.of("ok", true, "sent", sent);
     }
 }

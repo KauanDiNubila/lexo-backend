@@ -14,90 +14,90 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-public class DeadlineService {
+public class AgendaService {
 
     private final DeadlineRepository repo;
     private final CaseRepository caseRepo;
-    private final ActivityService activity;
+    private final AtividadeService activity;
 
-    public DeadlineService(DeadlineRepository repo, CaseRepository caseRepo, ActivityService activity) {
+    public AgendaService(DeadlineRepository repo, CaseRepository caseRepo, AtividadeService activity) {
         this.repo = repo;
         this.caseRepo = caseRepo;
         this.activity = activity;
     }
 
     @Transactional(readOnly = true)
-    public List<DeadlineResponse> list(AuthUser me) {
+    public List<DeadlineResponse> listar(AuthUser me) {
         return repo.findByOrganizationIdOrderByDateAsc(me.organizationId())
                 .stream().map(DeadlineResponse::from).toList();
     }
 
     @Transactional
-    public DeadlineResponse create(AuthUser me, DeadlineRequest req) {
-        requireOwnCase(me, req.caseId());
+    public DeadlineResponse criar(AuthUser me, DeadlineRequest req) {
+        exigirProcessoProprio(me, req.caseId());
         Deadline d = new Deadline();
         d.setOrganizationId(me.organizationId());
         d.setCaseId(req.caseId());
-        apply(d, req);
+        preencher(d, req);
         d = repo.save(d);
 
-        activity.log(me.organizationId(), d.getCaseId(), me.id(), nameOf(me),
+        activity.registrar(me.organizationId(), d.getCaseId(), me.id(), nomeDe(me),
                 "Prazo \"" + req.title() + "\" criado");
         return DeadlineResponse.from(d);
     }
 
     @Transactional
-    public DeadlineResponse update(AuthUser me, String id, DeadlineRequest req) {
-        requireOwnCase(me, req.caseId());
-        Deadline d = load(me, id);
+    public DeadlineResponse atualizar(AuthUser me, String id, DeadlineRequest req) {
+        exigirProcessoProprio(me, req.caseId());
+        Deadline d = carregar(me, id);
         d.setCaseId(req.caseId());
-        apply(d, req);
+        preencher(d, req);
         d = repo.save(d);
 
-        activity.log(me.organizationId(), d.getCaseId(), me.id(), nameOf(me),
+        activity.registrar(me.organizationId(), d.getCaseId(), me.id(), nomeDe(me),
                 "Prazo \"" + req.title() + "\" atualizado");
         return DeadlineResponse.from(d);
     }
 
     @Transactional
-    public DeadlineResponse toggleStatus(AuthUser me, String id, boolean completed) {
-        Deadline d = load(me, id);
+    public DeadlineResponse alternarStatus(AuthUser me, String id, boolean completed) {
+        Deadline d = carregar(me, id);
         d.setStatus(completed ? DeadlineStatus.CONCLUIDO : DeadlineStatus.PENDENTE);
         d = repo.save(d);
 
-        activity.log(me.organizationId(), d.getCaseId(), me.id(), nameOf(me),
+        activity.registrar(me.organizationId(), d.getCaseId(), me.id(), nomeDe(me),
                 "Prazo \"" + d.getTitle() + "\" marcado como " + (completed ? "Concluído" : "Pendente"));
         return DeadlineResponse.from(d);
     }
 
     @Transactional
-    public void delete(AuthUser me, String id) {
+    public void excluir(AuthUser me, String id) {
         repo.deleteByIdAndOrganizationId(id, me.organizationId());
     }
 
-    private Deadline load(AuthUser me, String id) {
+    private Deadline carregar(AuthUser me, String id) {
         return repo.findByIdAndOrganizationId(id, me.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Prazo não encontrado"));
     }
 
-    private void requireOwnCase(AuthUser me, String caseId) {
+    private void exigirProcessoProprio(AuthUser me, String caseId) {
         if (!caseRepo.existsByIdAndOrganizationId(caseId, me.organizationId())) {
             throw ApiException.notFound("Processo não encontrado");
         }
     }
 
-    private void apply(Deadline d, DeadlineRequest req) {
+    private void preencher(Deadline d, DeadlineRequest req) {
         d.setTitle(req.title());
         d.setType(req.type());
         d.setDate(req.date());
-        d.setDescription(blankToNull(req.description()));
+        d.setDescription(vazioParaNulo(req.description()));
     }
 
-    private String blankToNull(String s) {
+    private String vazioParaNulo(String s) {
         return (s == null || s.isBlank()) ? null : s;
     }
 
-    private String nameOf(AuthUser me) {
+    private String nomeDe(AuthUser me) {
         return me.name() != null ? me.name() : "Usuário";
     }
 }

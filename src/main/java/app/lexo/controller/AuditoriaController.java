@@ -15,11 +15,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/auditoria")
 @PreAuthorize("hasRole('ADMIN')")
-public class AuditController {
+public class AuditoriaController {
 
     private final AuditLogRepository repo;
 
-    public AuditController(AuditLogRepository repo) {
+    public AuditoriaController(AuditLogRepository repo) {
         this.repo = repo;
     }
 

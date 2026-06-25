@@ -8,17 +8,17 @@ import org.springframework.stereotype.Service;
 
 /** Historico de atividades por processo, portado de lib/activity.ts. Nao-fatal, porem observavel. */
 @Service
-public class ActivityService {
+public class AtividadeService {
 
-    private static final Logger log = LoggerFactory.getLogger(ActivityService.class);
+    private static final Logger log = LoggerFactory.getLogger(AtividadeService.class);
 
     private final ActivityLogRepository repo;
 
-    public ActivityService(ActivityLogRepository repo) {
+    public AtividadeService(ActivityLogRepository repo) {
         this.repo = repo;
     }
 
-    public void log(String organizationId, String caseId, String userId, String userName, String action) {
+    public void registrar(String organizationId, String caseId, String userId, String userName, String action) {
         try {
             ActivityLog entry = new ActivityLog();
             entry.setOrganizationId(organizationId);

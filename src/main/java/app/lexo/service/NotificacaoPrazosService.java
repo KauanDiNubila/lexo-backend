@@ -18,14 +18,14 @@ import java.util.List;
  * (ainda nao notificados) que vencem nos proximos 3 dias e marca notifiedAt.
  */
 @Service
-public class DeadlineNotificationService {
+public class NotificacaoPrazosService {
 
-    private static final Logger log = LoggerFactory.getLogger(DeadlineNotificationService.class);
+    private static final Logger log = LoggerFactory.getLogger(NotificacaoPrazosService.class);
 
     private final DeadlineRepository repo;
     private final EmailService email;
 
-    public DeadlineNotificationService(DeadlineRepository repo, EmailService email) {
+    public NotificacaoPrazosService(DeadlineRepository repo, EmailService email) {
         this.repo = repo;
         this.email = email;
     }
@@ -33,7 +33,7 @@ public class DeadlineNotificationService {
     /** Roda todo dia as 08:00 (horario do servidor). */
     @Scheduled(cron = "0 0 8 * * *")
     @Transactional
-    public int run() {
+    public int executar() {
         Instant now = Instant.now();
         Instant limit = now.plus(3, ChronoUnit.DAYS);
 
