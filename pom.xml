@@ -25,6 +25,7 @@
 
     <modules>
         <module>discovery-server</module>
+        <module>api-gateway</module>
         <module>monolito</module>
     </modules>
 
