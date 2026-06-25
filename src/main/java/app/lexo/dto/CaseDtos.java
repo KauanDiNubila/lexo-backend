@@ -5,6 +5,7 @@ import app.lexo.domain.enums.CaseStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 public final class CaseDtos {
@@ -31,7 +32,7 @@ public final class CaseDtos {
             String description,
             String responsavelId,
             Instant createdAt
-    ) {
+    ) implements Serializable {
         public static CaseResponse from(Case c) {
             return new CaseResponse(
                     c.getId(), c.getClientId(), c.getNumber(), c.getArea(),

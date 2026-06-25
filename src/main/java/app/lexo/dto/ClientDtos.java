@@ -4,6 +4,7 @@ import app.lexo.domain.Client;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 public final class ClientDtos {
@@ -28,7 +29,7 @@ public final class ClientDtos {
             String phone,
             String notes,
             Instant createdAt
-    ) {
+    ) implements Serializable {
         public static ClientResponse from(Client c) {
             return new ClientResponse(
                     c.getId(), c.getName(), c.getDocument(), c.getEmail(),

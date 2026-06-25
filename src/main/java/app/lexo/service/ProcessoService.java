@@ -8,6 +8,8 @@ import app.lexo.repository.ClientRepository;
 import app.lexo.repository.UserRepository;
 import app.lexo.security.AuthUser;
 import app.lexo.controller.ApiException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,9 @@ import java.util.List;
 
 @Service
 public class ProcessoService {
+
+    /** Nome do cache; a chave e o organizationId para isolar por tenant. */
+    private static final String CACHE = "processos";
 
     private final CaseRepository repo;
     private final ClientRepository clientRepo;
@@ -29,6 +34,7 @@ public class ProcessoService {
         this.activity = activity;
     }
 
+    @Cacheable(value = CACHE, key = "#me.organizationId()")
     @Transactional(readOnly = true)
     public List<CaseResponse> listar(AuthUser me) {
         return repo.findByOrganizationIdOrderByCreatedAtDesc(me.organizationId())
@@ -40,6 +46,7 @@ public class ProcessoService {
         return CaseResponse.from(carregar(me, id));
     }
 
+    @CacheEvict(value = CACHE, key = "#me.organizationId()")
     @Transactional
     public CaseResponse criar(AuthUser me, CaseRequest req) {
         validarReferencias(me, req);
@@ -52,6 +59,7 @@ public class ProcessoService {
         return CaseResponse.from(c);
     }
 
+    @CacheEvict(value = CACHE, key = "#me.organizationId()")
     @Transactional
     public CaseResponse atualizar(AuthUser me, String id, CaseRequest req) {
         validarReferencias(me, req);
@@ -64,6 +72,7 @@ public class ProcessoService {
         return CaseResponse.from(c);
     }
 
+    @CacheEvict(value = CACHE, key = "#me.organizationId()")
     @Transactional
     public void excluir(AuthUser me, String id) {
         repo.deleteByIdAndOrganizationId(id, me.organizationId());
