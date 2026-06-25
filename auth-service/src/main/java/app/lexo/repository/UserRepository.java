@@ -15,4 +15,6 @@ public interface UserRepository extends JpaRepository<User, String> {
     List<User> findByOrganizationIdOrderByNameAsc(String organizationId);
 
     Optional<User> findByIdAndOrganizationId(String id, String organizationId);
+
+    boolean existsByIdAndOrganizationId(String id, String organizationId);
 }

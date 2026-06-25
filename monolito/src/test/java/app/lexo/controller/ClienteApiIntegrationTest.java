@@ -1,6 +1,5 @@
 package app.lexo.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,15 +11,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Teste de integracao ponta-a-ponta da API (app completa sobre H2).
- * Como agora a identidade vem dos headers X-User-* (injetados pelo gateway), os testes
- * simulam o gateway enviando esses headers.
+ * Teste de integracao do monolito (clientes) sobre H2. A identidade vem dos headers
+ * X-User-* injetados pelo gateway — entao os testes fabricam essa identidade diretamente
+ * (o auth/registro agora vive no auth-service, fora deste servico).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -35,26 +35,10 @@ class ClienteApiIntegrationTest {
 
     /** Identidade que o gateway repassaria via headers. */
     private record Identidade(String userId, String orgId, String role, String name) {
-    }
-
-    /** Registra uma organizacao e devolve a identidade do admin criado. */
-    private Identidade registrar(String email) throws Exception {
-        String body = om.writeValueAsString(Map.of(
-                "organizationName", "Escritorio " + email,
-                "name", "Admin Teste",
-                "email", email,
-                "password", "senha12345",
-                "confirmPassword", "senha12345"));
-
-        String resposta = mvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").exists())
-                .andReturn().getResponse().getContentAsString();
-
-        JsonNode user = om.readTree(resposta).get("user");
-        return new Identidade(user.get("id").asText(), user.get("organizationId").asText(),
-                user.get("role").asText(), user.get("name").asText());
+        static Identidade nova() {
+            return new Identidade(UUID.randomUUID().toString(), UUID.randomUUID().toString(),
+                    "ADMIN", "Admin Teste");
+        }
     }
 
     /** Monta os headers de confianca, como o gateway faria apos validar o JWT. */
@@ -77,7 +61,7 @@ class ClienteApiIntegrationTest {
     @Test
     @DisplayName("com identidade, cria e lista cliente")
     void criaEListaCliente() throws Exception {
-        Identidade id = registrar("cria@teste.com");
+        Identidade id = Identidade.nova();
         String cliente = om.writeValueAsString(Map.of("name", "Joao da Silva", "document", "52998224725"));
 
         mvc.perform(post("/api/clientes").headers(comoGateway(id))
@@ -94,7 +78,7 @@ class ClienteApiIntegrationTest {
     @Test
     @DisplayName("CPF invalido retorna 400 com mensagem de erro")
     void cpfInvalido() throws Exception {
-        Identidade id = registrar("cpf@teste.com");
+        Identidade id = Identidade.nova();
         String cliente = om.writeValueAsString(Map.of("name", "Fulano", "document", "11111111111"));
 
         mvc.perform(post("/api/clientes").headers(comoGateway(id))
@@ -107,8 +91,8 @@ class ClienteApiIntegrationTest {
     @Test
     @DisplayName("multi-tenant: uma organizacao nao ve clientes de outra")
     void isolamentoMultiTenant() throws Exception {
-        Identidade a = registrar("orgA@teste.com");
-        Identidade b = registrar("orgB@teste.com");
+        Identidade a = Identidade.nova();
+        Identidade b = Identidade.nova();
 
         mvc.perform(post("/api/clientes").headers(comoGateway(a))
                         .contentType(MediaType.APPLICATION_JSON)

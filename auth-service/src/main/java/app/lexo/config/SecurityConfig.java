@@ -52,6 +52,8 @@ public class SecurityConfig {
                                 "/api/convites/aceitar",
                                 "/api/convites/info/**",
                                 "/api/health",
+                                // Endpoints internos (servico-a-servico), nao expostos pelo gateway
+                                "/internal/**",
                                 // Swagger / OpenAPI
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
