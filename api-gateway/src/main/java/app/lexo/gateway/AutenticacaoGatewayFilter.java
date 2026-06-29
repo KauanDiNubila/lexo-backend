@@ -57,6 +57,12 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest req = exchange.getRequest();
+
+        // Preflight CORS (OPTIONS) ja foi tratado pelo CorsWebFilter; nao exige token.
+        if (req.getMethod() == org.springframework.http.HttpMethod.OPTIONS) {
+            return chain.filter(exchange);
+        }
+
         String path = req.getURI().getPath();
 
         // Remove headers de identidade vindos do cliente (anti-spoofing).
