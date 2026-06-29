@@ -1,12 +1,12 @@
 package app.lexo.service;
 
 import app.lexo.client.ClienteServiceClient;
+import app.lexo.client.ProcessoServiceClient;
 import app.lexo.domain.Invoice;
 import app.lexo.domain.enums.InvoiceStatus;
 import app.lexo.dto.InvoiceDtos.FinancialReport;
 import app.lexo.dto.InvoiceDtos.InvoiceRequest;
 import app.lexo.dto.InvoiceDtos.InvoiceResponse;
-import app.lexo.repository.CaseRepository;
 import app.lexo.repository.InvoiceRepository;
 import app.lexo.security.AuthUser;
 import app.lexo.controller.ApiException;
@@ -26,12 +26,13 @@ public class FinanceiroService {
 
     private final InvoiceRepository repo;
     private final ClienteServiceClient clienteClient;
-    private final CaseRepository caseRepo;
+    private final ProcessoServiceClient processoClient;
 
-    public FinanceiroService(InvoiceRepository repo, ClienteServiceClient clienteClient, CaseRepository caseRepo) {
+    public FinanceiroService(InvoiceRepository repo, ClienteServiceClient clienteClient,
+                             ProcessoServiceClient processoClient) {
         this.repo = repo;
         this.clienteClient = clienteClient;
-        this.caseRepo = caseRepo;
+        this.processoClient = processoClient;
     }
 
     @Transactional(readOnly = true)
@@ -107,8 +108,10 @@ public class FinanceiroService {
                 clienteClient.clienteExiste(req.clientId(), me.organizationId()).get("existe"))) {
             throw ApiException.notFound("Cliente não encontrado");
         }
+        // O processo agora vive no processo-service: valida via chamada Feign.
         if (req.caseId() != null && !req.caseId().isBlank()
-                && !caseRepo.existsByIdAndOrganizationId(req.caseId(), me.organizationId())) {
+                && !Boolean.TRUE.equals(
+                        processoClient.processoExiste(req.caseId(), me.organizationId()).get("existe"))) {
             throw ApiException.notFound("Processo não encontrado");
         }
     }
