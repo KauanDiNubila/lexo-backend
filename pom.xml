@@ -32,7 +32,7 @@
         <module>auditoria-service</module>
         <module>notificacao-service</module>
         <module>processo-service</module>
-        <module>monolito</module>
+        <module>financeiro-service</module>
     </modules>
 
     <dependencyManagement>

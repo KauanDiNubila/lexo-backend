@@ -1,20 +1,18 @@
 services:
-  postgres:
+  financeiro-db:
     image: postgres:16-alpine
-    container_name: lexo-db
+    container_name: lexo-financeiro-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: lexo_dev
+      POSTGRES_DB: lexo_financeiro
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      # host 5433 -> container 5432 (5432 do host ja esta em uso por outros projetos)
-      - "5433:5432"
+      - "5438:5432"
     volumes:
-      # Persiste os dados entre reinicios do container (em um volume gerenciado pelo Docker).
-      - lexo_pgdata:/var/lib/postgresql/data
+      - lexo_financeirodata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d lexo_dev"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lexo_financeiro"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -152,7 +150,7 @@ services:
       retries: 5
 
 volumes:
-  lexo_pgdata:
+  lexo_financeirodata:
   lexo_authdata:
   lexo_clientedata:
   lexo_auditoriadata:

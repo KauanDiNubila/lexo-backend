@@ -11,13 +11,11 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>monolito</artifactId>
-    <name>monolito</name>
-    <description>Monolito original do Lexo (sera desmembrado em microservicos)</description>
+    <artifactId>financeiro-service</artifactId>
+    <name>financeiro-service</name>
+    <description>Servico de honorarios (financeiro)</description>
 
     <properties>
-        <jjwt.version>0.12.6</jjwt.version>
-        <totp.version>1.7.1</totp.version>
         <springdoc.version>2.7.0</springdoc.version>
     </properties>
 
