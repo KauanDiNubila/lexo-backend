@@ -26,6 +26,12 @@
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
+        <!-- Envio real de e-mail (SMTP) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- Eureka client -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

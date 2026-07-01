@@ -90,6 +90,14 @@ services:
       timeout: 5s
       retries: 5
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: lexo-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP (os servicos enviam para ca)
+      - "8025:8025"   # painel web (caixa de entrada de dev)
+
   redis:
     image: redis:7-alpine
     container_name: lexo-redis
