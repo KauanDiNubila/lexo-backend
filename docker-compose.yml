@@ -98,6 +98,15 @@ services:
       - "1025:1025"   # SMTP (os servicos enviam para ca)
       - "8025:8025"   # painel web (caixa de entrada de dev)
 
+  # Zipkin: coleta os traces distribuidos enviados pelos servicos e mostra o
+  # caminho completo de cada requisicao (gateway -> servicos -> chamadas Feign).
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: lexo-zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"   # painel web + API de ingestao de spans
+
   redis:
     image: redis:7-alpine
     container_name: lexo-redis

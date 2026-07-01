@@ -48,4 +48,23 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- Dependencias herdadas por TODOS os modulos -->
+    <dependencies>
+        <!-- Observabilidade: actuator + tracing distribuido (Micrometer/Brave) exportando p/ Zipkin.
+             Propaga o mesmo traceId por gateway -> servicos -> chamadas Feign, tornando visivel
+             o caminho completo de uma requisicao atravessando os microservicos. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-brave</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.zipkin.reporter2</groupId>
+            <artifactId>zipkin-reporter-brave</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

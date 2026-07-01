@@ -36,6 +36,11 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
+        <!-- Propaga o traceId nas chamadas Feign (contexto de tracing entre servicos) -->
+        <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-micrometer</artifactId>
+        </dependency>
         <!-- Resiliencia: circuit breaker + fallback nas chamadas Feign entre servicos -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
