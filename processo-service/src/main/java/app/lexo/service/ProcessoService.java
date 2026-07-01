@@ -1,7 +1,6 @@
 package app.lexo.service;
 
-import app.lexo.client.AuthServiceClient;
-import app.lexo.client.ClienteServiceClient;
+import app.lexo.client.ReferenciaGateway;
 import app.lexo.domain.Case;
 import app.lexo.dto.CaseDtos.CaseRequest;
 import app.lexo.dto.CaseDtos.CaseResponse;
@@ -24,17 +23,14 @@ public class ProcessoService {
     private static final String CACHE = "processos";
 
     private final CaseRepository repo;
-    private final ClienteServiceClient clienteClient;
-    private final AuthServiceClient authClient;
+    private final ReferenciaGateway referencias;
     private final AtividadeService activity;
     private final PublicadorEventos eventos;
 
-    public ProcessoService(CaseRepository repo, ClienteServiceClient clienteClient,
-                       AuthServiceClient authClient, AtividadeService activity,
-                       PublicadorEventos eventos) {
+    public ProcessoService(CaseRepository repo, ReferenciaGateway referencias,
+                       AtividadeService activity, PublicadorEventos eventos) {
         this.repo = repo;
-        this.clienteClient = clienteClient;
-        this.authClient = authClient;
+        this.referencias = referencias;
         this.activity = activity;
         this.eventos = eventos;
     }
@@ -93,15 +89,13 @@ public class ProcessoService {
     }
 
     private void validarReferencias(AuthUser me, CaseRequest req) {
-        // O cliente agora vive no cliente-service: valida via chamada Feign.
-        if (!Boolean.TRUE.equals(
-                clienteClient.clienteExiste(req.clientId(), me.organizationId()).get("existe"))) {
+        // O cliente agora vive no cliente-service: valida via chamada Feign resiliente.
+        if (!referencias.clienteExiste(req.clientId(), me.organizationId())) {
             throw ApiException.notFound("Cliente não encontrado");
         }
-        // O responsavel (usuario) agora vive no auth-service: valida via chamada Feign.
+        // O responsavel (usuario) agora vive no auth-service: valida via chamada Feign resiliente.
         if (req.responsavelId() != null && !req.responsavelId().isBlank()
-                && !Boolean.TRUE.equals(
-                        authClient.usuarioExiste(req.responsavelId(), me.organizationId()).get("existe"))) {
+                && !referencias.usuarioExiste(req.responsavelId(), me.organizationId())) {
             throw ApiException.notFound("Responsável não encontrado");
         }
     }

@@ -1,7 +1,6 @@
 package app.lexo.service;
 
-import app.lexo.client.ClienteServiceClient;
-import app.lexo.client.ProcessoServiceClient;
+import app.lexo.client.ReferenciaGateway;
 import app.lexo.domain.Invoice;
 import app.lexo.domain.enums.InvoiceStatus;
 import app.lexo.dto.InvoiceDtos.FinancialReport;
@@ -25,14 +24,11 @@ import java.util.List;
 public class FinanceiroService {
 
     private final InvoiceRepository repo;
-    private final ClienteServiceClient clienteClient;
-    private final ProcessoServiceClient processoClient;
+    private final ReferenciaGateway referencias;
 
-    public FinanceiroService(InvoiceRepository repo, ClienteServiceClient clienteClient,
-                             ProcessoServiceClient processoClient) {
+    public FinanceiroService(InvoiceRepository repo, ReferenciaGateway referencias) {
         this.repo = repo;
-        this.clienteClient = clienteClient;
-        this.processoClient = processoClient;
+        this.referencias = referencias;
     }
 
     @Transactional(readOnly = true)
@@ -103,15 +99,13 @@ public class FinanceiroService {
     }
 
     private void validarReferencias(AuthUser me, InvoiceRequest req) {
-        // O cliente agora vive no cliente-service: valida via chamada Feign.
-        if (!Boolean.TRUE.equals(
-                clienteClient.clienteExiste(req.clientId(), me.organizationId()).get("existe"))) {
+        // O cliente agora vive no cliente-service: valida via chamada Feign resiliente.
+        if (!referencias.clienteExiste(req.clientId(), me.organizationId())) {
             throw ApiException.notFound("Cliente não encontrado");
         }
-        // O processo agora vive no processo-service: valida via chamada Feign.
+        // O processo agora vive no processo-service: valida via chamada Feign resiliente.
         if (req.caseId() != null && !req.caseId().isBlank()
-                && !Boolean.TRUE.equals(
-                        processoClient.processoExiste(req.caseId(), me.organizationId()).get("existe"))) {
+                && !referencias.processoExiste(req.caseId(), me.organizationId())) {
             throw ApiException.notFound("Processo não encontrado");
         }
     }
