@@ -6,6 +6,9 @@ import { Clientes } from "./pages/Clientes";
 import { Processos } from "./pages/Processos";
 import { Agenda } from "./pages/Agenda";
 import { Financeiro } from "./pages/Financeiro";
+import { Equipe } from "./pages/Equipe";
+import { Auditoria } from "./pages/Auditoria";
+import { Configuracoes } from "./pages/Configuracoes";
 import { Dashboard } from "./pages/Dashboard";
 import type { ReactNode } from "react";
 
@@ -25,6 +28,9 @@ export default function App() {
       <Route path="/processos" element={<Protegida><Processos /></Protegida>} />
       <Route path="/agenda" element={<Protegida><Agenda /></Protegida>} />
       <Route path="/financeiro" element={<Protegida><Financeiro /></Protegida>} />
+      <Route path="/equipe" element={<Protegida><Equipe /></Protegida>} />
+      <Route path="/auditoria" element={<Protegida><Auditoria /></Protegida>} />
+      <Route path="/configuracoes" element={<Protegida><Configuracoes /></Protegida>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

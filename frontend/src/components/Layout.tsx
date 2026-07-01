@@ -8,6 +8,9 @@ const navItens = [
   { para: "/processos", rotulo: "Processos", icone: "📂" },
   { para: "/agenda", rotulo: "Agenda", icone: "📅" },
   { para: "/financeiro", rotulo: "Financeiro", icone: "💰" },
+  { para: "/equipe", rotulo: "Equipe", icone: "🧑‍⚖️" },
+  { para: "/auditoria", rotulo: "Auditoria", icone: "📜" },
+  { para: "/configuracoes", rotulo: "Configurações", icone: "⚙️" },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
