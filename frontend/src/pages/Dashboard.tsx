@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Users, Briefcase, AlarmClock, Wallet, Sparkles, type LucideIcon } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 
@@ -27,7 +28,7 @@ type Metrica = {
   rotulo: string;
   valor: string | number;
   sub?: string;
-  icone: string;
+  icone: LucideIcon;
   cor: string;
   grad: string;
   para: string;
@@ -72,12 +73,11 @@ function KpiCard({ m }: { m: Metrica }) {
             borderRadius: 11,
             display: "grid",
             placeItems: "center",
-            fontSize: 19,
             background: m.grad,
             boxShadow: `0 6px 18px -6px ${m.cor}`,
           }}
         >
-          {m.icone}
+          <m.icone size={20} color="white" strokeWidth={2.2} />
         </div>
       </div>
       <div
@@ -176,10 +176,10 @@ export function Dashboard() {
   const primeiroNome = usuario?.name?.split(" ")[0];
 
   const metricas: Metrica[] = [
-    { rotulo: "Clientes", valor: carregando ? "—" : clientes.length, icone: "👥", cor: "#6366f1", grad: "linear-gradient(135deg,#818cf8,#6366f1)", para: "/app/clientes" },
-    { rotulo: "Processos ativos", valor: carregando ? "—" : m.ativos, sub: `${processos.length} no total`, icone: "📂", cor: "#34d399", grad: "linear-gradient(135deg,#34d399,#10b981)", para: "/app/processos" },
-    { rotulo: "Prazos urgentes", valor: carregando ? "—" : m.urgentes.length, sub: m.vencidos ? `${m.vencidos} vencido(s)` : "próximos 7 dias", icone: "⏰", cor: "#fbbf24", grad: "linear-gradient(135deg,#fbbf24,#f59e0b)", para: "/app/agenda" },
-    { rotulo: "Em aberto", valor: carregando ? "—" : moeda(m.emAberto), sub: `recebido: ${moeda(m.recebido)}`, icone: "💰", cor: "#a78bfa", grad: "linear-gradient(135deg,#c084fc,#8b5cf6)", para: "/app/financeiro" },
+    { rotulo: "Clientes", valor: carregando ? "—" : clientes.length, icone: Users, cor: "#6366f1", grad: "linear-gradient(135deg,#818cf8,#6366f1)", para: "/app/clientes" },
+    { rotulo: "Processos ativos", valor: carregando ? "—" : m.ativos, sub: `${processos.length} no total`, icone: Briefcase, cor: "#34d399", grad: "linear-gradient(135deg,#34d399,#10b981)", para: "/app/processos" },
+    { rotulo: "Prazos urgentes", valor: carregando ? "—" : m.urgentes.length, sub: m.vencidos ? `${m.vencidos} vencido(s)` : "próximos 7 dias", icone: AlarmClock, cor: "#fbbf24", grad: "linear-gradient(135deg,#fbbf24,#f59e0b)", para: "/app/agenda" },
+    { rotulo: "Em aberto", valor: carregando ? "—" : moeda(m.emAberto), sub: `recebido: ${moeda(m.recebido)}`, icone: Wallet, cor: "#a78bfa", grad: "linear-gradient(135deg,#c084fc,#8b5cf6)", para: "/app/financeiro" },
   ];
 
   return (
@@ -217,11 +217,11 @@ export function Dashboard() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
             <span
               style={{
-                width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center", fontSize: 14,
+                width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center",
                 background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
               }}
             >
-              🤖
+              <Sparkles size={15} color="white" strokeWidth={2.2} />
             </span>
             <span style={{ fontSize: 12.5, fontWeight: 700, color: "#c7d2fe", letterSpacing: 0.2 }}>Resumo do dia</span>
           </div>
@@ -248,7 +248,7 @@ export function Dashboard() {
           {carregando ? (
             <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Carregando...</div>
           ) : m.proximos.length === 0 ? (
-            <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Nenhum prazo em aberto. 🎉</div>
+            <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Nenhum prazo em aberto.</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column" }}>
               {m.proximos.map((p) => {

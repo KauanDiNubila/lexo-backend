@@ -1,16 +1,26 @@
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Users,
+  Briefcase,
+  CalendarDays,
+  Wallet,
+  UsersRound,
+  ScrollText,
+  Settings,
+} from "lucide-react";
 import { useAuth } from "../lib/auth";
 
 const navItens = [
-  { para: "/app", rotulo: "Visão geral", icone: "▦" },
-  { para: "/app/clientes", rotulo: "Clientes", icone: "👥" },
-  { para: "/app/processos", rotulo: "Processos", icone: "📂" },
-  { para: "/app/agenda", rotulo: "Agenda", icone: "📅" },
-  { para: "/app/financeiro", rotulo: "Financeiro", icone: "💰" },
-  { para: "/app/equipe", rotulo: "Equipe", icone: "🧑‍⚖️" },
-  { para: "/app/auditoria", rotulo: "Auditoria", icone: "📜" },
-  { para: "/app/configuracoes", rotulo: "Configurações", icone: "⚙️" },
+  { para: "/app", rotulo: "Visão geral", icone: LayoutDashboard },
+  { para: "/app/clientes", rotulo: "Clientes", icone: Users },
+  { para: "/app/processos", rotulo: "Processos", icone: Briefcase },
+  { para: "/app/agenda", rotulo: "Agenda", icone: CalendarDays },
+  { para: "/app/financeiro", rotulo: "Financeiro", icone: Wallet },
+  { para: "/app/equipe", rotulo: "Equipe", icone: UsersRound },
+  { para: "/app/auditoria", rotulo: "Auditoria", icone: ScrollText },
+  { para: "/app/configuracoes", rotulo: "Configurações", icone: Settings },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -80,7 +90,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 boxShadow: isActive ? "inset 3px 0 0 var(--color-primary)" : "none",
               })}
             >
-              <span style={{ width: 18, textAlign: "center" }}>{item.icone}</span>
+              <item.icone size={17} strokeWidth={2} />
               {item.rotulo}
             </NavLink>
           ))}
