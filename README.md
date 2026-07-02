@@ -95,6 +95,17 @@ síncrona (Feign) e assíncrona (Kafka e RabbitMQ).
 
 ## Como rodar
 
+### Atalho (Windows): sobe tudo com um comando
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1   # infra + Eureka + servicos + gateway + frontend
+powershell -ExecutionPolicy Bypass -File scripts\stop-all.ps1    # derruba os processos (mantem o Docker)
+```
+
+O script usa o JDK 21, sobe o Eureka primeiro (espera ele responder) e desanexa cada
+processo (sobrevive ao fechar o terminal). Logs em `scripts/logs/`. Requer os jars já
+compilados (passo 2). Os passos manuais abaixo continuam válidos.
+
 ### 1. Suba a infraestrutura (Docker)
 
 ```bash
