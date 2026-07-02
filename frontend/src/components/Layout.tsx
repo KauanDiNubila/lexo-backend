@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -9,6 +9,7 @@ import {
   UsersRound,
   ScrollText,
   Settings,
+  Scale,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
@@ -52,7 +53,17 @@ export function Layout({ children }: { children: ReactNode }) {
           padding: "1.25rem 0.75rem",
         }}
       >
-        <div style={{ padding: "0 0.75rem 1.25rem", display: "flex", alignItems: "center", gap: 10 }}>
+        <Link
+          to="/app"
+          style={{
+            padding: "0 0.75rem 1.25rem",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
           <div
             style={{
               width: 34,
@@ -61,14 +72,14 @@ export function Layout({ children }: { children: ReactNode }) {
               background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
               display: "grid",
               placeItems: "center",
-              fontWeight: 800,
               color: "white",
+              boxShadow: "0 6px 16px -6px #6366f1",
             }}
           >
-            L
+            <Scale size={19} strokeWidth={2.3} />
           </div>
           <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: -0.3 }}>Lexo</span>
-        </div>
+        </Link>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {navItens.map((item) => (
