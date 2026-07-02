@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 
 export function Login() {
   const { login, registrar } = useAuth();
   const navigate = useNavigate();
-  const [modo, setModo] = useState<"login" | "registro">("login");
+  const [params] = useSearchParams();
+  const [modo, setModo] = useState<"login" | "registro">(
+    params.get("modo") === "registro" ? "registro" : "login"
+  );
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -30,7 +33,7 @@ export function Login() {
           confirmPassword: senha,
         });
       }
-      navigate("/");
+      navigate("/app");
     } catch (err) {
       setErro((err as Error).message);
     } finally {
@@ -41,7 +44,7 @@ export function Login() {
   return (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "2rem" }}>
       <div className="card" style={{ width: 400, maxWidth: "100%", padding: "2rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+        <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, textDecoration: "none", color: "inherit", width: "fit-content" }}>
           <div
             style={{
               width: 38,
@@ -57,7 +60,7 @@ export function Login() {
             L
           </div>
           <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: -0.4 }}>Lexo</span>
-        </div>
+        </Link>
         <p style={{ color: "var(--color-text-muted)", fontSize: 14, marginBottom: 22 }}>
           {modo === "login" ? "Acesse a plataforma do seu escritório." : "Crie a conta do seu escritório."}
         </p>

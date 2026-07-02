@@ -3,14 +3,14 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 
 const navItens = [
-  { para: "/", rotulo: "Visão geral", icone: "▦" },
-  { para: "/clientes", rotulo: "Clientes", icone: "👥" },
-  { para: "/processos", rotulo: "Processos", icone: "📂" },
-  { para: "/agenda", rotulo: "Agenda", icone: "📅" },
-  { para: "/financeiro", rotulo: "Financeiro", icone: "💰" },
-  { para: "/equipe", rotulo: "Equipe", icone: "🧑‍⚖️" },
-  { para: "/auditoria", rotulo: "Auditoria", icone: "📜" },
-  { para: "/configuracoes", rotulo: "Configurações", icone: "⚙️" },
+  { para: "/app", rotulo: "Visão geral", icone: "▦" },
+  { para: "/app/clientes", rotulo: "Clientes", icone: "👥" },
+  { para: "/app/processos", rotulo: "Processos", icone: "📂" },
+  { para: "/app/agenda", rotulo: "Agenda", icone: "📅" },
+  { para: "/app/financeiro", rotulo: "Financeiro", icone: "💰" },
+  { para: "/app/equipe", rotulo: "Equipe", icone: "🧑‍⚖️" },
+  { para: "/app/auditoria", rotulo: "Auditoria", icone: "📜" },
+  { para: "/app/configuracoes", rotulo: "Configurações", icone: "⚙️" },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -65,7 +65,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <NavLink
               key={item.para}
               to={item.para}
-              end={item.para === "/"}
+              end={item.para === "/app"}
               style={({ isActive }) => ({
                 display: "flex",
                 alignItems: "center",
