@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Scale } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
 export function Login() {
@@ -53,11 +54,11 @@ export function Login() {
               background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
               display: "grid",
               placeItems: "center",
-              fontWeight: 800,
               color: "white",
+              boxShadow: "0 6px 16px -6px #6366f1",
             }}
           >
-            L
+            <Scale size={21} strokeWidth={2.3} />
           </div>
           <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: -0.4 }}>Lexo</span>
         </Link>

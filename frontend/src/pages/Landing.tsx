@@ -1,4 +1,15 @@
 import { Link } from "react-router-dom";
+import {
+  Scale,
+  Briefcase,
+  CalendarClock,
+  Sparkles,
+  BarChart3,
+  Wallet,
+  ShieldCheck,
+  Check,
+  type LucideIcon,
+} from "lucide-react";
 import { useAuth } from "../lib/auth";
 
 /** Marca (logo + nome), reutilizada na nav e no footer. */
@@ -6,7 +17,7 @@ function Marca({ tamanho = 34 }: { tamanho?: number }) {
   return (
     <div className="flex items-center gap-2.5">
       <div
-        className="grid place-items-center font-extrabold text-white"
+        className="grid place-items-center text-white"
         style={{
           width: tamanho,
           height: tamanho,
@@ -14,7 +25,7 @@ function Marca({ tamanho = 34 }: { tamanho?: number }) {
           background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
         }}
       >
-        L
+        <Scale size={tamanho * 0.56} strokeWidth={2.3} />
       </div>
       <span className="font-bold tracking-tight" style={{ fontSize: tamanho * 0.55 }}>
         Lexo
@@ -31,13 +42,13 @@ function Secao({ id, children, className = "" }: { id?: string; children: React.
   );
 }
 
-const RECURSOS = [
-  { icone: "📂", titulo: "Gestão de processos", texto: "Cada processo com partes, andamentos, documentos e prazos num só lugar — organizado por cliente e área." },
-  { icone: "📅", titulo: "Controle de prazos", texto: "Agenda com alertas automáticos de prazos fatais. Nunca mais perca uma data por falta de aviso." },
-  { icone: "🤖", titulo: "Lexo IA", texto: "Resumos de casos, sugestão de prazos e petições em segundos, com um assistente treinado para o jurídico." },
-  { icone: "📊", titulo: "Jurimetria", texto: "Indicadores do escritório: processos por status, produtividade da equipe e valores em aberto." },
-  { icone: "💰", titulo: "Financeiro", texto: "Honorários, faturas e recebimentos vinculados a cliente e processo, com relatório consolidado." },
-  { icone: "🔐", titulo: "Portal do cliente", texto: "Seu cliente acompanha o andamento com transparência, sem precisar ligar para o escritório." },
+const RECURSOS: { icone: LucideIcon; titulo: string; texto: string }[] = [
+  { icone: Briefcase, titulo: "Gestão de processos", texto: "Cada processo com partes, andamentos, documentos e prazos num só lugar — organizado por cliente e área." },
+  { icone: CalendarClock, titulo: "Controle de prazos", texto: "Agenda com alertas automáticos de prazos fatais. Nunca mais perca uma data por falta de aviso." },
+  { icone: Sparkles, titulo: "Lexo IA", texto: "Resumos de casos, sugestão de prazos e petições em segundos, com um assistente treinado para o jurídico." },
+  { icone: BarChart3, titulo: "Jurimetria", texto: "Indicadores do escritório: processos por status, produtividade da equipe e valores em aberto." },
+  { icone: Wallet, titulo: "Financeiro", texto: "Honorários, faturas e recebimentos vinculados a cliente e processo, com relatório consolidado." },
+  { icone: ShieldCheck, titulo: "Portal do cliente", texto: "Seu cliente acompanha o andamento com transparência, sem precisar ligar para o escritório." },
 ];
 
 const PASSOS = [
@@ -123,9 +134,11 @@ export function Landing() {
           </Link>
         </div>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
-          <span>✓ Sem cartão de crédito</span>
-          <span>✓ Migração assistida</span>
-          <span>✓ LGPD & ISO 27001</span>
+          {["Sem cartão de crédito", "Migração assistida", "LGPD & ISO 27001"].map((t) => (
+            <span key={t} className="inline-flex items-center gap-1.5">
+              <Check size={14} strokeWidth={3} style={{ color: "var(--color-success)" }} /> {t}
+            </span>
+          ))}
         </div>
 
         {/* Prévia do painel */}
@@ -149,7 +162,9 @@ export function Landing() {
             ))}
           </div>
           <div className="mx-6 mb-6 rounded-xl p-4" style={{ background: "var(--color-primary-soft)", border: "1px solid var(--color-border)" }}>
-            <div className="mb-1 text-xs font-semibold" style={{ color: "var(--color-primary)" }}>🤖 Resumo da Lexo IA</div>
+            <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--color-primary)" }}>
+              <Sparkles size={14} strokeWidth={2.4} /> Resumo da Lexo IA
+            </div>
             <p className="text-sm" style={{ color: "var(--color-text)" }}>
               3 processos entram em prazo fatal nesta semana. O caso <b>0001-23.2026</b> aguarda contestação
               até sexta. Recomendo priorizar a defesa de <b>Andrade vs. Município</b>.
@@ -181,8 +196,8 @@ export function Landing() {
         <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {RECURSOS.map((r) => (
             <div key={r.titulo} className="card p-6 transition-transform hover:-translate-y-1">
-              <div className="grid h-11 w-11 place-items-center rounded-xl text-xl" style={{ background: "var(--color-primary-soft)" }}>
-                {r.icone}
+              <div className="grid h-11 w-11 place-items-center rounded-xl" style={{ background: "var(--color-primary-soft)", color: "var(--color-primary)" }}>
+                <r.icone size={22} strokeWidth={2.2} />
               </div>
               <h3 className="mt-4 text-lg font-bold">{r.titulo}</h3>
               <p className="mt-2 text-sm" style={{ color: "var(--color-text-muted)" }}>{r.texto}</p>
@@ -220,7 +235,7 @@ export function Landing() {
             <ul className="mt-6 space-y-3 text-sm">
               {["Resumo automático de qualquer processo", "Sugestão de prazos a partir dos andamentos", "Rascunho de petições e notificações", "Análise de jurimetria em linguagem natural"].map((i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span style={{ color: "var(--color-success)" }}>✓</span>
+                  <Check size={16} strokeWidth={3} style={{ color: "var(--color-success)", flexShrink: 0, marginTop: 1 }} />
                   <span>{i}</span>
                 </li>
               ))}
@@ -295,7 +310,7 @@ export function Landing() {
               <ul className="mt-6 space-y-2.5 text-sm">
                 {p.itens.map((i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span style={{ color: "var(--color-success)" }}>✓</span>
+                    <Check size={16} strokeWidth={3} style={{ color: "var(--color-success)", flexShrink: 0, marginTop: 1 }} />
                     <span>{i}</span>
                   </li>
                 ))}
