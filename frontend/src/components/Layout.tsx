@@ -54,7 +54,7 @@ export function Layout({ children }: { children: ReactNode }) {
         }}
       >
         <Link
-          to="/app"
+          to="/"
           style={{
             padding: "0 0.75rem 1.25rem",
             display: "flex",
