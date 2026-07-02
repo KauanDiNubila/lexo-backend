@@ -28,12 +28,13 @@ public final class ClientDtos {
             String email,
             String phone,
             String notes,
+            String portalToken,
             Instant createdAt
     ) implements Serializable {
         public static ClientResponse from(Client c) {
             return new ClientResponse(
                     c.getId(), c.getName(), c.getDocument(), c.getEmail(),
-                    c.getPhone(), c.getNotes(), c.getCreatedAt());
+                    c.getPhone(), c.getNotes(), c.getPortalToken(), c.getCreatedAt());
         }
     }
 }

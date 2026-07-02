@@ -52,6 +52,8 @@ public class SecurityConfig {
                                 "/api/convites/aceitar",
                                 "/api/convites/info/**",
                                 "/api/health",
+                                // Portal do cliente: acesso publico read-only por token (magic link)
+                                "/api/portal/**",
                                 // Endpoints internos (servico-a-servico), nao expostos pelo gateway
                                 "/internal/**",
                                 // Swagger / OpenAPI

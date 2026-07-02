@@ -12,6 +12,8 @@ public interface DeadlineRepository extends JpaRepository<Deadline, String> {
 
     List<Deadline> findByOrganizationIdOrderByDateAsc(String organizationId);
 
+    List<Deadline> findByCaseIdInAndOrganizationIdOrderByDateAsc(List<String> caseIds, String organizationId);
+
     Optional<Deadline> findByIdAndOrganizationId(String id, String organizationId);
 
     long deleteByIdAndOrganizationId(String id, String organizationId);

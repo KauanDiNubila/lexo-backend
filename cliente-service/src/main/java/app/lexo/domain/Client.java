@@ -22,6 +22,10 @@ public class Client extends BaseEntity {
     @Column(columnDefinition = "text")
     private String notes;
 
+    /** Token do portal do cliente: acesso publico read-only via link (magic link). */
+    @Column(unique = true)
+    private String portalToken;
+
     public String getOrganizationId() {
         return organizationId;
     }
@@ -68,5 +72,13 @@ public class Client extends BaseEntity {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getPortalToken() {
+        return portalToken;
+    }
+
+    public void setPortalToken(String portalToken) {
+        this.portalToken = portalToken;
     }
 }

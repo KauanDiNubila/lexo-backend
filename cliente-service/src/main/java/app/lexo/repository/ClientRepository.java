@@ -12,6 +12,8 @@ public interface ClientRepository extends JpaRepository<Client, String> {
 
     Optional<Client> findByIdAndOrganizationId(String id, String organizationId);
 
+    Optional<Client> findByPortalToken(String portalToken);
+
     boolean existsByIdAndOrganizationId(String id, String organizationId);
 
     long deleteByIdAndOrganizationId(String id, String organizationId);

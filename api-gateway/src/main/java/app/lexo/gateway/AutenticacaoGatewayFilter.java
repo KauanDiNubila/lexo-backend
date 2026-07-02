@@ -44,7 +44,8 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
             "/api/convites/aceitar",
             "/api/convites/info/",
             "/api/health",
-            "/api/cron/"
+            "/api/cron/",
+            "/api/portal/"
     );
 
     private final JwtParser parser;

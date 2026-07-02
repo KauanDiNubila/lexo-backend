@@ -11,6 +11,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, String> {
 
     List<Invoice> findByOrganizationIdOrderByDueDateAsc(String organizationId);
 
+    List<Invoice> findByClientIdAndOrganizationIdOrderByDueDateAsc(String clientId, String organizationId);
+
     Optional<Invoice> findByIdAndOrganizationId(String id, String organizationId);
 
     long deleteByIdAndOrganizationId(String id, String organizationId);

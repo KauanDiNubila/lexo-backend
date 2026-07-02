@@ -1,0 +1,20 @@
+package app.lexo.dto;
+
+import java.time.Instant;
+import java.util.List;
+
+/** Dados dos processos de um cliente para o portal (consumido pelo cliente-service via Feign). */
+public class PortalDtos {
+
+    public record PrazoPortal(String title, String type, String status, Instant date) {
+    }
+
+    public record ProcessoPortal(
+            String number,
+            String area,
+            String status,
+            Instant createdAt,
+            List<PrazoPortal> prazos
+    ) {
+    }
+}
