@@ -106,12 +106,6 @@ export function Layout({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-
-        <div style={{ marginTop: "auto", padding: "0 0.25rem" }}>
-          <div style={{ fontSize: 12, color: "var(--color-text-muted)", padding: "0 0.5rem 0.5rem" }}>
-            Microserviços conectados ✓
-          </div>
-        </div>
       </aside>
 
       {/* Conteúdo */}
