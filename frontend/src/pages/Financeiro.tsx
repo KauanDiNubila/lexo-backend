@@ -37,7 +37,7 @@ export function Financeiro() {
   const [clientId, setClientId] = useState("");
   const [caseId, setCaseId] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [valor, setValor] = useState("");
+  const [valorCentavos, setValorCentavos] = useState(0);
   const [status, setStatus] = useState("PENDENTE");
   const [vencimento, setVencimento] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -70,6 +70,10 @@ export function Financeiro() {
 
   async function criar(e: FormEvent) {
     e.preventDefault();
+    if (valorCentavos <= 0) {
+      setErroForm("Informe um valor maior que zero.");
+      return;
+    }
     setErroForm(null);
     setSalvando(true);
     try {
@@ -77,14 +81,14 @@ export function Financeiro() {
         clientId,
         caseId: caseId || null,
         description: descricao,
-        amount: Number(valor),
+        amount: valorCentavos / 100,
         status,
         dueDate: `${vencimento}T00:00:00Z`,
       });
       setClientId("");
       setCaseId("");
       setDescricao("");
-      setValor("");
+      setValorCentavos(0);
       setStatus("PENDENTE");
       setVencimento("");
       setAberto(false);
@@ -174,8 +178,18 @@ export function Financeiro() {
               </div>
               <div style={{ display: "flex", gap: 12 }}>
                 <div style={{ flex: 1 }}>
-                  <label className="label">Valor (R$) *</label>
-                  <input className="input" type="number" step="0.01" min="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                  <label className="label">Valor *</label>
+                  <input
+                    className="input"
+                    type="text"
+                    inputMode="numeric"
+                    value={valorCentavos ? moeda(valorCentavos / 100) : ""}
+                    onChange={(e) => {
+                      const digitos = e.target.value.replace(/\D/g, "");
+                      setValorCentavos(digitos ? parseInt(digitos, 10) : 0);
+                    }}
+                    placeholder="R$ 0,00"
+                  />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label className="label">Vencimento *</label>
