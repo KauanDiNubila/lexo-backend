@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api } from "../lib/api";
 
 type Processo = {
@@ -20,17 +20,19 @@ const corStatus: Record<string, string> = {
   ENCERRADO: "#f87171",
 };
 
+const FORM_VAZIO = { clientId: "", numero: "", area: "", status: "ATIVO" };
+
 export function Processos() {
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [aberto, setAberto] = useState(false);
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("");
 
-  const [clientId, setClientId] = useState("");
-  const [numero, setNumero] = useState("");
-  const [area, setArea] = useState("");
-  const [status, setStatus] = useState("ATIVO");
+  const [aberto, setAberto] = useState(false);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [form, setForm] = useState(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
 
@@ -57,16 +59,41 @@ export function Processos() {
 
   const nomeCliente = (id: string) => clientes.find((c) => c.id === id)?.name || "—";
 
-  async function criar(e: FormEvent) {
+  const filtrados = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return processos.filter((p) => {
+      if (filtroStatus && p.status !== filtroStatus) return false;
+      if (!q) return true;
+      return [p.number, p.area, nomeCliente(p.clientId)].some((v) => v?.toLowerCase().includes(q));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processos, clientes, busca, filtroStatus]);
+
+  function abrirNovo() {
+    setEditandoId(null);
+    setForm(FORM_VAZIO);
+    setErroForm(null);
+    setAberto(true);
+  }
+
+  function abrirEdicao(p: Processo) {
+    setEditandoId(p.id);
+    setForm({ clientId: p.clientId, numero: p.number, area: p.area ?? "", status: p.status });
+    setErroForm(null);
+    setAberto(true);
+  }
+
+  async function salvar(e: FormEvent) {
     e.preventDefault();
     setErroForm(null);
     setSalvando(true);
+    const corpo = { clientId: form.clientId, number: form.numero, area: form.area || null, status: form.status };
     try {
-      await api.post("/api/processos", { clientId, number: numero, area: area || null, status });
-      setClientId("");
-      setNumero("");
-      setArea("");
-      setStatus("ATIVO");
+      if (editandoId) {
+        await api.put(`/api/processos/${editandoId}`, corpo);
+      } else {
+        await api.post("/api/processos", corpo);
+      }
       setAberto(false);
       await carregar();
     } catch (e) {
@@ -76,18 +103,41 @@ export function Processos() {
     }
   }
 
+  async function excluir(id: string) {
+    if (!confirm("Excluir este processo?")) return;
+    await api.del(`/api/processos/${id}`);
+    await carregar();
+  }
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Processos</h1>
           <p style={{ color: "var(--color-text-muted)", margin: "4px 0 0", fontSize: 14 }}>
-            {processos.length} processo(s) · via <code>processo-service</code>
+            {busca || filtroStatus ? `${filtrados.length} de ${processos.length}` : `${processos.length} processo(s)`} · via{" "}
+            <code>processo-service</code>
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => setAberto(true)}>
+        <button className="btn btn-primary" onClick={abrirNovo}>
           + Novo processo
         </button>
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+        <input
+          className="input"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por número, cliente ou área..."
+          style={{ maxWidth: 360 }}
+        />
+        <select className="input" value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)} style={{ maxWidth: 180 }}>
+          <option value="">Todos os status</option>
+          {STATUS.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
       </div>
 
       <div className="card" style={{ overflow: "hidden" }}>
@@ -95,9 +145,9 @@ export function Processos() {
           <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>Carregando...</div>
         ) : erro ? (
           <div style={{ padding: 40, textAlign: "center", color: "var(--color-danger)" }}>{erro}</div>
-        ) : processos.length === 0 ? (
+        ) : filtrados.length === 0 ? (
           <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>
-            Nenhum processo ainda.
+            {processos.length === 0 ? "Nenhum processo ainda." : "Nenhum processo corresponde ao filtro."}
           </div>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -107,10 +157,11 @@ export function Processos() {
                 <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>CLIENTE</th>
                 <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>ÁREA</th>
                 <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>STATUS</th>
+                <th style={{ padding: "0.85rem 1.25rem" }}></th>
               </tr>
             </thead>
             <tbody>
-              {processos.map((p) => (
+              {filtrados.map((p) => (
                 <tr key={p.id} style={{ borderTop: "1px solid var(--color-border)", fontSize: 14 }}>
                   <td style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>{p.number}</td>
                   <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>{nomeCliente(p.clientId)}</td>
@@ -129,6 +180,20 @@ export function Processos() {
                       {p.status}
                     </span>
                   </td>
+                  <td style={{ padding: "0.85rem 1.25rem", textAlign: "right", whiteSpace: "nowrap" }}>
+                    <button
+                      onClick={() => abrirEdicao(p)}
+                      style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontSize: 13, marginRight: 14 }}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => excluir(p.id)}
+                      style={{ background: "none", border: "none", color: "var(--color-danger)", cursor: "pointer", fontSize: 13 }}
+                    >
+                      Excluir
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -142,11 +207,13 @@ export function Processos() {
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}
         >
           <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: 440, maxWidth: "100%", padding: "1.75rem" }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 18px" }}>Novo processo</h2>
-            <form onSubmit={criar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 18px" }}>
+              {editandoId ? "Editar processo" : "Novo processo"}
+            </h2>
+            <form onSubmit={salvar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
                 <label className="label">Cliente *</label>
-                <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)} required>
+                <select className="input" value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} required>
                   <option value="">Selecione...</option>
                   {clientes.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -155,15 +222,15 @@ export function Processos() {
               </div>
               <div>
                 <label className="label">Número do processo *</label>
-                <input className="input" value={numero} onChange={(e) => setNumero(e.target.value)} required placeholder="0001-23.2026" />
+                <input className="input" value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} required placeholder="0001-23.2026" />
               </div>
               <div>
                 <label className="label">Área</label>
-                <input className="input" value={area} onChange={(e) => setArea(e.target.value)} placeholder="Cível" />
+                <input className="input" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Cível" />
               </div>
               <div>
                 <label className="label">Status</label>
-                <select className="input" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                   {STATUS.map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
@@ -173,7 +240,7 @@ export function Processos() {
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 6 }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setAberto(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" disabled={salvando}>
-                  {salvando ? "Salvando..." : "Salvar"}
+                  {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Salvar"}
                 </button>
               </div>
             </form>
