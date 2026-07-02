@@ -5,9 +5,10 @@
 # =====================================================================
 $mortos = 0
 
-# Servicos Java (jars do lexo-backend)
+# Servicos Java — casa pelo NOME do jar (funciona com caminho relativo ou absoluto)
+$jarRegex = '(discovery-server|api-gateway|auth-service|cliente-service|processo-service|financeiro-service|auditoria-service|notificacao-service)-0\.1\.0\.jar'
 Get-CimInstance Win32_Process |
-    Where-Object { $_.CommandLine -match 'lexo-backend.*target.*\.jar' } |
+    Where-Object { $_.CommandLine -match $jarRegex } |
     ForEach-Object {
         Write-Host "  matando java PID $($_.ProcessId)" -ForegroundColor Yellow
         Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
