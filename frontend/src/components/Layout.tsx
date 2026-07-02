@@ -76,7 +76,8 @@ export function Layout({ children }: { children: ReactNode }) {
                 fontWeight: 600,
                 textDecoration: "none",
                 color: isActive ? "var(--color-text)" : "var(--color-text-muted)",
-                backgroundColor: isActive ? "var(--color-primary-soft)" : "transparent",
+                background: isActive ? "linear-gradient(100deg, var(--color-primary-soft), transparent)" : "transparent",
+                boxShadow: isActive ? "inset 3px 0 0 var(--color-primary)" : "none",
               })}
             >
               <span style={{ width: 18, textAlign: "center" }}>{item.icone}</span>
@@ -114,12 +115,13 @@ export function Layout({ children }: { children: ReactNode }) {
               width: 36,
               height: 36,
               borderRadius: "50%",
-              backgroundColor: "var(--color-primary-soft)",
-              color: "var(--color-primary)",
+              background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+              color: "white",
               display: "grid",
               placeItems: "center",
               fontWeight: 700,
               fontSize: 13,
+              boxShadow: "0 4px 12px -4px #6366f1",
             }}
           >
             {iniciais}
