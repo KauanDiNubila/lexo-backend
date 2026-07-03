@@ -1,5 +1,7 @@
 package app.lexo.controller;
 
+import app.lexo.dto.ChatDtos.ChatRequest;
+import app.lexo.dto.ChatDtos.ChatResponse;
 import app.lexo.dto.IaDtos.ResumoProcessoRequest;
 import app.lexo.dto.IaDtos.ResumoResponse;
 import app.lexo.service.IaService;
@@ -25,5 +27,10 @@ public class IaController {
     @PostMapping("/resumir-processo")
     public ResumoResponse resumirProcesso(@RequestBody ResumoProcessoRequest req) {
         return service.resumirProcesso(req);
+    }
+
+    @PostMapping("/chat")
+    public ChatResponse chat(@RequestBody ChatRequest req) {
+        return service.chat(req);
     }
 }

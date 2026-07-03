@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,14 +40,31 @@ public class GeminiClient {
         return apiKey != null && !apiKey.isBlank();
     }
 
-    /** Gera texto a partir do prompt. Optional vazio se nao configurado ou em caso de falha. */
+    /** Prompt unico (sem historico). Optional vazio se nao configurado ou em falha. */
     public Optional<String> gerar(String prompt) {
+        List<Map<String, Object>> contents = List.of(
+                Map.of("parts", List.of(Map.of("text", prompt))));
+        return chamar(null, contents);
+    }
+
+    /**
+     * Conversa multi-turno. {@code contents} no formato do Gemini
+     * (cada item: role "user"/"model" + parts). {@code systemInstruction} opcional.
+     */
+    public Optional<String> conversar(String systemInstruction, List<Map<String, Object>> contents) {
+        return chamar(systemInstruction, contents);
+    }
+
+    private Optional<String> chamar(String systemInstruction, List<Map<String, Object>> contents) {
         if (!isConfigured()) {
             return Optional.empty();
         }
         try {
-            Map<String, Object> body = Map.of(
-                    "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))));
+            Map<String, Object> body = new HashMap<>();
+            body.put("contents", contents);
+            if (systemInstruction != null && !systemInstruction.isBlank()) {
+                body.put("system_instruction", Map.of("parts", List.of(Map.of("text", systemInstruction))));
+            }
             JsonNode resp = http.post()
                     .uri(baseUrl + "/models/" + model + ":generateContent?key=" + apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
