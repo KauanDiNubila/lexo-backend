@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Sparkles, Copy, Check } from "lucide-react";
 import { api } from "../lib/api";
+import { Markdown } from "../components/Markdown";
 
 type Processo = { id: string; number: string; area: string | null; status: string; clientId: string };
 type Cliente = { id: string; name: string };
@@ -133,24 +134,19 @@ export function Peticoes() {
             <div style={{ color: "var(--color-text-muted)", fontSize: 14, padding: "12px 0" }}>Redigindo a minuta...</div>
           ) : (
             <>
-              <pre
+              <div
                 style={{
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  fontFamily: "ui-monospace, 'Cascadia Code', Menlo, monospace",
-                  fontSize: 13.5,
-                  lineHeight: 1.6,
-                  margin: 0,
+                  fontSize: 14,
                   background: "var(--color-bg)",
                   border: "1px solid var(--color-border)",
                   borderRadius: 10,
-                  padding: "1rem 1.1rem",
+                  padding: "1.1rem 1.25rem",
                   maxHeight: 520,
                   overflowY: "auto",
                 }}
               >
-                {texto}
-              </pre>
+                <Markdown>{texto}</Markdown>
+              </div>
               <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 10 }}>
                 {fonte === "gemini" ? "✨ Gerado pela Lexo IA (Gemini)" : "Modelo automático · configure a Lexo IA para geração completa"}
                 {" · "}Minuta a revisar pelo advogado responsável.

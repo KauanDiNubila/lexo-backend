@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Sparkles, Send } from "lucide-react";
 import { api } from "../lib/api";
+import { Markdown } from "../components/Markdown";
 
 type Msg = { papel: "user" | "assistant"; texto: string };
 
@@ -89,14 +90,13 @@ export function Assistente() {
                   borderRadius: 14,
                   fontSize: 14.5,
                   lineHeight: 1.55,
-                  whiteSpace: "pre-wrap",
                   background: m.papel === "user" ? "var(--color-primary)" : "var(--color-surface-2)",
                   color: m.papel === "user" ? "#fff" : "var(--color-text)",
                   borderTopRightRadius: m.papel === "user" ? 4 : 14,
                   borderTopLeftRadius: m.papel === "user" ? 14 : 4,
                 }}
               >
-                {m.texto}
+                {m.papel === "assistant" ? <Markdown>{m.texto}</Markdown> : <span style={{ whiteSpace: "pre-wrap" }}>{m.texto}</span>}
               </div>
             </div>
           ))

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Sparkles } from "lucide-react";
 import { api } from "../lib/api";
+import { Markdown } from "../components/Markdown";
 
 type Prazo = { id: string; caseId: string; title: string; status: string; date: string };
 
@@ -321,7 +322,7 @@ export function Processos() {
               </div>
             ) : (
               <>
-                <p style={{ fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>{iaResumo}</p>
+                <div style={{ fontSize: 14.5 }}><Markdown>{iaResumo}</Markdown></div>
                 {iaFonte && iaFonte !== "erro" && (
                   <div style={{ marginTop: 14, fontSize: 12, color: "var(--color-text-muted)" }}>
                     {iaFonte === "gemini"
