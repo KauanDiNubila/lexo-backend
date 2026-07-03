@@ -10,11 +10,13 @@ import {
   ScrollText,
   Settings,
   Scale,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
 const navItens = [
   { para: "/app", rotulo: "Visão geral", icone: LayoutDashboard },
+  { para: "/app/assistente", rotulo: "Assistente", icone: Sparkles },
   { para: "/app/clientes", rotulo: "Clientes", icone: Users },
   { para: "/app/processos", rotulo: "Processos", icone: Briefcase },
   { para: "/app/agenda", rotulo: "Agenda", icone: CalendarDays },

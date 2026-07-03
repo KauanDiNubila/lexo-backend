@@ -12,6 +12,7 @@ import { Equipe } from "./pages/Equipe";
 import { Auditoria } from "./pages/Auditoria";
 import { Configuracoes } from "./pages/Configuracoes";
 import { Dashboard } from "./pages/Dashboard";
+import { Assistente } from "./pages/Assistente";
 import type { ReactNode } from "react";
 
 function Protegida({ children }: { children: ReactNode }) {
@@ -31,6 +32,7 @@ export default function App() {
 
       {/* Aplicação (protegida) */}
       <Route path="/app" element={<Protegida><Dashboard /></Protegida>} />
+      <Route path="/app/assistente" element={<Protegida><Assistente /></Protegida>} />
       <Route path="/app/clientes" element={<Protegida><Clientes /></Protegida>} />
       <Route path="/app/processos" element={<Protegida><Processos /></Protegida>} />
       <Route path="/app/agenda" element={<Protegida><Agenda /></Protegida>} />
