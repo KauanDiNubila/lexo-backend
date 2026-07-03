@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Sparkles } from "lucide-react";
 import { api } from "../lib/api";
+
+type Prazo = { id: string; caseId: string; title: string; status: string; date: string };
 
 type Processo = {
   id: string;
@@ -35,6 +38,13 @@ export function Processos() {
   const [form, setForm] = useState(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
+
+  // Resumo por IA
+  const [iaAberto, setIaAberto] = useState(false);
+  const [iaProcesso, setIaProcesso] = useState<Processo | null>(null);
+  const [iaCarregando, setIaCarregando] = useState(false);
+  const [iaResumo, setIaResumo] = useState("");
+  const [iaFonte, setIaFonte] = useState<string>("");
 
   async function carregar() {
     setCarregando(true);
@@ -107,6 +117,39 @@ export function Processos() {
     if (!confirm("Excluir este processo?")) return;
     await api.del(`/api/processos/${id}`);
     await carregar();
+  }
+
+  async function resumirIA(p: Processo) {
+    setIaProcesso(p);
+    setIaAberto(true);
+    setIaCarregando(true);
+    setIaResumo("");
+    setIaFonte("");
+    try {
+      // reúne os prazos deste processo para dar contexto à IA
+      const agenda = await api.get<Prazo[]>("/api/agenda").catch(() => [] as Prazo[]);
+      const prazos = agenda
+        .filter((d) => d.caseId === p.id)
+        .map((d) => ({
+          titulo: d.title,
+          data: new Date(d.date).toLocaleDateString("pt-BR", { timeZone: "UTC" }),
+          status: d.status,
+        }));
+      const r = await api.post<{ resumo: string; fonte: string }>("/api/ia/resumir-processo", {
+        numero: p.number,
+        area: p.area,
+        status: p.status,
+        cliente: nomeCliente(p.clientId),
+        prazos,
+      });
+      setIaResumo(r.resumo);
+      setIaFonte(r.fonte);
+    } catch (e) {
+      setIaResumo("Não foi possível gerar o resumo agora. Tente novamente.");
+      setIaFonte("erro");
+    } finally {
+      setIaCarregando(false);
+    }
   }
 
   return (
@@ -182,6 +225,13 @@ export function Processos() {
                   </td>
                   <td style={{ padding: "0.85rem 1.25rem", textAlign: "right", whiteSpace: "nowrap" }}>
                     <button
+                      onClick={() => resumirIA(p)}
+                      title="Resumir com a Lexo IA"
+                      style={{ background: "none", border: "none", color: "#c084fc", cursor: "pointer", fontSize: 13, marginRight: 14, display: "inline-flex", alignItems: "center", gap: 4, verticalAlign: "middle" }}
+                    >
+                      <Sparkles size={13} /> Resumir
+                    </button>
+                    <button
                       onClick={() => abrirEdicao(p)}
                       style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontSize: 13, marginRight: 14 }}
                     >
@@ -244,6 +294,47 @@ export function Processos() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de resumo por IA */}
+      {iaAberto && (
+        <div
+          onClick={() => setIaAberto(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}
+        >
+          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: 480, maxWidth: "100%", padding: "1.75rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span className="grid h-7 w-7 place-items-center rounded-lg text-white" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
+                <Sparkles size={15} />
+              </span>
+              <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Resumo do processo</h2>
+            </div>
+            <p style={{ fontSize: 13, color: "var(--color-text-muted)", margin: "0 0 16px" }}>
+              {iaProcesso?.number}
+            </p>
+
+            {iaCarregando ? (
+              <div style={{ padding: "20px 0", color: "var(--color-text-muted)", fontSize: 14 }}>
+                Analisando o processo...
+              </div>
+            ) : (
+              <>
+                <p style={{ fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>{iaResumo}</p>
+                {iaFonte && iaFonte !== "erro" && (
+                  <div style={{ marginTop: 14, fontSize: 12, color: "var(--color-text-muted)" }}>
+                    {iaFonte === "gemini"
+                      ? "✨ Gerado pela Lexo IA (Gemini)"
+                      : "Resumo automático · configure a Lexo IA (GEMINI_API_KEY) para análises mais ricas"}
+                  </div>
+                )}
+              </>
+            )}
+
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
+              <button className="btn btn-ghost" onClick={() => setIaAberto(false)}>Fechar</button>
+            </div>
           </div>
         </div>
       )}
