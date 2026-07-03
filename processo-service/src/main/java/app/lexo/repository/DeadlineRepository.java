@@ -18,7 +18,6 @@ public interface DeadlineRepository extends JpaRepository<Deadline, String> {
 
     long deleteByIdAndOrganizationId(String id, String organizationId);
 
-    /** Prazos pendentes nao notificados que vencem ate a data informada (cron de notificacao). */
     List<Deadline> findByStatusAndNotifiedAtIsNullAndDateBetween(
             DeadlineStatus status, Instant start, Instant end);
 }

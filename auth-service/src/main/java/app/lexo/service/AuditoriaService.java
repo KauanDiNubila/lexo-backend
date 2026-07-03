@@ -6,10 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-/**
- * Log de auditoria, portado de lib/audit.ts. A falha de auditoria nao quebra o fluxo
- * principal, mas e sempre observavel (nunca silenciosa).
- */
 @Service
 public class AuditoriaService {
 

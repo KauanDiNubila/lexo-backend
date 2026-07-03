@@ -5,10 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Anexa a chave interna em toda chamada Feign, autenticando as requisicoes
- * servico-a-servico aos endpoints /internal/** dos outros servicos.
- */
 @Configuration
 public class FeignConfig {
 

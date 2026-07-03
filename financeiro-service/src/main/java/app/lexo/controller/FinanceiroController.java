@@ -26,10 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Financeiro/honorarios. Vedado a SECRETARIA — exige ADMIN ou ADVOGADO em toda rota
- * (autorizacao no ponto de uso, nao apenas no roteamento).
- */
 @RestController
 @RequestMapping("/api/financeiro")
 @PreAuthorize("hasAnyRole('ADMIN','ADVOGADO')")

@@ -12,10 +12,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
-/**
- * Endpoints internos (servico-a-servico). Usados por outros servicos para validar a
- * existencia de um processo (ex.: ao criar um honorario vinculado a um processo).
- */
 @RestController
 public class InternalCaseController {
 

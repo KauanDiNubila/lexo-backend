@@ -14,7 +14,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
-/** Emissao e validacao de JWT (HS256). Espelha a sessao JWT do NextAuth original. */
 @Service
 public class JwtService {
 

@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* Tema escuro do Lexo Web — fundo slate profundo + accent indigo. */
 @theme {
   --color-bg: #0b0d14;
   --color-surface: #141722;
@@ -101,7 +100,6 @@ body {
   margin-bottom: 0.35rem;
 }
 
-/* Renderizacao de markdown (respostas da IA) */
 .md > :first-child {
   margin-top: 0;
 }

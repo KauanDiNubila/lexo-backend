@@ -13,15 +13,15 @@ class DocumentValidatorTest {
     @DisplayName("aceita CPF valido")
     void cpfValido() {
         assertTrue(DocumentValidator.isValidCpf("52998224725"));
-        assertTrue(DocumentValidator.isValidCpf("390.533.447-05")); // com mascara
+        assertTrue(DocumentValidator.isValidCpf("390.533.447-05"));
     }
 
     @Test
     @DisplayName("rejeita CPF invalido")
     void cpfInvalido() {
-        assertFalse(DocumentValidator.isValidCpf("11111111111")); // todos iguais
-        assertFalse(DocumentValidator.isValidCpf("12345678900")); // digito verificador errado
-        assertFalse(DocumentValidator.isValidCpf("123"));         // tamanho errado
+        assertFalse(DocumentValidator.isValidCpf("11111111111"));
+        assertFalse(DocumentValidator.isValidCpf("12345678900"));
+        assertFalse(DocumentValidator.isValidCpf("123"));
     }
 
     @Test
@@ -33,8 +33,8 @@ class DocumentValidatorTest {
     @Test
     @DisplayName("rejeita CNPJ invalido")
     void cnpjInvalido() {
-        assertFalse(DocumentValidator.isValidCnpj("11222333000180")); // digito errado
-        assertFalse(DocumentValidator.isValidCnpj("00000000000000")); // todos iguais
+        assertFalse(DocumentValidator.isValidCnpj("11222333000180"));
+        assertFalse(DocumentValidator.isValidCnpj("00000000000000"));
     }
 
     @Test
@@ -42,6 +42,6 @@ class DocumentValidatorTest {
     void isValidPorTamanho() {
         assertTrue(DocumentValidator.isValid("52998224725"));
         assertTrue(DocumentValidator.isValid("11222333000181"));
-        assertFalse(DocumentValidator.isValid("123456")); // nem 11 nem 14
+        assertFalse(DocumentValidator.isValid("123456"));
     }
 }

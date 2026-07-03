@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-/** Busca os honorarios de um cliente no financeiro-service, para o portal. */
 @FeignClient(name = "financeiro-service")
 public interface FinanceiroPortalClient {
 

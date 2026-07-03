@@ -1,6 +1,5 @@
 package app.lexo.util;
 
-/** Validacao de CPF/CNPJ, portada de lib/document.ts. */
 public final class DocumentValidator {
 
     private DocumentValidator() {
@@ -48,7 +47,6 @@ public final class DocumentValidator {
         return second == Character.getNumericValue(d.charAt(13));
     }
 
-    /** Aceita CPF (11 digitos) ou CNPJ (14 digitos). */
     public static boolean isValid(String value) {
         String d = digits(value);
         if (d.length() == 11) return isValidCpf(d);

@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-/** DTOs de autenticacao/registro. */
 public final class AuthDtos {
 
     private AuthDtos() {

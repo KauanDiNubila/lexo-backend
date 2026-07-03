@@ -22,7 +22,6 @@ public class Client extends BaseEntity {
     @Column(columnDefinition = "text")
     private String notes;
 
-    /** Token do portal do cliente: acesso publico read-only via link (magic link). */
     @Column(unique = true)
     private String portalToken;
 

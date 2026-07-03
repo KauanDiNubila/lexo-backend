@@ -13,10 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Adaptador para a API do Google Gemini (free tier). Sem a chave configurada,
- * {@link #isConfigured()} retorna false e o servico usa o fallback heuristico.
- */
 @Component
 public class GeminiClient {
 
@@ -40,17 +36,12 @@ public class GeminiClient {
         return apiKey != null && !apiKey.isBlank();
     }
 
-    /** Prompt unico (sem historico). Optional vazio se nao configurado ou em falha. */
     public Optional<String> gerar(String prompt) {
         List<Map<String, Object>> contents = List.of(
                 Map.of("parts", List.of(Map.of("text", prompt))));
         return chamar(null, contents);
     }
 
-    /**
-     * Conversa multi-turno. {@code contents} no formato do Gemini
-     * (cada item: role "user"/"model" + parts). {@code systemInstruction} opcional.
-     */
     public Optional<String> conversar(String systemInstruction, List<Map<String, Object>> contents) {
         return chamar(systemInstruction, contents);
     }

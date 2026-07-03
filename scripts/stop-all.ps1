@@ -1,11 +1,5 @@
-# =====================================================================
-#  Lexo — derruba todos os processos da stack (servicos Java + Vite).
-#  Nao mexe na infra Docker (use 'docker compose down' se quiser parar os containers).
-#  Uso:  powershell -ExecutionPolicy Bypass -File scripts\stop-all.ps1
-# =====================================================================
 $mortos = 0
 
-# Servicos Java — casa pelo NOME do jar (funciona com caminho relativo ou absoluto)
 $jarRegex = '(discovery-server|api-gateway|auth-service|cliente-service|processo-service|financeiro-service|auditoria-service|notificacao-service)-0\.1\.0\.jar'
 Get-CimInstance Win32_Process |
     Where-Object { $_.CommandLine -match $jarRegex } |
@@ -15,7 +9,6 @@ Get-CimInstance Win32_Process |
         $mortos++
     }
 
-# Frontend (Vite / node servindo o dev server)
 Get-CimInstance Win32_Process |
     Where-Object { $_.CommandLine -match 'vite' -and $_.CommandLine -match 'lexo' } |
     ForEach-Object {

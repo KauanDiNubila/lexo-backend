@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Verificacao em dois fatores (TOTP). */
 @RestController
 @RequestMapping("/api/2fa")
 public class DoisFatoresController {

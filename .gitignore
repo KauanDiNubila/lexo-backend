@@ -5,7 +5,6 @@ target/
 *.err
 scripts/logs/
 
-# IDE
 .idea/
 *.iml
 .vscode/
@@ -13,9 +12,7 @@ scripts/logs/
 .project
 .classpath
 
-# OS
 .DS_Store
 
-# Segredos locais (chaves de API, etc.) — nunca versionar
 scripts/env.local.ps1
 .env.local

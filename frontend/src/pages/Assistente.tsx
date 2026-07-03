@@ -56,7 +56,6 @@ export function Assistente() {
         </p>
       </div>
 
-      {/* Área das mensagens */}
       <div className="card" style={{ flex: 1, overflowY: "auto", padding: "1.25rem", display: "flex", flexDirection: "column", gap: 14 }}>
         {mensagens.length === 0 ? (
           <div style={{ margin: "auto", textAlign: "center", maxWidth: 460 }}>
@@ -111,7 +110,6 @@ export function Assistente() {
         <div ref={fimRef} />
       </div>
 
-      {/* Campo de entrada */}
       <form onSubmit={enviar} style={{ display: "flex", gap: 10, marginTop: 14 }}>
         <input
           className="input"

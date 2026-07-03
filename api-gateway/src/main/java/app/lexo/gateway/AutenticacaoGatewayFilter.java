@@ -20,14 +20,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/**
- * Validacao central do JWT no gateway. Em vez de cada servico validar o token,
- * o gateway valida UMA vez e repassa a identidade via headers de confianca
- * (X-User-Id, X-Org-Id, X-User-Role, X-User-Name). Os servicos confiam nesses headers.
- *
- * Seguranca: headers X-User-* vindos do cliente sao SEMPRE removidos (anti-spoofing),
- * para que ninguem se passe por outro usuario injetando headers manualmente.
- */
 @Component
 public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
 
@@ -37,7 +29,6 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
     public static final String H_NAME = "X-User-Name";
     public static final String H_EMAIL = "X-User-Email";
 
-    // Rotas que nao exigem autenticacao (mesmas rotas publicas dos servicos).
     private static final List<String> PUBLICAS = List.of(
             "/api/auth/login",
             "/api/auth/register",
@@ -59,14 +50,12 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest req = exchange.getRequest();
 
-        // Preflight CORS (OPTIONS) ja foi tratado pelo CorsWebFilter; nao exige token.
         if (req.getMethod() == org.springframework.http.HttpMethod.OPTIONS) {
             return chain.filter(exchange);
         }
 
         String path = req.getURI().getPath();
 
-        // Remove headers de identidade vindos do cliente (anti-spoofing).
         ServerHttpRequest.Builder mutada = req.mutate().headers(h -> {
             h.remove(H_USER_ID);
             h.remove(H_ORG_ID);
@@ -91,7 +80,7 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
             mutada.header(H_USER_ID, c.getSubject())
                     .header(H_ORG_ID, c.get("organizationId", String.class))
                     .header(H_ROLE, c.get("role", String.class))
-                    // nome pode ter acentos: codifica para trafegar seguro em header HTTP
+
                     .header(H_NAME, URLEncoder.encode(nome == null ? "" : nome, StandardCharsets.UTF_8))
                     .header(H_EMAIL, email == null ? "" : email);
             return chain.filter(exchange.mutate().request(mutada.build()).build());
@@ -111,7 +100,7 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        // Antes do roteamento, para validar e injetar os headers cedo.
+
         return -1;
     }
 }

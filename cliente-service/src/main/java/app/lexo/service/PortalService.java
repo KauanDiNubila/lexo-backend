@@ -20,10 +20,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Portal do cliente: gera o link (token) e monta a visao publica read-only,
- * agregando processos (processo-service) e honorarios (financeiro-service) via Feign.
- */
 @Service
 public class PortalService {
 
@@ -41,7 +37,6 @@ public class PortalService {
         this.financeiroClient = financeiroClient;
     }
 
-    /** Gera (ou rotaciona) o token do portal do cliente e devolve o token. */
     @Transactional
     public String gerarToken(AuthUser me, String clientId) {
         Client c = repo.findByIdAndOrganizationId(clientId, me.organizationId())
@@ -52,7 +47,6 @@ public class PortalService {
         return c.getPortalToken();
     }
 
-    /** Visao publica do portal a partir do token (sem autenticacao). */
     @Transactional(readOnly = true)
     public PortalResponse porToken(String token) {
         Client c = repo.findByPortalToken(token)
@@ -71,7 +65,6 @@ public class PortalService {
                 new ResumoPortal(processos.size(), emAberto));
     }
 
-    /** Degrada com elegancia: se o servico destino estiver fora, devolve lista vazia. */
     private <T> List<T> buscar(java.util.function.Supplier<List<T>> chamada, String nome) {
         try {
             return chamada.get();

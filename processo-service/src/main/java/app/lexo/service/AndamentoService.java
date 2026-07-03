@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** Andamentos (movimentacoes) de um processo. */
 @Service
 public class AndamentoService {
 

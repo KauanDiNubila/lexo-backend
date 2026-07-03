@@ -6,11 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/**
- * Consome os eventos de dominio do Kafka (publicados por outros servicos) e grava no
- * log de auditoria. E o coracao event-driven deste servico: nenhum produtor sabe que a
- * auditoria existe — ela apenas reage aos fatos que aconteceram.
- */
 @Component
 public class ConsumidorEventos {
 

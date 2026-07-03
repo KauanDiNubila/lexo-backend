@@ -65,8 +65,7 @@ public class AutenticacaoService {
 
     @Transactional(readOnly = true)
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest req) {
-        // Trava brute force/credential stuffing por email: 10 tentativas / 15 min.
-        // Retorna o mesmo erro de credencial invalida para nao revelar o bloqueio.
+
         String key = "login:" + req.email().toLowerCase();
         if (!rateLimit.verificar(key, 10, 15 * 60)) {
             throw ApiException.unauthorized("Email ou senha inválidos");

@@ -36,7 +36,7 @@ class RiskCalculatorTest {
     @Test
     @DisplayName("PRAZO pesa mais que OUTRO (fator 1.5)")
     void prazoPesaMais() {
-        // 2 dias: como OUTRO daria ALTO; como PRAZO o vencimento efetivo chega antes -> URGENTE
+
         assertEquals(RiskCalculator.RiskLevel.URGENTE,
                 RiskCalculator.getRiskLevel(emDias(2), DeadlineType.PRAZO, DeadlineStatus.PENDENTE));
     }

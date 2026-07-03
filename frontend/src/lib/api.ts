@@ -27,7 +27,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    // Token invalido/expirado numa rota protegida: desloga e manda para o login.
+
     if (res.status === 401 && !path.startsWith("/api/auth/")) {
       clearToken();
       if (window.location.pathname.startsWith("/app")) {

@@ -16,10 +16,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Honorarios. Toda mutacao/leitura exige ADMIN/ADVOGADO (SECRETARIA e barrada) — a
- * verificacao acontece no ponto de uso, no controller, via @PreAuthorize.
- */
 @Service
 public class FinanceiroService {
 
@@ -99,11 +95,11 @@ public class FinanceiroService {
     }
 
     private void validarReferencias(AuthUser me, InvoiceRequest req) {
-        // O cliente agora vive no cliente-service: valida via chamada Feign resiliente.
+
         if (!referencias.clienteExiste(req.clientId(), me.organizationId())) {
             throw ApiException.notFound("Cliente não encontrado");
         }
-        // O processo agora vive no processo-service: valida via chamada Feign resiliente.
+
         if (req.caseId() != null && !req.caseId().isBlank()
                 && !referencias.processoExiste(req.caseId(), me.organizationId())) {
             throw ApiException.notFound("Processo não encontrado");

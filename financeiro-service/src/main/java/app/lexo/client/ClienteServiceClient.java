@@ -7,10 +7,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Map;
 
-/**
- * Cliente Feign para o cliente-service. Resolve "cliente-service" via Eureka
- * (load-balanced). Usado para validar a existencia de um cliente que agora vive em outro servico.
- */
 @FeignClient(name = "cliente-service")
 public interface ClienteServiceClient {
 

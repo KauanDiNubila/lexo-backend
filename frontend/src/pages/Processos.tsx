@@ -41,14 +41,12 @@ export function Processos() {
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
 
-  // Resumo por IA
   const [iaAberto, setIaAberto] = useState(false);
   const [iaProcesso, setIaProcesso] = useState<Processo | null>(null);
   const [iaCarregando, setIaCarregando] = useState(false);
   const [iaResumo, setIaResumo] = useState("");
   const [iaFonte, setIaFonte] = useState<string>("");
 
-  // Andamentos (timeline)
   const [andAberto, setAndAberto] = useState(false);
   const [andProcesso, setAndProcesso] = useState<Processo | null>(null);
   const [andamentos, setAndamentos] = useState<Andamento[]>([]);
@@ -86,7 +84,7 @@ export function Processos() {
       if (!q) return true;
       return [p.number, p.area, nomeCliente(p.clientId)].some((v) => v?.toLowerCase().includes(q));
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [processos, clientes, busca, filtroStatus]);
 
   function abrirNovo() {
@@ -173,7 +171,7 @@ export function Processos() {
     setIaResumo("");
     setIaFonte("");
     try {
-      // reúne os prazos deste processo para dar contexto à IA
+
       const agenda = await api.get<Prazo[]>("/api/agenda").catch(() => [] as Prazo[]);
       const prazos = agenda
         .filter((d) => d.caseId === p.id)
@@ -352,7 +350,6 @@ export function Processos() {
         </div>
       )}
 
-      {/* Modal de resumo por IA */}
       {iaAberto && (
         <div
           onClick={() => setIaAberto(false)}
@@ -393,7 +390,6 @@ export function Processos() {
         </div>
       )}
 
-      {/* Modal de andamentos (timeline) */}
       {andAberto && (
         <div
           onClick={() => setAndAberto(false)}
@@ -405,7 +401,6 @@ export function Processos() {
               {andProcesso?.number} — o cliente também vê estes andamentos no portal.
             </p>
 
-            {/* Timeline */}
             {andCarregando ? (
               <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Carregando...</div>
             ) : andamentos.length === 0 ? (
@@ -438,7 +433,6 @@ export function Processos() {
               </div>
             )}
 
-            {/* Novo andamento */}
             <form onSubmit={adicionarAndamento} style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12, borderTop: "1px solid var(--color-border)", paddingTop: 16 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-muted)" }}>Novo andamento</div>
               <div style={{ display: "flex", gap: 10 }}>

@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Agenda (prazos/compromissos). */
 @RestController
 @RequestMapping("/api/agenda")
 public class AgendaController {

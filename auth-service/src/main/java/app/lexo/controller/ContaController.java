@@ -15,10 +15,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Area de conta: dados do escritorio (organizacao) e do perfil do usuario logado.
- * O nome do escritorio so pode ser alterado por ADMIN; o perfil, pelo proprio usuario.
- */
 @RestController
 public class ContaController {
 

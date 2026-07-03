@@ -4,7 +4,6 @@ import app.lexo.domain.AuditLog;
 
 import java.time.Instant;
 
-/** Resposta de leitura do log de auditoria. */
 public record AuditLogResponse(
         String id,
         String userName,

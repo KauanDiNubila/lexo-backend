@@ -7,7 +7,6 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-/** Andamento/movimentacao de um processo (linha do tempo). */
 @Entity
 @Table(
         name = "andamentos",

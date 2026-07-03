@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-/** Prazo/compromisso da agenda. */
 @Entity
 @Table(
         name = "deadlines",

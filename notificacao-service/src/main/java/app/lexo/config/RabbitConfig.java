@@ -10,12 +10,6 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Topologia da fila de e-mails no RabbitMQ:
- * - exchange principal -> fila lexo.email
- * - a fila aponta para uma dead-letter exchange; mensagens que falham apos os retries
- *   (configurados no application.properties) caem na fila lexo.email.dlq para inspecao.
- */
 @Configuration
 public class RabbitConfig {
 
@@ -59,7 +53,6 @@ public class RabbitConfig {
         return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with(ROUTING_KEY);
     }
 
-    /** Serializa as mensagens como JSON (em vez da serializacao Java padrao). */
     @Bean
     public MessageConverter jacksonMessageConverter() {
         return new Jackson2JsonMessageConverter();

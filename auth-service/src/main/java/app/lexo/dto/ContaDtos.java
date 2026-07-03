@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 
-/** DTOs da area de conta: dados do escritorio e do perfil do usuario logado. */
 public class ContaDtos {
 
     public record OrganizacaoInfo(
@@ -26,7 +25,6 @@ public class ContaDtos {
     ) {
     }
 
-    /** Resposta agregada que popula toda a tela de configuracoes numa unica chamada. */
     public record ContaResponse(
             OrganizacaoInfo organizacao,
             PerfilInfo usuario

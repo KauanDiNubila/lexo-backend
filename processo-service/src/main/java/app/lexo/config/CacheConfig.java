@@ -8,11 +8,6 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 
 import java.time.Duration;
 
-/**
- * Habilita o cache com Redis como backend. As entradas expiram pelo TTL configurado
- * (lexo.cache.ttl-minutes) e valores nulos nao sao cacheados. A serializacao de valores
- * usa o padrao (JDK) — por isso os DTOs cacheados implementam Serializable.
- */
 @Configuration
 @EnableCaching
 public class CacheConfig {

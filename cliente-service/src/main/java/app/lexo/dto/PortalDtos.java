@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-/** DTOs do portal do cliente (visao publica read-only, agregada de varios servicos). */
 public class PortalDtos {
 
     public record PrazoPortal(String title, String type, String status, Instant date) {
@@ -34,7 +33,6 @@ public class PortalDtos {
     public record ResumoPortal(int totalProcessos, BigDecimal emAberto) {
     }
 
-    /** Resposta publica do portal, montada a partir do token. */
     public record PortalResponse(
             String cliente,
             List<ProcessoPortal> processos,
@@ -43,7 +41,6 @@ public class PortalDtos {
     ) {
     }
 
-    /** Retorno ao gerar/rotacionar o link do portal (o advogado copia e envia ao cliente). */
     public record PortalLinkResponse(String token) {
     }
 }

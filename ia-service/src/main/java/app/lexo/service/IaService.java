@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** Recursos de IA: Gemini quando ha chave, senao fallback heuristico (mock). */
 @Service
 public class IaService {
 

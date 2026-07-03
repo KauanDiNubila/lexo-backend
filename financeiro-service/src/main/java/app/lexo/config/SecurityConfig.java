@@ -20,11 +20,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Stateless. A identidade vem dos headers de confianca injetados pelo gateway
- * (o gateway ja validou o JWT). Autorizacao fina por papel acontece nos
- * services/controllers (ponto de uso), via @PreAuthorize.
- */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -52,14 +47,14 @@ public class SecurityConfig {
                                 "/api/convites/aceitar",
                                 "/api/convites/info/**",
                                 "/api/health",
-                                // Endpoints internos (servico-a-servico), protegidos por X-Internal-Key
+
                                 "/internal/**",
-                                // Swagger / OpenAPI
+
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        // Endpoint de cron protegido por segredo proprio (CRON_SECRET), nao por JWT.
+
                         .requestMatchers("/api/cron/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .anyRequest().authenticated()
@@ -69,10 +64,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * CORS — permite que o frontend (em outra origem/porta) chame a API pelo navegador.
-     * As origens permitidas vem da propriedade lexo.cors.allowed-origins.
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -90,7 +81,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Custo 10, igual ao bcrypt.hash(password, 10) do projeto original.
+
         return new BCryptPasswordEncoder(10);
     }
 }

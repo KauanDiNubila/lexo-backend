@@ -19,7 +19,6 @@ export function Clientes() {
   const [erro, setErro] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
 
-  // modal: aberto para criar (editandoId = null) ou editar (editandoId = id)
   const [aberto, setAberto] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [form, setForm] = useState(FORM_VAZIO);
@@ -196,7 +195,6 @@ export function Clientes() {
         )}
       </div>
 
-      {/* Modal de criação/edição */}
       {aberto && (
         <div
           onClick={() => setAberto(false)}

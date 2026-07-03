@@ -7,10 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-/**
- * Consome a fila de e-mails e dispara o envio de fato. Se lancar excecao, o RabbitMQ
- * reentrega ate o limite de retries; esgotado, a mensagem vai para a dead-letter queue.
- */
 @Component
 public class ConsumidorEmail {
 

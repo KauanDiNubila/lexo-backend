@@ -15,10 +15,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-/**
- * Notificacao de prazos, portada de api/cron/notify-deadlines. Alerta prazos pendentes
- * (ainda nao notificados) que vencem nos proximos 3 dias e marca notifiedAt.
- */
 @Service
 public class NotificacaoPrazosService {
 
@@ -32,7 +28,6 @@ public class NotificacaoPrazosService {
         this.enfileiradorEmail = enfileiradorEmail;
     }
 
-    /** Roda todo dia as 08:00 (horario do servidor). */
     @Scheduled(cron = "0 0 8 * * *")
     @Transactional
     public int executar() {

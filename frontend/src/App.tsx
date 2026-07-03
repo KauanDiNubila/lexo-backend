@@ -26,12 +26,11 @@ function Protegida({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <Routes>
-      {/* Público */}
+
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/portal/:token" element={<PortalCliente />} />
 
-      {/* Aplicação (protegida) */}
       <Route path="/app" element={<Protegida><Dashboard /></Protegida>} />
       <Route path="/app/assistente" element={<Protegida><Assistente /></Protegida>} />
       <Route path="/app/peticoes" element={<Protegida><Peticoes /></Protegida>} />

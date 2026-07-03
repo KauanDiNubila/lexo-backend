@@ -17,7 +17,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, String> {
 
     long deleteByIdAndOrganizationId(String id, String organizationId);
 
-    /** Para o relatorio financeiro por periodo. */
     List<Invoice> findByOrganizationIdAndDueDateBetweenOrderByDueDateAsc(
             String organizationId, Instant start, Instant end);
 }

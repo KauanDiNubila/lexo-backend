@@ -5,10 +5,6 @@ import app.lexo.domain.enums.DeadlineType;
 
 import java.time.Instant;
 
-/**
- * Score de risco de prazo, portado de lib/risk.ts. Retorna null quando o prazo
- * nao esta mais pendente (concluido/perdido nao tem risco).
- */
 public final class RiskCalculator {
 
     private RiskCalculator() {
@@ -38,7 +34,6 @@ public final class RiskCalculator {
         double daysRemaining =
                 (date.toEpochMilli() - System.currentTimeMillis()) / (1000.0 * 60 * 60 * 24);
 
-        // PRAZO e AUDIENCIA pesam mais — o vencimento efetivo chega antes.
         double factor = type == DeadlineType.PRAZO ? 1.5
                 : type == DeadlineType.AUDIENCIA ? 1.2
                 : 1.0;

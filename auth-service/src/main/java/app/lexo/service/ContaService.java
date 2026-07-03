@@ -12,7 +12,6 @@ import app.lexo.security.AuthUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Leitura e edicao dos dados da conta: escritorio (organizacao) e perfil do usuario. */
 @Service
 public class ContaService {
 

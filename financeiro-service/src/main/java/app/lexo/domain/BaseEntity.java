@@ -9,10 +9,6 @@ import jakarta.persistence.PreUpdate;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Base das entidades: id String (gerado no momento da persistencia, espelhando o
- * cuid() do Prisma original) + carimbos createdAt/updatedAt.
- */
 @MappedSuperclass
 public abstract class BaseEntity {
 

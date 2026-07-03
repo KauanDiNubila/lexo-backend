@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-/** Historico de atividades por processo, portado de lib/activity.ts. Nao-fatal, porem observavel. */
 @Service
 public class AtividadeService {
 

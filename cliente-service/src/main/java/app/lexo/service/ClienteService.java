@@ -19,7 +19,6 @@ import java.util.List;
 @Service
 public class ClienteService {
 
-    /** Nome do cache; a chave e o organizationId para isolar por tenant. */
     private static final String CACHE = "clientes";
 
     private final ClientRepository repo;

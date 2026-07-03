@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
-/** Log de auditoria de acoes sensiveis (visivel a administradores). */
 @Entity
 @Table(
         name = "audit_logs",

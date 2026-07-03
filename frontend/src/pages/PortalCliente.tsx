@@ -89,7 +89,6 @@ export function PortalCliente() {
               Acompanhe aqui o andamento dos seus processos e sua situação financeira, em tempo real.
             </p>
 
-            {/* Resumo */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
               <div className="card" style={{ padding: "1.1rem 1.25rem", display: "flex", alignItems: "center", gap: 14 }}>
                 <div className="grid h-11 w-11 place-items-center rounded-xl text-white" style={{ background: "linear-gradient(135deg,#34d399,#10b981)" }}>
@@ -111,7 +110,6 @@ export function PortalCliente() {
               </div>
             </div>
 
-            {/* Processos */}
             <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Seus processos</h2>
             {portal.processos.length === 0 ? (
               <div className="card" style={{ padding: 24, color: "var(--color-text-muted)", marginBottom: 24 }}>Nenhum processo cadastrado ainda.</div>
@@ -166,7 +164,6 @@ export function PortalCliente() {
               </div>
             )}
 
-            {/* Honorários */}
             <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Financeiro</h2>
             {portal.honorarios.length === 0 ? (
               <div className="card" style={{ padding: 24, color: "var(--color-text-muted)" }}>Nenhum lançamento financeiro.</div>

@@ -13,12 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-/**
- * Cifra de segredos TOTP em repouso com AES-256-GCM, portada de lib/crypto.ts.
- * A chave NAO fica no banco — e derivada de TOTP_ENC_KEY (ou, na ausencia, do AUTH_SECRET).
- * Cada valor cifrado carrega seu proprio IV aleatorio. Segredos legados em texto puro
- * (sem o prefixo) continuam validos para nao causar lockout.
- */
 @Service
 public class CriptografiaService {
 
@@ -42,7 +36,7 @@ public class CriptografiaService {
 
     private SecretKey derivarChave(String secret) {
         try {
-            // Deriva 32 bytes deterministicos da chave (salt fixo; o IV por mensagem garante aleatoriedade).
+
             byte[] salt = "lexo-totp-kdf-v1".getBytes(StandardCharsets.UTF_8);
             PBEKeySpec spec = new PBEKeySpec(secret.toCharArray(), salt, 100_000, 256);
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
@@ -65,7 +59,7 @@ public class CriptografiaService {
             cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(TAG_BITS, iv));
             byte[] ct = cipher.doFinal(plain.getBytes(StandardCharsets.UTF_8));
             Base64.Encoder b64 = Base64.getEncoder();
-            // GCM no Java ja anexa a tag ao final do ciphertext; guardamos iv:ciphertext(+tag).
+
             return PREFIX + b64.encodeToString(iv) + ":" + b64.encodeToString(ct);
         } catch (Exception e) {
             throw new IllegalStateException("Falha ao cifrar segredo TOTP", e);
@@ -73,7 +67,7 @@ public class CriptografiaService {
     }
 
     public String decifrar(String stored) {
-        // Compatibilidade: segredos legados em texto puro continuam validos.
+
         if (!estaCifrado(stored)) {
             return stored;
         }

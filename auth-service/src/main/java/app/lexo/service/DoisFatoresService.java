@@ -8,7 +8,6 @@ import app.lexo.controller.ApiException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Gestao do 2FA (TOTP), portada de actions/totp.ts. Segredos cifrados em repouso. */
 @Service
 public class DoisFatoresService {
 
@@ -29,7 +28,7 @@ public class DoisFatoresService {
     public InitiateResponse iniciar(AuthUser me) {
         User user = usuarioAtual(me);
         String secret = totp.generateSecret();
-        // O segredo pendente vai cifrado ao banco.
+
         user.setTotpPendingSecret(crypto.cifrar(secret));
         userRepo.save(user);
         return new InitiateResponse(secret, totp.otpauthUri(secret, user.getEmail()));
@@ -45,7 +44,7 @@ public class DoisFatoresService {
         if (!totp.verify(secret, code)) {
             throw ApiException.badRequest("Código inválido. Tente novamente.");
         }
-        // O pendente ja esta cifrado; promove-se direto a totpSecret.
+
         user.setTotpSecret(user.getTotpPendingSecret());
         user.setTotpEnabled(true);
         user.setTotpPendingSecret(null);

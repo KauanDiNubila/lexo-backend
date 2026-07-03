@@ -10,10 +10,6 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * CORS no gateway — permite que o frontend (SPA, em outra origem) chame a API pelo navegador.
- * O CorsWebFilter roda antes do filtro de autenticacao e ja responde o preflight (OPTIONS).
- */
 @Configuration
 public class CorsConfig {
 

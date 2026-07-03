@@ -7,10 +7,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Map;
 
-/**
- * Cliente Feign para o processo-service. Resolve "processo-service" via Eureka.
- * Usado para validar a existencia de um processo (ex.: ao vincular um honorario).
- */
 @FeignClient(name = "processo-service")
 public interface ProcessoServiceClient {
 

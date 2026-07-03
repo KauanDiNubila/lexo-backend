@@ -2,7 +2,6 @@ package app.lexo.controller;
 
 import org.springframework.http.HttpStatus;
 
-/** Erro de negocio com mensagem amigavel e status HTTP, no padrao { error: "..." }. */
 public class ApiException extends RuntimeException {
 
     private final HttpStatus status;

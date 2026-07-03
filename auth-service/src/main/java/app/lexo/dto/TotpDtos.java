@@ -5,13 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 
-/** DTOs de 2FA (TOTP) e de leitura de auditoria. */
 public final class TotpDtos {
 
     private TotpDtos() {
     }
 
-    /** Retorno do inicio do 2FA: segredo em base32 + URI otpauth para o QR Code. */
     public record InitiateResponse(
             String secret,
             String otpauthUri

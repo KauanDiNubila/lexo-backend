@@ -32,7 +32,6 @@ function Badge({ texto, cor }: { texto: string; cor: string }) {
   );
 }
 
-/** Campo com valor exibido + edição inline (botão Editar → input → Salvar/Cancelar). */
 function CampoEditavel({
   valor,
   podeEditar,
@@ -114,7 +113,6 @@ export function Configuracoes() {
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<Aviso>(null);
 
-  // 2FA
   const [segredo, setSegredo] = useState<string | null>(null);
   const [otpauth, setOtpauth] = useState<string>("");
   const [codigo, setCodigo] = useState("");
@@ -237,7 +235,7 @@ export function Configuracoes() {
         <div className="card" style={{ padding: "1.5rem", color: "var(--color-text-muted)" }}>Carregando...</div>
       ) : (
         <>
-          {/* Escritório */}
+
           <Secao titulo="Escritório" descricao={ehAdmin ? "Dados da sua organização." : "Apenas administradores podem editar o escritório."}>
             <Linha rotulo="Nome do escritório">
               <CampoEditavel valor={conta.organizacao.name} podeEditar={!!ehAdmin} onSalvar={salvarOrg} />
@@ -253,7 +251,6 @@ export function Configuracoes() {
             </Linha>
           </Secao>
 
-          {/* Meu perfil */}
           <Secao titulo="Meu perfil" descricao="Seus dados de acesso.">
             <Linha rotulo="Nome">
               <CampoEditavel valor={conta.usuario.name} podeEditar onSalvar={salvarPerfil} />
@@ -266,7 +263,6 @@ export function Configuracoes() {
             </Linha>
           </Secao>
 
-          {/* Segurança / 2FA */}
           <Secao
             titulo="Verificação em dois fatores (2FA)"
             descricao="Camada extra de segurança com um app autenticador (Google Authenticator, Authy...)."
@@ -286,7 +282,6 @@ export function Configuracoes() {
               </button>
             )}
 
-            {/* Fluxo de ativação com QR code */}
             {segredo && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
@@ -339,7 +334,6 @@ export function Configuracoes() {
               </div>
             )}
 
-            {/* Desativar */}
             {conta.usuario.totpEnabled && (
               <div>
                 <label className="label">Informe um código atual do app para desativar:</label>

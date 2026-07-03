@@ -18,11 +18,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/**
- * Autenticacao por headers de confianca injetados pelo gateway (X-User-*).
- * O gateway ja validou o JWT; aqui apenas reconstruimos o AuthUser a partir dos headers.
- * Em producao, os servicos so devem ser acessiveis pela rede interna (atras do gateway).
- */
 @Component
 public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 

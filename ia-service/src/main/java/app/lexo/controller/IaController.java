@@ -12,10 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Recursos de IA. Fica atras do gateway (so requisicoes autenticadas chegam aqui),
- * por isso o servico nao precisa de seguranca propria.
- */
 @RestController
 @RequestMapping("/api/ia")
 public class IaController {

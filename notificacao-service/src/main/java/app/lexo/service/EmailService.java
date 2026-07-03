@@ -8,13 +8,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-/**
- * Envio real de e-mail via SMTP (JavaMailSender). Em dev, aponta para o Mailpit
- * (servidor de e-mail local com caixa de entrada web em http://localhost:8025).
- *
- * Se o servidor SMTP estiver indisponivel, o envio lanca excecao — o RabbitMQ reentrega
- * ate o limite de retries e, esgotado, a mensagem vai para a dead-letter queue.
- */
 @Service
 public class EmailService {
 
@@ -35,7 +28,7 @@ public class EmailService {
         mensagem.setSubject(tarefa.assunto());
         mensagem.setText(tarefa.corpo());
 
-        mailSender.send(mensagem); // lanca MailException se o SMTP falhar -> retry -> DLQ
+        mailSender.send(mensagem);
         log.info("[email] enviado '{}' para {}", tarefa.tipo(), tarefa.destinatario());
     }
 }

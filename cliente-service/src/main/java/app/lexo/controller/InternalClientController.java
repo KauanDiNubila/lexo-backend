@@ -12,10 +12,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
-/**
- * Endpoints internos (servico-a-servico), fora do fluxo do gateway. Usados por outros
- * servicos para validar a existencia de um cliente (ex.: ao criar um processo ou honorario).
- */
 @RestController
 public class InternalClientController {
 

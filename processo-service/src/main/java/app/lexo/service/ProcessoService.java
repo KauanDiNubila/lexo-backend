@@ -19,7 +19,6 @@ import java.util.List;
 @Service
 public class ProcessoService {
 
-    /** Nome do cache; a chave e o organizationId para isolar por tenant. */
     private static final String CACHE = "processos";
 
     private final CaseRepository repo;
@@ -89,11 +88,11 @@ public class ProcessoService {
     }
 
     private void validarReferencias(AuthUser me, CaseRequest req) {
-        // O cliente agora vive no cliente-service: valida via chamada Feign resiliente.
+
         if (!referencias.clienteExiste(req.clientId(), me.organizationId())) {
             throw ApiException.notFound("Cliente não encontrado");
         }
-        // O responsavel (usuario) agora vive no auth-service: valida via chamada Feign resiliente.
+
         if (req.responsavelId() != null && !req.responsavelId().isBlank()
                 && !referencias.usuarioExiste(req.responsavelId(), me.organizationId())) {
             throw ApiException.notFound("Responsável não encontrado");

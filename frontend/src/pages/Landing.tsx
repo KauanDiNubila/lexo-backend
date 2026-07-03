@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
-/** Marca (logo + nome), reutilizada na nav e no footer. */
 function Marca({ tamanho = 34 }: { tamanho?: number }) {
   return (
     <div className="flex items-center gap-2.5">
@@ -81,7 +80,7 @@ export function Landing() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg)" }}>
-      {/* NAV */}
+
       <header
         className="sticky top-0 z-50 backdrop-blur"
         style={{ borderBottom: "1px solid var(--color-border)", background: "rgba(11,13,20,0.75)" }}
@@ -107,7 +106,6 @@ export function Landing() {
         </div>
       </header>
 
-      {/* HERO */}
       <Secao className="pt-20 pb-16 text-center">
         <span
           className="inline-block rounded-full px-3 py-1 text-xs font-semibold"
@@ -141,7 +139,6 @@ export function Landing() {
           ))}
         </div>
 
-        {/* Prévia do painel */}
         <div className="card mx-auto mt-14 max-w-4xl overflow-hidden text-left" style={{ boxShadow: "0 30px 80px -40px rgba(99,102,241,0.5)" }}>
           <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: "1px solid var(--color-border)" }}>
             <span className="h-3 w-3 rounded-full" style={{ background: "#f87171" }} />
@@ -172,7 +169,6 @@ export function Landing() {
           </div>
         </div>
 
-        {/* Prova social */}
         <div className="mt-14">
           <p className="text-xs uppercase tracking-widest" style={{ color: "var(--color-text-muted)" }}>
             Escritórios que confiam na Lexo
@@ -185,7 +181,6 @@ export function Landing() {
         </div>
       </Secao>
 
-      {/* RECURSOS */}
       <Secao id="recursos" className="py-20">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Tudo que o escritório precisa</h2>
@@ -206,7 +201,6 @@ export function Landing() {
         </div>
       </Secao>
 
-      {/* COMO FUNCIONA */}
       <Secao id="como-funciona" className="py-20">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Do caos à clareza em 3 passos</h2>
@@ -222,7 +216,6 @@ export function Landing() {
         </div>
       </Secao>
 
-      {/* LEXO IA */}
       <Secao id="ia" className="py-20">
         <div className="card grid gap-10 p-8 md:grid-cols-2 md:p-12">
           <div>
@@ -252,7 +245,6 @@ export function Landing() {
         </div>
       </Secao>
 
-      {/* DEPOIMENTOS */}
       <Secao className="py-20">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Quem usa, recomenda</h2>
@@ -275,7 +267,6 @@ export function Landing() {
         </div>
       </Secao>
 
-      {/* PREÇOS */}
       <Secao id="precos" className="py-20">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Preços que cabem no escritório</h2>
@@ -326,7 +317,6 @@ export function Landing() {
         </div>
       </Secao>
 
-      {/* CTA FINAL */}
       <Secao className="py-20">
         <div
           className="card overflow-hidden p-10 text-center md:p-16"
@@ -344,7 +334,6 @@ export function Landing() {
         </div>
       </Secao>
 
-      {/* FOOTER */}
       <footer style={{ borderTop: "1px solid var(--color-border)" }}>
         <Secao className="flex flex-col items-center justify-between gap-4 py-10 md:flex-row">
           <Marca tamanho={28} />

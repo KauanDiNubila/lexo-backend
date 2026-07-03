@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Andamentos (movimentacoes) de um processo — timeline. */
 @RestController
 @RequestMapping("/api/processos/{caseId}/andamentos")
 public class AndamentoController {

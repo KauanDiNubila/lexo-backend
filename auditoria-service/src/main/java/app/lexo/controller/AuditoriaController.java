@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Log de auditoria — restrito a ADMIN. */
 @RestController
 @RequestMapping("/api/auditoria")
 @PreAuthorize("hasRole('ADMIN')")

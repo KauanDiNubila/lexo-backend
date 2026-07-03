@@ -49,7 +49,7 @@ function KpiCard({ m }: { m: Metrica }) {
         boxShadow: `0 18px 40px -32px ${m.cor}`,
       }}
     >
-      {/* brilho decorativo no canto */}
+
       <div
         style={{
           position: "absolute",
@@ -195,14 +195,12 @@ export function Dashboard() {
         Visão geral do seu escritório — dados dos microserviços via API Gateway.
       </p>
 
-      {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(215px, 1fr))", gap: 16 }}>
         {metricas.map((mt) => (
           <KpiCard key={mt.rotulo} m={mt} />
         ))}
       </div>
 
-      {/* Resumo estilo IA */}
       {!carregando && (
         <div
           className="card"
@@ -242,7 +240,7 @@ export function Dashboard() {
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginTop: 16 }}>
-        {/* Próximos prazos */}
+
         <CardBase>
           <TituloSecao texto="Próximos prazos" link="Ver agenda" para="/app/agenda" />
           {carregando ? (
@@ -269,7 +267,6 @@ export function Dashboard() {
           )}
         </CardBase>
 
-        {/* Processos por status */}
         <CardBase>
           <TituloSecao texto="Processos por status" link="Ver todos" para="/app/processos" />
           {carregando ? (

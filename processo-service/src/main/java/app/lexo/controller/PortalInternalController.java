@@ -19,10 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Endpoint interno (servico-a-servico) que devolve os processos de um cliente, cada um com
- * seus prazos e andamentos. Usado pelo cliente-service para montar o portal do cliente.
- */
 @RestController
 public class PortalInternalController {
 

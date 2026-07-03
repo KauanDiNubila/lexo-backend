@@ -1,14 +1,6 @@
-# =====================================================================
-#  Lexo — sobe a stack inteira: infra Docker + Eureka + servicos + gateway + frontend.
-#  Uso (na raiz do repo):  powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1
-#
-#  Cada servico usa sua porta default (todas unicas). Os processos sao desanexados
-#  (Start-Process) e sobrevivem ao fechamento do terminal. Logs em scripts\logs\.
-#  Para derrubar tudo:  powershell -ExecutionPolicy Bypass -File scripts\stop-all.ps1
-# =====================================================================
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$java = "C:\Program Files\Java\jdk-21\bin\java.exe"   # o projeto exige Java 21
+$java = "C:\Program Files\Java\jdk-21\bin\java.exe"
 $logs = Join-Path $root "scripts\logs"
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
 
@@ -18,7 +10,6 @@ if (-not (Test-Path $java)) {
     exit 1
 }
 
-# Segredos locais (fora do Git): coloque sua GEMINI_API_KEY em scripts\env.local.ps1
 $envLocal = Join-Path $PSScriptRoot "env.local.ps1"
 if (Test-Path $envLocal) {
     . $envLocal

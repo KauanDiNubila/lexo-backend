@@ -46,7 +46,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Sidebar */}
+
       <aside
         style={{
           width: 240,
@@ -112,7 +112,6 @@ export function Layout({ children }: { children: ReactNode }) {
         </nav>
       </aside>
 
-      {/* Conteúdo */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <header
           style={{

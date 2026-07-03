@@ -47,7 +47,6 @@ public final class InvoiceDtos {
         }
     }
 
-    /** Resumo do relatorio financeiro por periodo. */
     public record FinancialReport(
             Instant start,
             Instant end,

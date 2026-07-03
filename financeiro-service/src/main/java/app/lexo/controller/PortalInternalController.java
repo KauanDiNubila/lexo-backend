@@ -10,10 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * Endpoint interno (servico-a-servico) que devolve os honorarios de um cliente.
- * Usado pelo cliente-service para montar o portal do cliente.
- */
 @RestController
 public class PortalInternalController {
 

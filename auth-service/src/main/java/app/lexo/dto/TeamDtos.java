@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 
-/** DTOs de gestao de equipe (usuarios + convites). */
 public final class TeamDtos {
 
     private TeamDtos() {
@@ -66,7 +65,6 @@ public final class TeamDtos {
         }
     }
 
-    /** Info publica do convite (tela de aceite, sem exigir login). */
     public record InviteInfo(
             String organizationName,
             String inviteeName,

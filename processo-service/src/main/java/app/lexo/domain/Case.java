@@ -9,7 +9,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-/** Processo judicial. Tabela "cases" (CASE e palavra reservada em SQL). */
 @Entity
 @Table(
         name = "cases",

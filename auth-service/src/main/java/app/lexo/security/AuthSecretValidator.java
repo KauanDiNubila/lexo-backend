@@ -9,18 +9,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
-/**
- * Guarda de producao para o segredo do JWT. O default de desenvolvimento tem 32+ bytes
- * (passa na verificacao de tamanho), mas e publico no repositorio — se for para producao
- * sem AUTH_SECRET, qualquer um forjaria um token. Aqui o servico recusa iniciar sob o
- * profile "prod" enquanto o segredo for o default/ausente (fail-fast). Fora de prod, apenas avisa.
- */
 @Component
 public class AuthSecretValidator implements InitializingBean {
 
     private static final Logger log = LoggerFactory.getLogger(AuthSecretValidator.class);
 
-    /** Segredo default de desenvolvimento — inseguro fora de dev por estar versionado. */
     static final String SEGREDO_DEV = "troque-esta-chave-em-producao-com-no-minimo-32-bytes";
 
     private final String secret;

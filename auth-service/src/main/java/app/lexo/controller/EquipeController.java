@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Gestao de equipe — restrita a ADMIN. */
 @RestController
 @RequestMapping("/api/usuarios")
 @PreAuthorize("hasRole('ADMIN')")

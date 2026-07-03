@@ -17,11 +17,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * Teste de integracao do monolito (clientes) sobre H2. A identidade vem dos headers
- * X-User-* injetados pelo gateway — entao os testes fabricam essa identidade diretamente
- * (o auth/registro agora vive no auth-service, fora deste servico).
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @DisplayName("API de clientes (integracao)")
@@ -33,7 +28,6 @@ class ClienteApiIntegrationTest {
     @Autowired
     private ObjectMapper om;
 
-    /** Identidade que o gateway repassaria via headers. */
     private record Identidade(String userId, String orgId, String role, String name) {
         static Identidade nova() {
             return new Identidade(UUID.randomUUID().toString(), UUID.randomUUID().toString(),
@@ -41,7 +35,6 @@ class ClienteApiIntegrationTest {
         }
     }
 
-    /** Monta os headers de confianca, como o gateway faria apos validar o JWT. */
     private HttpHeaders comoGateway(Identidade id) {
         HttpHeaders h = new HttpHeaders();
         h.add("X-User-Id", id.userId());

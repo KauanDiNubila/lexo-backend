@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
-/** Historico de atividades por processo. */
 @Entity
 @Table(
         name = "activity_logs",

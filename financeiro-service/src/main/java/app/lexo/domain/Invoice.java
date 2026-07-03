@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Honorario / cobranca. */
 @Entity
 @Table(
         name = "invoices",
