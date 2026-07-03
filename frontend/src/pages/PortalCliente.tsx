@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Scale, Briefcase, CalendarClock, Wallet } from "lucide-react";
+import { Scale, Briefcase, CalendarClock, Wallet, History } from "lucide-react";
 
 const BASE = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8080";
 
 type PrazoPortal = { title: string; type: string; status: string; date: string };
-type ProcessoPortal = { number: string; area: string | null; status: string; createdAt: string; prazos: PrazoPortal[] };
+type AndamentoPortal = { title: string; description: string | null; date: string };
+type ProcessoPortal = { number: string; area: string | null; status: string; createdAt: string; prazos: PrazoPortal[]; andamentos: AndamentoPortal[] };
 type HonorarioPortal = { description: string; amount: number; status: string; dueDate: string };
 type Portal = {
   cliente: string;
@@ -134,6 +135,28 @@ export function PortalCliente() {
                           <div key={j} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "3px 0" }}>
                             <span>{pr.title}</span>
                             <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>{data(pr.date)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {p.andamentos && p.andamentos.length > 0 && (
+                      <div style={{ marginTop: 12, borderTop: "1px solid var(--color-border)", paddingTop: 10 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                          <History size={13} /> Andamentos
+                        </div>
+                        {p.andamentos.map((a, j) => (
+                          <div key={j} style={{ display: "flex", gap: 10 }}>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--color-primary)", marginTop: 5, flexShrink: 0 }} />
+                              {j < p.andamentos.length - 1 && <span style={{ flex: 1, width: 2, background: "var(--color-border)" }} />}
+                            </div>
+                            <div style={{ paddingBottom: 12, flex: 1 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13.5 }}>
+                                <span style={{ fontWeight: 600 }}>{a.title}</span>
+                                <span style={{ color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>{data(a.date)}</span>
+                              </div>
+                              {a.description && <div style={{ fontSize: 13, color: "var(--color-text-muted)", marginTop: 2 }}>{a.description}</div>}
+                            </div>
                           </div>
                         ))}
                       </div>

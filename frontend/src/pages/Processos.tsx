@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { Markdown } from "../components/Markdown";
 
 type Prazo = { id: string; caseId: string; title: string; status: string; date: string };
+type Andamento = { id: string; title: string; description: string | null; date: string };
 
 type Processo = {
   id: string;
@@ -46,6 +47,14 @@ export function Processos() {
   const [iaCarregando, setIaCarregando] = useState(false);
   const [iaResumo, setIaResumo] = useState("");
   const [iaFonte, setIaFonte] = useState<string>("");
+
+  // Andamentos (timeline)
+  const [andAberto, setAndAberto] = useState(false);
+  const [andProcesso, setAndProcesso] = useState<Processo | null>(null);
+  const [andamentos, setAndamentos] = useState<Andamento[]>([]);
+  const [andCarregando, setAndCarregando] = useState(false);
+  const [andForm, setAndForm] = useState({ title: "", description: "", date: "" });
+  const [andSalvando, setAndSalvando] = useState(false);
 
   async function carregar() {
     setCarregando(true);
@@ -118,6 +127,43 @@ export function Processos() {
     if (!confirm("Excluir este processo?")) return;
     await api.del(`/api/processos/${id}`);
     await carregar();
+  }
+
+  async function abrirAndamentos(p: Processo) {
+    setAndProcesso(p);
+    setAndAberto(true);
+    setAndForm({ title: "", description: "", date: "" });
+    setAndCarregando(true);
+    try {
+      setAndamentos(await api.get<Andamento[]>(`/api/processos/${p.id}/andamentos`));
+    } catch {
+      setAndamentos([]);
+    } finally {
+      setAndCarregando(false);
+    }
+  }
+
+  async function adicionarAndamento(e: FormEvent) {
+    e.preventDefault();
+    if (!andProcesso || !andForm.title.trim() || !andForm.date || andSalvando) return;
+    setAndSalvando(true);
+    try {
+      await api.post(`/api/processos/${andProcesso.id}/andamentos`, {
+        title: andForm.title.trim(),
+        description: andForm.description.trim() || null,
+        date: `${andForm.date}T00:00:00Z`,
+      });
+      setAndForm({ title: "", description: "", date: "" });
+      setAndamentos(await api.get<Andamento[]>(`/api/processos/${andProcesso.id}/andamentos`));
+    } finally {
+      setAndSalvando(false);
+    }
+  }
+
+  async function excluirAndamento(id: string) {
+    if (!andProcesso) return;
+    await api.del(`/api/processos/${andProcesso.id}/andamentos/${id}`);
+    setAndamentos(await api.get<Andamento[]>(`/api/processos/${andProcesso.id}/andamentos`));
   }
 
   async function resumirIA(p: Processo) {
@@ -225,6 +271,13 @@ export function Processos() {
                     </span>
                   </td>
                   <td style={{ padding: "0.85rem 1.25rem", textAlign: "right", whiteSpace: "nowrap" }}>
+                    <button
+                      onClick={() => abrirAndamentos(p)}
+                      title="Ver/adicionar andamentos"
+                      style={{ background: "none", border: "none", color: "var(--color-text)", cursor: "pointer", fontSize: 13, marginRight: 14 }}
+                    >
+                      Andamentos
+                    </button>
                     <button
                       onClick={() => resumirIA(p)}
                       title="Resumir com a Lexo IA"
@@ -336,6 +389,70 @@ export function Processos() {
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
               <button className="btn btn-ghost" onClick={() => setIaAberto(false)}>Fechar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de andamentos (timeline) */}
+      {andAberto && (
+        <div
+          onClick={() => setAndAberto(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}
+        >
+          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: 540, maxWidth: "100%", padding: "1.75rem", maxHeight: "88vh", overflowY: "auto" }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 2px" }}>Andamentos</h2>
+            <p style={{ fontSize: 13, color: "var(--color-text-muted)", margin: "0 0 18px" }}>
+              {andProcesso?.number} — o cliente também vê estes andamentos no portal.
+            </p>
+
+            {/* Timeline */}
+            {andCarregando ? (
+              <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Carregando...</div>
+            ) : andamentos.length === 0 ? (
+              <div style={{ color: "var(--color-text-muted)", fontSize: 14, marginBottom: 8 }}>Nenhum andamento ainda.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 8 }}>
+                {andamentos.map((a) => (
+                  <div key={a.id} style={{ display: "flex", gap: 12, position: "relative" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--color-primary)", marginTop: 5, flexShrink: 0 }} />
+                      <span style={{ flex: 1, width: 2, background: "var(--color-border)" }} />
+                    </div>
+                    <div style={{ paddingBottom: 16, flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>{a.title}</span>
+                        <button
+                          onClick={() => excluirAndamento(a.id)}
+                          style={{ background: "none", border: "none", color: "var(--color-danger)", cursor: "pointer", fontSize: 12, flexShrink: 0 }}
+                        >
+                          remover
+                        </button>
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+                        {new Date(a.date).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+                      </div>
+                      {a.description && <div style={{ fontSize: 13, marginTop: 3, color: "var(--color-text)" }}>{a.description}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Novo andamento */}
+            <form onSubmit={adicionarAndamento} style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12, borderTop: "1px solid var(--color-border)", paddingTop: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-muted)" }}>Novo andamento</div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <input className="input" placeholder="Ex.: Sentença publicada" value={andForm.title} onChange={(e) => setAndForm({ ...andForm, title: e.target.value })} required />
+                <input className="input" type="date" style={{ maxWidth: 160 }} value={andForm.date} onChange={(e) => setAndForm({ ...andForm, date: e.target.value })} required />
+              </div>
+              <textarea className="input" placeholder="Detalhes (opcional)" rows={2} style={{ resize: "vertical", fontFamily: "inherit" }} value={andForm.description} onChange={(e) => setAndForm({ ...andForm, description: e.target.value })} />
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setAndAberto(false)}>Fechar</button>
+                <button type="submit" className="btn btn-primary" disabled={andSalvando || !andForm.title.trim() || !andForm.date}>
+                  {andSalvando ? "Adicionando..." : "Adicionar"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
