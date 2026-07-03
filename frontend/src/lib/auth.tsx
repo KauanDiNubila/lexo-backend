@@ -49,6 +49,10 @@ function lerToken(token: string): Usuario | null {
         .join("")
     );
     const claims = JSON.parse(json);
+    // Token expirado é tratado como deslogado (evita ficar "logado" com token morto).
+    if (claims.exp && claims.exp * 1000 <= Date.now()) {
+      return null;
+    }
     return {
       id: claims.sub,
       organizationId: claims.organizationId,
