@@ -29,6 +29,8 @@ function Start-Jar($name) {
     Write-Host "  > $name" -ForegroundColor Green
 }
 
+$env:SPRING_PROFILES_ACTIVE = "dev"
+
 Write-Host "== Infra (Docker) ==" -ForegroundColor Cyan
 docker compose -f (Join-Path $root "docker-compose.yml") up -d | Out-Null
 

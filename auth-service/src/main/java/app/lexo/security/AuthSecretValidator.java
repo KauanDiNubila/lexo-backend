@@ -26,17 +26,18 @@ public class AuthSecretValidator implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        boolean producao = Arrays.asList(env.getActiveProfiles()).contains("prod");
+        var perfis = Arrays.asList(env.getActiveProfiles());
+        boolean dev = perfis.contains("dev") || perfis.contains("test");
         boolean inseguro = secret == null || secret.isBlank() || SEGREDO_DEV.equals(secret);
         if (!inseguro) {
             return;
         }
-        if (producao) {
+        if (!dev) {
             throw new IllegalStateException(
-                    "AUTH_SECRET nao configurado em producao. Defina a variavel de ambiente "
-                    + "AUTH_SECRET (>= 32 bytes) — o servico recusa iniciar com o segredo default.");
+                    "AUTH_SECRET inseguro ou ausente. Defina a variavel de ambiente AUTH_SECRET "
+                    + "(>= 32 bytes), ou rode com o profile 'dev' para desenvolvimento local. "
+                    + "O servico recusa iniciar com o segredo default fora de dev.");
         }
-        log.warn("*** Usando o AUTH_SECRET DEFAULT de desenvolvimento. NUNCA use em producao: "
-                + "defina a env AUTH_SECRET (>= 32 bytes). ***");
+        log.warn("*** AUTH_SECRET DEFAULT (profile dev). NUNCA use este segredo em producao. ***");
     }
 }

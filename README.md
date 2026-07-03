@@ -1,5 +1,6 @@
 # ⚖️ Lexo — Plataforma Jurídica em Microserviços (Full-Stack + IA)
 
+![CI](https://github.com/KauanDiNubila/lexo-backend/actions/workflows/ci.yml/badge.svg)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-6DB33F)
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2024.0-6DB33F)
@@ -90,7 +91,8 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 - **Anti-spoofing**: o gateway **remove** quaisquer headers `X-User-*` enviados pelo cliente.
 - **Multi-tenancy**: toda query filtra por `organizationId` — um escritório nunca vê dados de outro.
 - **Serviço-a-serviço**: os endpoints `/internal/**` exigem uma chave interna (`X-Internal-Key`).
-- **Fail-fast de produção**: o gateway e o auth-service **recusam iniciar** sob o profile `prod` se o segredo do JWT ainda for o default versionado.
+- **Seguro por padrão**: o gateway e o auth-service **recusam iniciar** com o segredo default do JWT fora do profile `dev` — em qualquer outro ambiente é obrigatório definir `AUTH_SECRET`.
+- **Proteção da IA**: as rotas `/api/ia/**` exigem passagem pelo gateway autenticado (header `X-Org-Id`) e têm **rate limit por organização** — evita abuso e estouro de cota do provedor de IA.
 
 ---
 
