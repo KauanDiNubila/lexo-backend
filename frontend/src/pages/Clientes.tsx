@@ -7,6 +7,7 @@ type Cliente = {
   document: string | null;
   email: string | null;
   phone: string | null;
+  portalToken: string | null;
   createdAt: string | null;
 };
 
@@ -99,6 +100,22 @@ export function Clientes() {
     await carregar();
   }
 
+  async function copiarPortal(c: Cliente) {
+    try {
+      let token = c.portalToken;
+      if (!token) {
+        const r = await api.post<{ token: string }>(`/api/clientes/${c.id}/portal`);
+        token = r.token;
+        await carregar();
+      }
+      const link = `${window.location.origin}/portal/${token}`;
+      await navigator.clipboard.writeText(link);
+      alert(`Link do portal copiado!\n\n${link}\n\nEnvie para ${c.name} acompanhar o processo.`);
+    } catch {
+      alert("Não foi possível gerar o link. Tente novamente.");
+    }
+  }
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
@@ -152,6 +169,13 @@ export function Clientes() {
                   <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>{c.email || "—"}</td>
                   <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>{c.phone || "—"}</td>
                   <td style={{ padding: "0.85rem 1.25rem", textAlign: "right", whiteSpace: "nowrap" }}>
+                    <button
+                      onClick={() => copiarPortal(c)}
+                      title="Gerar/copiar o link do portal do cliente"
+                      style={{ background: "none", border: "none", color: c.portalToken ? "var(--color-success)" : "var(--color-text-muted)", cursor: "pointer", fontSize: 13, marginRight: 14 }}
+                    >
+                      {c.portalToken ? "Copiar portal" : "Gerar portal"}
+                    </button>
                     <button
                       onClick={() => abrirEdicao(c)}
                       style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontSize: 13, marginRight: 14 }}

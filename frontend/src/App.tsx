@@ -3,6 +3,7 @@ import { useAuth } from "./lib/auth";
 import { Layout } from "./components/Layout";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
+import { PortalCliente } from "./pages/PortalCliente";
 import { Clientes } from "./pages/Clientes";
 import { Processos } from "./pages/Processos";
 import { Agenda } from "./pages/Agenda";
@@ -26,6 +27,7 @@ export default function App() {
       {/* Público */}
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/portal/:token" element={<PortalCliente />} />
 
       {/* Aplicação (protegida) */}
       <Route path="/app" element={<Protegida><Dashboard /></Protegida>} />
