@@ -18,6 +18,13 @@ if (-not (Test-Path $java)) {
     exit 1
 }
 
+# Segredos locais (fora do Git): coloque sua GEMINI_API_KEY em scripts\env.local.ps1
+$envLocal = Join-Path $PSScriptRoot "env.local.ps1"
+if (Test-Path $envLocal) {
+    . $envLocal
+    if ($env:GEMINI_API_KEY) { Write-Host "GEMINI_API_KEY carregada (Lexo IA usara o Gemini real)." -ForegroundColor Green }
+}
+
 function Start-Jar($name) {
     $jar = Join-Path $root "$name\target\$name-0.1.0.jar"
     if (-not (Test-Path $jar)) {
