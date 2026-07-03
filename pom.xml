@@ -33,6 +33,7 @@
         <module>notificacao-service</module>
         <module>processo-service</module>
         <module>financeiro-service</module>
+        <module>ia-service</module>
     </modules>
 
     <dependencyManagement>

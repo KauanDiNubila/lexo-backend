@@ -48,7 +48,7 @@ else { Write-Host "  Eureka demorou; seguindo mesmo assim." -ForegroundColor Yel
 Write-Host "== Servicos ==" -ForegroundColor Cyan
 foreach ($s in @(
     "auth-service", "cliente-service", "processo-service",
-    "financeiro-service", "auditoria-service", "notificacao-service", "api-gateway")) {
+    "financeiro-service", "auditoria-service", "notificacao-service", "ia-service", "api-gateway")) {
     Start-Jar $s
 }
 

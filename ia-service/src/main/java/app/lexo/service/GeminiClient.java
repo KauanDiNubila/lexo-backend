@@ -1,0 +1,64 @@
+package app.lexo.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Adaptador para a API do Google Gemini (free tier). Sem a chave configurada,
+ * {@link #isConfigured()} retorna false e o servico usa o fallback heuristico.
+ */
+@Component
+public class GeminiClient {
+
+    private static final Logger log = LoggerFactory.getLogger(GeminiClient.class);
+
+    private final String apiKey;
+    private final String model;
+    private final String baseUrl;
+    private final RestClient http = RestClient.create();
+
+    public GeminiClient(
+            @Value("${lexo.ia.gemini.api-key}") String apiKey,
+            @Value("${lexo.ia.gemini.model}") String model,
+            @Value("${lexo.ia.gemini.base-url}") String baseUrl) {
+        this.apiKey = apiKey;
+        this.model = model;
+        this.baseUrl = baseUrl;
+    }
+
+    public boolean isConfigured() {
+        return apiKey != null && !apiKey.isBlank();
+    }
+
+    /** Gera texto a partir do prompt. Optional vazio se nao configurado ou em caso de falha. */
+    public Optional<String> gerar(String prompt) {
+        if (!isConfigured()) {
+            return Optional.empty();
+        }
+        try {
+            Map<String, Object> body = Map.of(
+                    "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))));
+            JsonNode resp = http.post()
+                    .uri(baseUrl + "/models/" + model + ":generateContent?key=" + apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(JsonNode.class);
+            String texto = resp == null ? null
+                    : resp.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null);
+            return Optional.ofNullable(texto).filter(t -> !t.isBlank());
+        } catch (Exception e) {
+            log.warn("Chamada ao Gemini falhou, usando fallback: {}", e.toString());
+            return Optional.empty();
+        }
+    }
+}
