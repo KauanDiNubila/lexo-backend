@@ -2,6 +2,8 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 *.class
 *.log
+*.err
+scripts/logs/
 
 # IDE
 .idea/
