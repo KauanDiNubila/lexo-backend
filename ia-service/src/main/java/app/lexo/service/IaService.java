@@ -7,6 +7,8 @@ import app.lexo.dto.ChatDtos.ProcessoContexto;
 import app.lexo.dto.IaDtos.PrazoCtx;
 import app.lexo.dto.IaDtos.ResumoProcessoRequest;
 import app.lexo.dto.IaDtos.ResumoResponse;
+import app.lexo.dto.PeticaoDtos.PeticaoRequest;
+import app.lexo.dto.PeticaoDtos.PeticaoResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -57,6 +59,46 @@ public class IaService {
                 + "Área: " + nvl(ctx.area(), "não informada") + "\n"
                 + "Status: " + nvl(ctx.status(), "não informado") + "\n"
                 + "Cliente: " + nvl(ctx.cliente(), "não informado");
+    }
+
+    public PeticaoResponse rascunharPeticao(PeticaoRequest req) {
+        return gemini.gerar(promptPeticao(req))
+                .map(t -> new PeticaoResponse(t.trim(), "gemini"))
+                .orElseGet(() -> new PeticaoResponse(modeloPeticao(req), "mock"));
+    }
+
+    private String promptPeticao(PeticaoRequest req) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Você é um advogado brasileiro experiente. Redija a MINUTA de uma peça ou documento ")
+          .append("jurídico conforme o pedido abaixo, em português jurídico formal e bem estruturado ")
+          .append("(endereçamento ao juízo, qualificação das partes, DOS FATOS, DO DIREITO, DOS PEDIDOS, ")
+          .append("e fecho com local, data e assinatura). Onde faltar informação específica (nomes completos, ")
+          .append("CPF/CNPJ, valores, datas, número do processo), use PLACEHOLDERS entre colchetes, ex.: ")
+          .append("[NOME DO CLIENTE], [VALOR], [DATA]. NÃO invente números de lei, súmulas ou jurisprudência ")
+          .append("específicos — se mencionar a tese jurídica, mantenha-a genérica. Deixe claro que é uma minuta ")
+          .append("a ser revisada pelo advogado responsável.\n\n");
+        sb.append("Pedido: ").append(nvl(req.pedido(), "peça jurídica")).append("\n");
+        var ctx = req.contexto();
+        if (ctx != null) {
+            sb.append("\nContexto do processo:\n")
+              .append("Número: ").append(nvl(ctx.numero(), "não informado")).append("\n")
+              .append("Área: ").append(nvl(ctx.area(), "não informada")).append("\n")
+              .append("Status: ").append(nvl(ctx.status(), "não informado")).append("\n")
+              .append("Cliente: ").append(nvl(ctx.cliente(), "não informado")).append("\n");
+        }
+        return sb.toString();
+    }
+
+    private String modeloPeticao(PeticaoRequest req) {
+        return "MINUTA (modelo automático — configure a Lexo IA com GEMINI_API_KEY para geração completa)\n\n"
+                + "Pedido: " + nvl(req.pedido(), "peça jurídica") + "\n\n"
+                + "EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO DA [VARA] DA COMARCA DE [COMARCA]\n\n"
+                + "[NOME DO CLIENTE], [QUALIFICAÇÃO], por seu advogado que esta subscreve, vem, respeitosamente, "
+                + "à presença de Vossa Excelência, expor e requerer o que segue.\n\n"
+                + "DOS FATOS\n[Descrever os fatos.]\n\n"
+                + "DO DIREITO\n[Fundamentar juridicamente.]\n\n"
+                + "DOS PEDIDOS\n[Elencar os pedidos.]\n\n"
+                + "Nesses termos, pede deferimento.\n[LOCAL], [DATA].\n[ADVOGADO] — OAB/[UF] [Nº]";
     }
 
     public ResumoResponse resumirProcesso(ResumoProcessoRequest req) {
