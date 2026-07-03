@@ -11,12 +11,14 @@ import {
   Settings,
   Scale,
   Sparkles,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
 const navItens = [
   { para: "/app", rotulo: "Visão geral", icone: LayoutDashboard },
   { para: "/app/assistente", rotulo: "Assistente", icone: Sparkles },
+  { para: "/app/peticoes", rotulo: "Petições", icone: FileText },
   { para: "/app/clientes", rotulo: "Clientes", icone: Users },
   { para: "/app/processos", rotulo: "Processos", icone: Briefcase },
   { para: "/app/agenda", rotulo: "Agenda", icone: CalendarDays },
