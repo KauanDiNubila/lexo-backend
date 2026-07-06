@@ -29,9 +29,9 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ## 🎬 Demo
 
-> Grave a tela navegando em **http://localhost:3000** (landing → login → dashboard → assistente de IA → portal do cliente), salve como `docs/demo.gif` e o vídeo aparece aqui.
+![Demo do Lexo](docs/demo.gif)
 
-<!-- ![Demo do Lexo](docs/demo.gif) -->
+> Landing → criar conta → dashboard → assistente de IA → portal do cliente, tudo rodando via `docker compose up`.
 
 ---
 
