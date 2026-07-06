@@ -1,21 +1,28 @@
+name: lexo
+
+x-java-build: &java-build
+  context: .
+  dockerfile: Dockerfile
+
+x-infra-env: &infra-env
+  SPRING_PROFILES_ACTIVE: dev
+  LEXO_EUREKA_URL: http://discovery-server:8761/eureka/
+  LEXO_ZIPKIN: http://zipkin:9411/api/v2/spans
+  LEXO_REDIS_HOST: redis
+  LEXO_REDIS_PORT: "6379"
+  LEXO_KAFKA_BOOTSTRAP: kafka:9092
+  LEXO_RABBIT_HOST: rabbitmq
+  LEXO_RABBIT_PORT: "5672"
+  LEXO_SMTP_HOST: mailpit
+  LEXO_SMTP_PORT: "1025"
+  SPRING_DATASOURCE_USERNAME: postgres
+  SPRING_DATASOURCE_PASSWORD: postgres
+  AUTH_SECRET: ${AUTH_SECRET:-lexo-docker-dev-secret-com-mais-de-32-bytes-0123456789}
+  LEXO_INTERNAL_KEY: ${LEXO_INTERNAL_KEY:-lexo-docker-internal-key-dev}
+
 services:
-  financeiro-db:
-    image: postgres:16-alpine
-    container_name: lexo-financeiro-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: lexo_financeiro
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5438:5432"
-    volumes:
-      - lexo_financeirodata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d lexo_financeiro"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+
+  # ============ Infraestrutura ============
 
   auth-db:
     image: postgres:16-alpine
@@ -26,7 +33,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-
       - "5434:5432"
     volumes:
       - lexo_authdata:/var/lib/postgresql/data
@@ -54,24 +60,6 @@ services:
       timeout: 5s
       retries: 5
 
-  auditoria-db:
-    image: postgres:16-alpine
-    container_name: lexo-auditoria-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: lexo_auditoria
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5436:5432"
-    volumes:
-      - lexo_auditoriadata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d lexo_auditoria"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   processo-db:
     image: postgres:16-alpine
     container_name: lexo-processo-db
@@ -90,27 +78,47 @@ services:
       timeout: 5s
       retries: 5
 
-  mailpit:
-    image: axllent/mailpit:latest
-    container_name: lexo-mailpit
+  financeiro-db:
+    image: postgres:16-alpine
+    container_name: lexo-financeiro-db
     restart: unless-stopped
+    environment:
+      POSTGRES_DB: lexo_financeiro
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "5438:5432"
+    volumes:
+      - lexo_financeirodata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lexo_financeiro"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  zipkin:
-    image: openzipkin/zipkin:latest
-    container_name: lexo-zipkin
+  auditoria-db:
+    image: postgres:16-alpine
+    container_name: lexo-auditoria-db
     restart: unless-stopped
+    environment:
+      POSTGRES_DB: lexo_auditoria
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "9411:9411"
+      - "5436:5432"
+    volumes:
+      - lexo_auditoriadata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lexo_auditoria"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     container_name: lexo-redis
     restart: unless-stopped
     ports:
-
       - "6380:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -123,19 +131,16 @@ services:
     container_name: lexo-kafka
     restart: unless-stopped
     ports:
-
-      - "9094:9092"
+      - "9094:9094"
     environment:
-
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9094
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -152,7 +157,6 @@ services:
     container_name: lexo-rabbit
     restart: unless-stopped
     ports:
-
       - "5673:5672"
       - "15673:15672"
     environment:
@@ -164,9 +168,195 @@ services:
       timeout: 10s
       retries: 5
 
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: lexo-zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: lexo-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  # ============ Aplicacao ============
+
+  discovery-server:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: discovery-server
+    container_name: lexo-discovery
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+
+  api-gateway:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: api-gateway
+    container_name: lexo-gateway
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-server:
+        condition: service_started
+
+  auth-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: auth-service
+    container_name: lexo-auth
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: auth-service
+      LEXO_AUTH_DB_URL: jdbc:postgresql://auth-db:5432/lexo_auth
+    depends_on:
+      discovery-server:
+        condition: service_started
+      auth-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  cliente-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: cliente-service
+    container_name: lexo-cliente
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: cliente-service
+      LEXO_CLIENTE_DB_URL: jdbc:postgresql://cliente-db:5432/lexo_cliente
+    depends_on:
+      discovery-server:
+        condition: service_started
+      cliente-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  processo-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: processo-service
+    container_name: lexo-processo
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: processo-service
+      LEXO_PROCESSO_DB_URL: jdbc:postgresql://processo-db:5432/lexo_processo
+    depends_on:
+      discovery-server:
+        condition: service_started
+      processo-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  financeiro-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: financeiro-service
+    container_name: lexo-financeiro
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: financeiro-service
+      LEXO_FINANCEIRO_DB_URL: jdbc:postgresql://financeiro-db:5432/lexo_financeiro
+    depends_on:
+      discovery-server:
+        condition: service_started
+      financeiro-db:
+        condition: service_healthy
+
+  auditoria-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: auditoria-service
+    container_name: lexo-auditoria
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: auditoria-service
+      LEXO_AUDITORIA_DB_URL: jdbc:postgresql://auditoria-db:5432/lexo_auditoria
+    depends_on:
+      discovery-server:
+        condition: service_started
+      auditoria-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  notificacao-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: notificacao-service
+    container_name: lexo-notificacao
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: notificacao-service
+    depends_on:
+      discovery-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  ia-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: ia-service
+    container_name: lexo-ia
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: ia-service
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    depends_on:
+      discovery-server:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lexo-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+
 volumes:
-  lexo_financeirodata:
   lexo_authdata:
   lexo_clientedata:
-  lexo_auditoriadata:
   lexo_processodata:
+  lexo_financeirodata:
+  lexo_auditoriadata:

@@ -143,14 +143,38 @@ npm run dev          # http://localhost:5173
 
 ## ▶️ Como rodar
 
-### Atalho (Windows): sobe tudo com um comando
+### Opção 1 — Docker (recomendado): sobe TUDO com um comando
+
+Requer apenas **Docker**. Constrói e sobe os 9 microserviços + infraestrutura + frontend.
+
+```bash
+docker compose up -d --build
+```
+
+Aguarde ~1-2 min (registro no Eureka) e acesse:
+
+- **Frontend**: http://localhost:3000
+- **Gateway**: http://localhost:8080 · **Eureka**: http://localhost:8761
+- **Zipkin**: http://localhost:9411 · **Mailpit**: http://localhost:8025 · **RabbitMQ**: http://localhost:15673 (guest/guest)
+
+```bash
+docker compose down            # para tudo
+docker compose down -v         # para tudo e apaga os dados dos bancos
+```
+
+> **Lexo IA**: para ligar a IA real, exporte `GEMINI_API_KEY` antes do `up` (senão roda em modo mock):
+> `export GEMINI_API_KEY=sua-chave` (ou coloque num arquivo `.env` na raiz).
+
+### Opção 2 — Local sem containers (Windows)
+
+Sobe a infra no Docker e os serviços como jars (útil para desenvolver). Requer JDK 21 e os jars compilados (`mvn -DskipTests package`).
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1   # infra + Eureka + serviços + gateway + frontend
 powershell -ExecutionPolicy Bypass -File scripts\stop-all.ps1    # derruba os processos (mantém o Docker)
 ```
 
-O script usa o JDK 21, sobe o Eureka primeiro (espera responder) e desanexa cada processo. Logs em `scripts/logs/`. Requer os jars já compilados (passo 2).
+### Opção 3 — Manual (passo a passo)
 
 ### 1. Infraestrutura (Docker)
 
@@ -165,6 +189,9 @@ mvn clean package
 ```
 
 ### 3. Suba os serviços (Eureka primeiro)
+
+Defina o profile `dev` antes (o gateway e o auth-service recusam iniciar com o segredo default fora de `dev`):
+`export SPRING_PROFILES_ACTIVE=dev` (Linux/Mac) · `$env:SPRING_PROFILES_ACTIVE="dev"` (PowerShell).
 
 ```bash
 java -jar discovery-server/target/discovery-server-0.1.0.jar       # 8761 (primeiro!)
