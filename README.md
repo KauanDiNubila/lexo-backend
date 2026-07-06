@@ -4,6 +4,8 @@
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-6DB33F)
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2024.0-6DB33F)
+![Kafka](https://img.shields.io/badge/Apache%20Kafka-231F20)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB)
 ![Gemini](https://img.shields.io/badge/IA-Google%20Gemini-8E75FF)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
