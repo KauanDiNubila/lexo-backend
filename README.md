@@ -1,4 +1,4 @@
-# ⚖️ Lexo — Plataforma Jurídica em Microserviços (Full-Stack + IA)
+# Lexo — Plataforma Jurídica em Microserviços (Full-Stack + IA)
 
 ![CI](https://github.com/KauanDiNubila/lexo-backend/actions/workflows/ci.yml/badge.svg)
 ![Java](https://img.shields.io/badge/Java-21-orange)
@@ -14,20 +14,20 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ---
 
-## ✨ Destaques
+## Destaques
 
 - **8 microserviços** com service discovery (Eureka), API Gateway e banco-por-serviço (PostgreSQL).
 - **Segurança distribuída**: o gateway valida o JWT e injeta identidade em headers de confiança; anti-spoofing e isolamento multi-tenant em toda query.
 - **Resiliência**: *circuit breaker* (Resilience4j) com *fallback* nas chamadas entre serviços — a queda de um serviço não derruba os outros.
 - **Observabilidade**: *tracing* distribuído (Micrometer + Zipkin) — uma requisição é rastreável de ponta a ponta, incluindo os saltos Feign.
 - **Mensageria**: eventos de domínio (Kafka) para auditoria *event-driven* e fila de e-mails (RabbitMQ) com *retry* + *dead-letter queue*.
-- **🤖 Lexo IA (real)**: resumo de processo, assistente jurídico (chat) e rascunho de petição via **Google Gemini**, num microserviço dedicado — com *fallback* heurístico que roda **sem chave e custo zero**.
-- **🔗 Portal do cliente**: link público (*magic link*, sem login) onde o cliente acompanha processos, prazos, andamentos e financeiro em tempo real.
+- **Lexo IA (real)**: resumo de processo, assistente jurídico (chat) e rascunho de petição via **Google Gemini**, num microserviço dedicado — com *fallback* heurístico que roda **sem chave e custo zero**.
+- **Portal do cliente**: link público (*magic link*, sem login) onde o cliente acompanha processos, prazos, andamentos e financeiro em tempo real.
 - **Frontend completo** (React + Vite + TypeScript): landing page, app do escritório e portal, no mesmo repositório.
 
 ---
 
-## 🎬 Demo
+## Demo
 
 ![Demo do Lexo](docs/demo.gif)
 
@@ -35,7 +35,7 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ---
 
-## 🏗️ Arquitetura
+## Arquitetura
 
 ```
                         ┌───────────────────────────┐
@@ -79,7 +79,7 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ---
 
-## 🔀 Padrões de comunicação
+## Padrões de comunicação
 
 | Padrão | Tecnologia | Onde |
 |--------|-----------|------|
@@ -91,7 +91,7 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ---
 
-## 🔒 Segurança distribuída
+## Segurança distribuída
 
 - O **gateway** é o único ponto que valida o **JWT** (HS256, segredo compartilhado).
 - Após validar, injeta a identidade em headers de confiança: `X-User-Id`, `X-Org-Id`, `X-User-Role`, `X-User-Name`, `X-User-Email`.
@@ -104,7 +104,7 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ---
 
-## 🤖 Lexo IA
+## Lexo IA
 
 Um microserviço dedicado (`ia-service`) que integra o **Google Gemini** (free tier). Sem chave configurada, ele responde com um *fallback* heurístico — o produto **funciona e demonstra a arquitetura com custo zero**, e "liga" a IA real ao definir a variável `GEMINI_API_KEY`.
 
@@ -118,7 +118,7 @@ Um microserviço dedicado (`ia-service`) que integra o **Google Gemini** (free t
 
 ---
 
-## 🖥️ Frontend (`/frontend`)
+## Frontend (`/frontend`)
 
 SPA em **React + Vite + TypeScript** que consome o backend via gateway:
 
@@ -134,7 +134,7 @@ npm run dev          # http://localhost:5173
 
 ---
 
-## 🧰 Stack
+## Stack
 
 | Camada | Tecnologia |
 |--------|-----------|
@@ -149,7 +149,7 @@ npm run dev          # http://localhost:5173
 
 ---
 
-## ▶️ Como rodar
+## Como rodar
 
 ### Opção 1 — Docker (recomendado): sobe TUDO com um comando
 
@@ -239,7 +239,7 @@ Painéis úteis: **Eureka** (8761) · **Zipkin** (9411) · **Mailpit** (8025) ·
 
 ---
 
-## 🗺️ Portas
+## Portas
 
 | Porta | O quê |
 |-------|-------|
@@ -252,7 +252,7 @@ Painéis úteis: **Eureka** (8761) · **Zipkin** (9411) · **Mailpit** (8025) ·
 
 ---
 
-## 🧪 Testes
+## Testes
 
 ```bash
 mvn test
@@ -262,7 +262,7 @@ Testes unitários (validação CPF/CNPJ, risco de prazo, JWT) e de integração 
 
 ---
 
-## 📁 Estrutura
+## Estrutura
 
 ```
 lexo-backend/
@@ -283,7 +283,7 @@ lexo-backend/
 
 ---
 
-## 🛣️ Roadmap
+## Roadmap
 
 - Config Server centralizado e biblioteca compartilhada para o código de segurança comum.
 - Captura de publicações (DJe) → geração automática de prazos.
