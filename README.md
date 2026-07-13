@@ -18,7 +18,7 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ## Destaques
 
-- **8 microserviços** com service discovery (Eureka), API Gateway e banco-por-serviço (PostgreSQL).
+- **9 microserviços** com service discovery (Eureka), API Gateway e banco-por-serviço (PostgreSQL).
 - **Segurança distribuída**: o gateway valida o JWT e injeta identidade em headers de confiança; anti-spoofing e isolamento multi-tenant em toda query.
 - **Resiliência**: *circuit breaker* (Resilience4j) com *fallback* nas chamadas entre serviços — a queda de um serviço não derruba os outros.
 - **Observabilidade**: *tracing* distribuído (Micrometer + Zipkin) — uma requisição é rastreável de ponta a ponta, incluindo os saltos Feign.
