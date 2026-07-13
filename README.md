@@ -1,4 +1,4 @@
-# Lexo — Plataforma Jurídica em Microserviços (Full-Stack + IA)
+# Lexo — Plataforma Jurídica em Microserviços
 
 ![CI](https://github.com/KauanDiNubila/lexo-backend/actions/workflows/ci.yml/badge.svg)
 ![Java](https://img.shields.io/badge/Java-21-orange)
