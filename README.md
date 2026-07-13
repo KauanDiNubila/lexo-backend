@@ -39,31 +39,48 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ## Arquitetura
 
+```mermaid
+flowchart TB
+    FE["Frontend React + Portal do cliente"] --> GW["API Gateway :8080<br/>valida JWT · injeta X-User-* · roteia"]
+    GW -. descobre .-> EUREKA["Eureka :8761"]
+
+    GW --> AUTH["auth :8082"]
+    GW --> CLI["cliente :8083"]
+    GW --> PROC["processo :8086"]
+    GW --> FIN["financeiro :8081"]
+    GW --> IA["ia :8087"]
+    GW --> AUD["auditoria :8084"]
+
+    AUTH --> DBA[("lexo_auth")]
+    CLI --> DBC[("lexo_cliente")]
+    PROC --> DBP[("lexo_processo")]
+    FIN --> DBF[("lexo_financeiro")]
+    AUD --> DBAU[("lexo_auditoria")]
+
+    PROC -- Feign --> CLI
+    PROC -- Feign --> AUTH
+    FIN -- Feign --> CLI
+    FIN -- Feign --> PROC
+    CLI -- Feign portal --> PROC
+    CLI -- Feign portal --> FIN
+
+    CLI -- eventos --> KAFKA[["Apache Kafka"]]
+    PROC -- eventos --> KAFKA
+    KAFKA --> AUD
+    AUTH -- email --> RABBIT[["RabbitMQ + DLQ"]]
+    PROC -- email --> RABBIT
+    RABBIT --> NOT["notificacao :8085"]
+    CLI -. cache .-> REDIS[["Redis"]]
+    PROC -. cache .-> REDIS
+    IA --> GEMINI["Google Gemini"]
 ```
-                        ┌───────────────────────────┐
-     Frontend (React) ─▶│        API Gateway         │  valida JWT · injeta X-User-* · roteia
-     Portal do cliente  │        (porta 8080)        │
-                        └─────────────┬──────────────┘
-                                      │  descobre serviços via Eureka (8761)
-   ┌──────────┬──────────┬───────────┼───────────┬────────────┬───────────┬──────────┐
-   ▼          ▼          ▼           ▼           ▼            ▼           ▼          ▼
-┌───────┐ ┌───────┐ ┌─────────┐ ┌─────────┐ ┌──────────┐ ┌───────────┐ ┌────────┐  │
-│ auth  │ │cliente│ │auditoria│ │processo │ │financeiro│ │notificacao│ │   ia   │  │
-│ 8082  │ │ 8083  │ │  8084   │ │  8086   │ │  8081    │ │   8085    │ │  8087  │  │
-└───┬───┘ └───┬───┘ └────▲────┘ └────┬────┘ └────┬─────┘ └─────▲─────┘ └───┬────┘  │
-    │         │          │           │           │             │           │       │
-    │         │   consome eventos    │ publica   │  Feign       │ consome   │ Google│
-    │         └─ publica ─┐          │ eventos   │ (cliente +   │ fila de   │ Gemini│
-    │            eventos  ▼          ▼           │  processo)   │ e-mails   ▼       │
-    │                ┌─────────┐                 │              │       (free tier) │
-    │                │  KAFKA  │                 │              │                   │
-    │                └─────────┘                 │              │                   │
-    └──── Feign ──────┐  ┌──── Feign ────────────┘        ┌─────┴─────┐             │
-   (responsavelId)    ▼  ▼  (clientId / caseId)           │ RABBITMQ  │             │
-                  (validação síncrona + circuit breaker)  │fila e-mails│            │
-                                                          └───────────┘             │
-   Portal do cliente ── cliente-service agrega (Feign) ── processo + financeiro ────┘
-```
+
+**Por que estas decisões?**
+
+- **Microserviços** — para exercitar arquitetura distribuída (discovery, gateway, resiliência, observabilidade). Para um produto real em estágio inicial, um monólito modular seria mais pragmático; aqui o objetivo é dominar os padrões.
+- **Banco por serviço** — cada serviço evolui e escala de forma independente; o custo é não ter `JOIN` entre domínios, resolvido com Feign (síncrono) e eventos (assíncrono).
+- **Kafka *e* RabbitMQ** — não é redundância: Kafka é um *log de eventos* durável para vários consumidores (auditoria); RabbitMQ é uma *fila de tarefas* com retry/DLQ para trabalho pontual (e-mail).
+- **Autenticação no gateway** — o JWT é validado uma vez na borda, que injeta a identidade nos serviços; eles não revalidam o token e permanecem simples e stateless.
 
 ### Serviços
 
