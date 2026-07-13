@@ -79,7 +79,7 @@ flowchart TB
 
 - **Microserviços** — para exercitar arquitetura distribuída (discovery, gateway, resiliência, observabilidade). Para um produto real em estágio inicial, um monólito modular seria mais pragmático; aqui o objetivo é dominar os padrões.
 - **Banco por serviço** — cada serviço evolui e escala de forma independente; o custo é não ter `JOIN` entre domínios, resolvido com Feign (síncrono) e eventos (assíncrono).
-- **Kafka *e* RabbitMQ** — não é redundância: Kafka é um *log de eventos* durável para vários consumidores (auditoria); RabbitMQ é uma *fila de tarefas* com retry/DLQ para trabalho pontual (e-mail).
+- **Kafka *e* RabbitMQ** — Kafka é um *log de eventos* durável para vários consumidores (auditoria); RabbitMQ é uma *fila de tarefas* com retry/DLQ para trabalho pontual (e-mail).
 - **Autenticação no gateway** — o JWT é validado uma vez na borda, que injeta a identidade nos serviços; eles não revalidam o token e permanecem simples e stateless.
 
 ### Serviços
