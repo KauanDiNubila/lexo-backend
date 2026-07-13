@@ -108,6 +108,16 @@ flowchart TB
 | **Cache** | Redis | cache de leitura (chave por tenant) + rate limiting de login |
 | **Autenticação interna** | Header `X-Internal-Key` | protege os endpoints `/internal/**` (serviço-a-serviço) |
 
+### Cache (Redis)
+
+Os serviços de leitura mais pesada (cliente e processo) usam **cache-aside** com Redis:
+na primeira leitura o resultado é gravado no cache com **chave por organização**
+(`organizationId`) e **TTL** configurável; nas escritas (criar/atualizar/excluir) o
+cache daquela organização é **invalidado** (`@CacheEvict`), evitando servir dado
+desatualizado. Como a chave inclui o *tenant*, um escritório nunca lê o cache de
+outro. O Redis também mantém o **rate limiting de login** (contador com expiração),
+compartilhado entre todas as instâncias do auth-service.
+
 ---
 
 ## Segurança distribuída
