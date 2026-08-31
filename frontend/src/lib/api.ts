@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8080";
+const BASE = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8090";
 
 export class ApiError extends Error {
   readonly status: number;

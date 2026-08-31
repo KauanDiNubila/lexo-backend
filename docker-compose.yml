@@ -207,7 +207,7 @@ services:
       <<: *infra-env
       LEXO_EUREKA_HOSTNAME: api-gateway
     ports:
-      - "8080:8080"
+      - "8090:8090"
     depends_on:
       discovery-server:
         condition: service_started

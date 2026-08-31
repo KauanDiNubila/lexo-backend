@@ -62,6 +62,6 @@ Write-Host "  > frontend" -ForegroundColor Green
 Write-Host ""
 Write-Host "Tudo iniciando. Aguarde ~30-40s (os servicos registram no Eureka) e acesse:" -ForegroundColor Cyan
 Write-Host "   Frontend:  http://localhost:5173"
-Write-Host "   Gateway:   http://localhost:8080/api/health"
+Write-Host "   Gateway:   http://localhost:8090/api/health"
 Write-Host "   Eureka:    http://localhost:8761"
 Write-Host "   Logs:      scripts\logs\"

@@ -1,7 +1,7 @@
 # Lexo Web — Frontend
 
 SPA (React + Vite + TypeScript) que consome a API de microserviços do Lexo através do
-**API Gateway** (`http://localhost:8080`). Tema escuro próprio.
+**API Gateway** (`http://localhost:8090`). Tema escuro próprio.
 
 ## Telas
 
@@ -24,7 +24,7 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-A URL do gateway vem de `VITE_GATEWAY_URL` (`.env`), com fallback para `http://localhost:8080`.
+A URL do gateway vem de `VITE_GATEWAY_URL` (`.env`), com fallback para `http://localhost:8090`.
 
 ## Arquitetura da integração
 

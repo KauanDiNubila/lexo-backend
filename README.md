@@ -41,7 +41,7 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ```mermaid
 flowchart TB
-    FE["Frontend React + Portal do cliente"] --> GW["API Gateway :8080<br/>valida JWT · injeta X-User-* · roteia"]
+    FE["Frontend React + Portal do cliente"] --> GW["API Gateway :8090<br/>valida JWT · injeta X-User-* · roteia"]
     GW -. descobre .-> EUREKA["Eureka :8761"]
 
     GW --> AUTH["auth :8082"]
@@ -87,7 +87,7 @@ flowchart TB
 | Serviço | Porta | Banco | Responsabilidade |
 |---------|-------|-------|------------------|
 | **discovery-server** | 8761 | — | Eureka: registro e descoberta de serviços |
-| **api-gateway** | 8080 | — | Porta de entrada única; valida JWT e roteia |
+| **api-gateway** | 8090 | — | Porta de entrada única; valida JWT e roteia |
 | **auth-service** | 8082 | `lexo-auth-db` (5434) | Autenticação, usuários, organizações, 2FA, equipe |
 | **cliente-service** | 8083 | `lexo-cliente-db` (5435) | Clientes (CPF/CNPJ) + agregação do portal do cliente |
 | **processo-service** | 8086 | `lexo-processo-db` (5437) | Processos, agenda (prazos), andamentos e atividades |
@@ -191,7 +191,7 @@ docker compose up -d --build
 Aguarde ~1-2 min (registro no Eureka) e acesse:
 
 - **Frontend**: http://localhost:3000
-- **Gateway**: http://localhost:8080 · **Eureka**: http://localhost:8761
+- **Gateway**: http://localhost:8090 · **Eureka**: http://localhost:8761
 - **Zipkin**: http://localhost:9411 · **Mailpit**: http://localhost:8025 · **RabbitMQ**: http://localhost:15673 (guest/guest)
 
 ```bash
@@ -251,17 +251,17 @@ setx GEMINI_API_KEY "sua-chave-do-aistudio"
 
 Sem a chave, a Lexo IA roda em modo *fallback* (mock) — nada quebra.
 
-### 5. Use a API (tudo pelo gateway, porta 8080)
+### 5. Use a API (tudo pelo gateway, porta 8090)
 
 ```bash
 # Registrar (rota pública)
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8090/api/auth/register \
   -H 'Content-Type: application/json' \
   -d '{"organizationName":"Meu Escritorio","name":"Ana","email":"ana@x.com",
        "password":"senha12345","confirmPassword":"senha12345"}'
 
 # Usar o token retornado nas rotas protegidas
-curl http://localhost:8080/api/clientes -H "Authorization: Bearer <TOKEN>"
+curl http://localhost:8090/api/clientes -H "Authorization: Bearer <TOKEN>"
 ```
 
 Painéis úteis: **Eureka** (8761) · **Zipkin** (9411) · **Mailpit** (8025) · **RabbitMQ** (15673, guest/guest).
@@ -272,7 +272,7 @@ Painéis úteis: **Eureka** (8761) · **Zipkin** (9411) · **Mailpit** (8025) ·
 
 | Porta | O quê |
 |-------|-------|
-| 8080 | API Gateway (entrada única) |
+| 8090 | API Gateway (entrada única) |
 | 8081–8087 | Serviços (financeiro, auth, cliente, auditoria, notificacao, processo, ia) |
 | 8761 | Eureka |
 | 5173 | Frontend (Vite) |

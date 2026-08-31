@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Scale, Briefcase, CalendarClock, Wallet, History } from "lucide-react";
 
-const BASE = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8080";
+const BASE = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8090";
 
 type PrazoPortal = { title: string; type: string; status: string; date: string };
 type AndamentoPortal = { title: string; description: string | null; date: string };
