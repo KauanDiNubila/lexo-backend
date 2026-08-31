@@ -1,13 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Users, Briefcase, AlarmClock, Wallet, Sparkles, type LucideIcon } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 
-type Cliente = { id: string };
-type Processo = { id: string; number: string; status: string };
 type Prazo = { id: string; title: string; status: string; date: string; risk: string | null };
-type Honorario = { id: string; amount: number; status: string };
 
 const moeda = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
@@ -18,7 +15,6 @@ const corStatusProcesso: Record<string, string> = {
   ENCERRADO: "#f87171",
 };
 
-const DIA = 86_400_000;
 
 function formatarData(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
@@ -121,64 +117,49 @@ function TituloSecao({ texto, link, para }: { texto: string; link: string; para:
 
 export function Dashboard() {
   const { usuario } = useAuth();
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [processos, setProcessos] = useState<Processo[]>([]);
-  const [prazos, setPrazos] = useState<Prazo[]>([]);
-  const [honorarios, setHonorarios] = useState<Honorario[]>([]);
+  const [m, setM] = useState({
+    totalClientes: 0,
+    totalProcessos: 0,
+    ativos: 0,
+    porStatus: {} as Record<string, number>,
+    urgentes: 0,
+    vencidos: 0,
+    proximos: [] as Prazo[],
+    emAberto: 0,
+    recebido: 0,
+  });
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
     Promise.allSettled([
-      api.get<Cliente[]>("/api/clientes"),
-      api.get<Processo[]>("/api/processos"),
-      api.get<Prazo[]>("/api/agenda"),
-      api.get<Honorario[]>("/api/financeiro"),
+      api.get<{ total: number }>("/api/clientes/resumo"),
+      api.get<{ total: number; ativos: number; porStatus: Record<string, number> }>("/api/processos/resumo"),
+      api.get<{ urgentes: number; vencidos: number; proximos: Prazo[] }>("/api/agenda/resumo"),
+      api.get<{ emAberto: number; recebido: number }>("/api/financeiro/resumo"),
     ]).then(([c, p, a, f]) => {
-      if (c.status === "fulfilled") setClientes(c.value);
-      if (p.status === "fulfilled") setProcessos(p.value);
-      if (a.status === "fulfilled") setPrazos(a.value);
-      if (f.status === "fulfilled") setHonorarios(f.value);
+      setM((atual) => ({
+        ...atual,
+        totalClientes: c.status === "fulfilled" ? c.value.total : 0,
+        totalProcessos: p.status === "fulfilled" ? p.value.total : 0,
+        ativos: p.status === "fulfilled" ? p.value.ativos : 0,
+        porStatus: p.status === "fulfilled" ? p.value.porStatus : {},
+        urgentes: a.status === "fulfilled" ? a.value.urgentes : 0,
+        vencidos: a.status === "fulfilled" ? a.value.vencidos : 0,
+        proximos: a.status === "fulfilled" ? a.value.proximos : [],
+        emAberto: f.status === "fulfilled" ? f.value.emAberto : 0,
+        recebido: f.status === "fulfilled" ? f.value.recebido : 0,
+      }));
       setCarregando(false);
     });
   }, []);
 
-  const m = useMemo(() => {
-    const agora = Date.now();
-    const em7dias = agora + 7 * DIA;
-    const abertos = prazos.filter((p) => p.status !== "CONCLUIDO");
-    const urgentes = abertos.filter((p) => {
-      const t = new Date(p.date).getTime();
-      return !Number.isNaN(t) && t <= em7dias;
-    });
-    const proximos = [...abertos]
-      .filter((p) => !Number.isNaN(new Date(p.date).getTime()))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 5);
-    const emAberto = honorarios
-      .filter((h) => h.status === "PENDENTE" || h.status === "ATRASADO")
-      .reduce((s, h) => s + h.amount, 0);
-    const recebido = honorarios.filter((h) => h.status === "PAGO").reduce((s, h) => s + h.amount, 0);
-    const porStatus = processos.reduce<Record<string, number>>((acc, p) => {
-      acc[p.status] = (acc[p.status] || 0) + 1;
-      return acc;
-    }, {});
-    return {
-      ativos: processos.filter((p) => p.status === "ATIVO").length,
-      urgentes,
-      proximos,
-      emAberto,
-      recebido,
-      porStatus,
-      vencidos: abertos.filter((p) => new Date(p.date).getTime() < agora).length,
-    };
-  }, [processos, prazos, honorarios]);
 
   const primeiroNome = usuario?.name?.split(" ")[0];
 
   const metricas: Metrica[] = [
-    { rotulo: "Clientes", valor: carregando ? "—" : clientes.length, icone: Users, cor: "#6366f1", grad: "linear-gradient(135deg,#818cf8,#6366f1)", para: "/app/clientes" },
-    { rotulo: "Processos ativos", valor: carregando ? "—" : m.ativos, sub: `${processos.length} no total`, icone: Briefcase, cor: "#34d399", grad: "linear-gradient(135deg,#34d399,#10b981)", para: "/app/processos" },
-    { rotulo: "Prazos urgentes", valor: carregando ? "—" : m.urgentes.length, sub: m.vencidos ? `${m.vencidos} vencido(s)` : "próximos 7 dias", icone: AlarmClock, cor: "#fbbf24", grad: "linear-gradient(135deg,#fbbf24,#f59e0b)", para: "/app/agenda" },
+    { rotulo: "Clientes", valor: carregando ? "—" : m.totalClientes, icone: Users, cor: "#6366f1", grad: "linear-gradient(135deg,#818cf8,#6366f1)", para: "/app/clientes" },
+    { rotulo: "Processos ativos", valor: carregando ? "—" : m.ativos, sub: `${m.totalProcessos} no total`, icone: Briefcase, cor: "#34d399", grad: "linear-gradient(135deg,#34d399,#10b981)", para: "/app/processos" },
+    { rotulo: "Prazos urgentes", valor: carregando ? "—" : m.urgentes, sub: m.vencidos ? `${m.vencidos} vencido(s)` : "próximos 7 dias", icone: AlarmClock, cor: "#fbbf24", grad: "linear-gradient(135deg,#fbbf24,#f59e0b)", para: "/app/agenda" },
     { rotulo: "Em aberto", valor: carregando ? "—" : moeda(m.emAberto), sub: `recebido: ${moeda(m.recebido)}`, icone: Wallet, cor: "#a78bfa", grad: "linear-gradient(135deg,#c084fc,#8b5cf6)", para: "/app/financeiro" },
   ];
 
@@ -224,9 +205,9 @@ export function Dashboard() {
             <span style={{ fontSize: 12.5, fontWeight: 700, color: "#c7d2fe", letterSpacing: 0.2 }}>Resumo do dia</span>
           </div>
           <p style={{ fontSize: 14.5, margin: 0, color: "var(--color-text)", lineHeight: 1.55 }}>
-            {m.urgentes.length > 0 ? (
+            {m.urgentes > 0 ? (
               <>
-                Você tem <b>{m.urgentes.length} prazo(s)</b> nos próximos 7 dias
+                Você tem <b>{m.urgentes} prazo(s)</b> nos próximos 7 dias
                 {m.vencidos > 0 && <> (<b style={{ color: "var(--color-danger)" }}>{m.vencidos} já vencido(s)</b>)</>}.{" "}
               </>
             ) : (
@@ -271,13 +252,13 @@ export function Dashboard() {
           <TituloSecao texto="Processos por status" link="Ver todos" para="/app/processos" />
           {carregando ? (
             <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Carregando...</div>
-          ) : processos.length === 0 ? (
+          ) : m.totalProcessos === 0 ? (
             <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Nenhum processo cadastrado.</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               {["ATIVO", "SUSPENSO", "ARQUIVADO", "ENCERRADO"].map((s) => {
                 const qtd = m.porStatus[s] || 0;
-                const pct = processos.length ? (qtd / processos.length) * 100 : 0;
+                const pct = m.totalProcessos ? (qtd / m.totalProcessos) * 100 : 0;
                 const cor = corStatusProcesso[s];
                 return (
                   <div key={s}>

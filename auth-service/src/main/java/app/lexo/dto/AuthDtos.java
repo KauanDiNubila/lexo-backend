@@ -36,7 +36,7 @@ public final class AuthDtos {
     }
 
     public record AuthResponse(
-            String token,
+            String accessToken,
             UserInfo user
     ) {
     }

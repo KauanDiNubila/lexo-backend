@@ -10,16 +10,17 @@ import app.lexo.dto.PortalDtos.ProcessoPortal;
 import app.lexo.repository.ClientRepository;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.security.Role;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +37,7 @@ class PortalServiceTest {
 
     private static final String ORG = "org-123";
     private static final String TOKEN = "token-abc";
+    private static final long VALIDADE_DIAS = 90;
 
     @Mock
     private ClientRepository repo;
@@ -46,8 +48,12 @@ class PortalServiceTest {
     @Mock
     private FinanceiroPortalClient financeiroClient;
 
-    @InjectMocks
     private PortalService service;
+
+    @BeforeEach
+    void montarServico() {
+        service = new PortalService(repo, processoClient, financeiroClient, VALIDADE_DIAS);
+    }
 
     private AuthUser usuario() {
         return new AuthUser("user-1", ORG, "Ana", "ana@x.com", Role.ADMIN);
@@ -59,6 +65,7 @@ class PortalServiceTest {
         c.setOrganizationId(ORG);
         c.setName("Cliente Portal");
         c.setPortalToken(TOKEN);
+        c.setPortalTokenExpiresAt(Instant.now().plus(VALIDADE_DIAS, ChronoUnit.DAYS));
         return c;
     }
 
@@ -79,6 +86,8 @@ class PortalServiceTest {
 
         assertThat(token).isNotBlank();
         assertThat(c.getPortalToken()).isEqualTo(token);
+        assertThat(c.getPortalTokenExpiresAt()).isAfter(Instant.now());
+        assertThat(c.portalAtivo()).isTrue();
         verify(repo).save(c);
     }
 
@@ -136,5 +145,31 @@ class PortalServiceTest {
         assertThatThrownBy(() -> service.porToken(TOKEN))
                 .isInstanceOf(ApiException.class)
                 .satisfies(e -> assertThat(((ApiException) e).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    @DisplayName("porToken lanca 404 quando o token expirou")
+    void porTokenExpirado() {
+        Client c = clienteComToken();
+        c.setPortalTokenExpiresAt(Instant.now().minus(1, ChronoUnit.DAYS));
+        when(repo.findByPortalToken(TOKEN)).thenReturn(Optional.of(c));
+
+        assertThatThrownBy(() -> service.porToken(TOKEN))
+                .isInstanceOf(ApiException.class)
+                .satisfies(e -> assertThat(((ApiException) e).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    @DisplayName("revogarToken apaga o token e a validade")
+    void revogarTokenLimpaOAcesso() {
+        Client c = clienteComToken();
+        when(repo.findByIdAndOrganizationId("c1", ORG)).thenReturn(Optional.of(c));
+
+        service.revogarToken(usuario(), "c1");
+
+        assertThat(c.getPortalToken()).isNull();
+        assertThat(c.getPortalTokenExpiresAt()).isNull();
+        assertThat(c.portalAtivo()).isFalse();
+        verify(repo).save(c);
     }
 }

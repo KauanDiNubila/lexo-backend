@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
+import java.util.List;
 
 public final class DeadlineDtos {
 
@@ -45,5 +46,8 @@ public final class DeadlineDtos {
                     d.getId(), d.getCaseId(), d.getTitle(), d.getType(), d.getStatus(),
                     d.getDate(), d.getDescription(), level == null ? null : level.name());
         }
+    }
+
+    public record ResumoAgenda(long urgentes, long vencidos, List<DeadlineResponse> proximos) {
     }
 }

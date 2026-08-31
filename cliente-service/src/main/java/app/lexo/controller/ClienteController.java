@@ -1,10 +1,16 @@
 package app.lexo.controller;
 
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.web.Pagina;
+import app.lexo.dto.ClientDtos.ClienteOpcao;
 import app.lexo.dto.ClientDtos.ClientRequest;
 import app.lexo.dto.ClientDtos.ClientResponse;
-import app.lexo.common.security.AuthUser;
+import app.lexo.dto.ClientDtos.ResumoClientes;
 import app.lexo.service.ClienteService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,8 +37,21 @@ public class ClienteController {
     }
 
     @GetMapping
-    public List<ClientResponse> list(@AuthenticationPrincipal AuthUser me) {
-        return service.listar(me);
+    public Pagina<ClientResponse> list(
+            @AuthenticationPrincipal AuthUser me,
+            @RequestParam(required = false) String q,
+            @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+        return service.listar(me, q, pageable);
+    }
+
+    @GetMapping("/opcoes")
+    public List<ClienteOpcao> opcoes(@AuthenticationPrincipal AuthUser me) {
+        return service.opcoes(me);
+    }
+
+    @GetMapping("/resumo")
+    public ResumoClientes resumo(@AuthenticationPrincipal AuthUser me) {
+        return service.resumo(me);
     }
 
     @GetMapping("/{id}")

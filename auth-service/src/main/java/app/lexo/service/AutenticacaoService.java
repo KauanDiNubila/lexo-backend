@@ -1,14 +1,14 @@
 package app.lexo.service;
 
+import app.lexo.common.security.Role;
+import app.lexo.common.web.ApiException;
+import app.lexo.common.web.ErrorCode;
 import app.lexo.domain.Organization;
 import app.lexo.domain.User;
-import app.lexo.common.security.Role;
 import app.lexo.dto.AuthDtos;
 import app.lexo.repository.OrganizationRepository;
 import app.lexo.repository.UserRepository;
 import app.lexo.security.JwtService;
-import app.lexo.common.web.ApiException;
-import app.lexo.common.web.ErrorCode;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +18,13 @@ import java.time.temporal.ChronoUnit;
 
 @Service
 public class AutenticacaoService {
+
+    private static final String HASH_DUMMY =
+            "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
+    private static final int TENTATIVAS_POR_EMAIL = 10;
+    private static final int TENTATIVAS_POR_IP = 30;
+    private static final long JANELA_SEGUNDOS = 15 * 60;
 
     private final UserRepository userRepo;
     private final OrganizationRepository orgRepo;
@@ -39,12 +46,17 @@ public class AutenticacaoService {
         this.totp = totp;
     }
 
+    public static String normalizarEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
     @Transactional
     public AuthDtos.AuthResponse registrar(AuthDtos.RegisterRequest req) {
         if (!req.password().equals(req.confirmPassword())) {
             throw ApiException.badRequest(ErrorCode.SENHAS_NAO_COINCIDEM, "As senhas não coincidem");
         }
-        if (userRepo.existsByEmail(req.email())) {
+        String email = normalizarEmail(req.email());
+        if (userRepo.existsByEmail(email)) {
             throw ApiException.conflict(ErrorCode.EMAIL_EM_USO, "Já existe um usuário com este email");
         }
 
@@ -56,7 +68,7 @@ public class AutenticacaoService {
         User user = new User();
         user.setOrganizationId(org.getId());
         user.setName(req.name());
-        user.setEmail(req.email());
+        user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(req.password()));
         user.setRole(Role.ADMIN);
         user = userRepo.save(user);
@@ -65,16 +77,27 @@ public class AutenticacaoService {
     }
 
     @Transactional(readOnly = true)
-    public AuthDtos.AuthResponse login(AuthDtos.LoginRequest req) {
+    public AuthDtos.AuthResponse login(AuthDtos.LoginRequest req, String ip) {
+        String email = normalizarEmail(req.email());
+        String chaveEmail = "login:email:" + email;
+        String chaveIp = ip == null ? null : "login:ip:" + ip;
 
-        String key = "login:" + req.email().toLowerCase();
-        if (!rateLimit.verificar(key, 10, 15 * 60)) {
+        boolean dentroDoLimite = rateLimit.verificar(chaveEmail, TENTATIVAS_POR_EMAIL, JANELA_SEGUNDOS);
+        if (chaveIp != null) {
+            dentroDoLimite &= rateLimit.verificar(chaveIp, TENTATIVAS_POR_IP, JANELA_SEGUNDOS);
+        }
+        if (!dentroDoLimite) {
             throw ApiException.unauthorized(
                     ErrorCode.CREDENCIAIS_INVALIDAS, "Email ou senha inválidos");
         }
 
-        User user = userRepo.findByEmail(req.email()).orElse(null);
-        if (user == null || !passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+        User user = userRepo.findByEmail(email).orElse(null);
+        if (user == null) {
+            passwordEncoder.matches(req.password(), HASH_DUMMY);
+            throw ApiException.unauthorized(
+                    ErrorCode.CREDENCIAIS_INVALIDAS, "Email ou senha inválidos");
+        }
+        if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
             throw ApiException.unauthorized(
                     ErrorCode.CREDENCIAIS_INVALIDAS, "Email ou senha inválidos");
         }
@@ -92,6 +115,19 @@ public class AutenticacaoService {
             }
         }
 
+        rateLimit.limpar(chaveEmail);
+        if (chaveIp != null) {
+            rateLimit.limpar(chaveIp);
+        }
+
+        return new AuthDtos.AuthResponse(jwtService.issue(user), paraInfo(user));
+    }
+
+    @Transactional(readOnly = true)
+    public AuthDtos.AuthResponse paraSessao(String userId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> ApiException.unauthorized(
+                        ErrorCode.REFRESH_INVALIDO, "Sessão inválida. Faça login novamente."));
         return new AuthDtos.AuthResponse(jwtService.issue(user), paraInfo(user));
     }
 

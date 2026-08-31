@@ -12,10 +12,13 @@ import app.lexo.repository.ClientRepository;
 import app.lexo.common.security.AuthUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -29,12 +32,15 @@ public class PortalService {
     private final ClientRepository repo;
     private final ProcessoPortalClient processoClient;
     private final FinanceiroPortalClient financeiroClient;
+    private final long validadeDias;
 
     public PortalService(ClientRepository repo, ProcessoPortalClient processoClient,
-                         FinanceiroPortalClient financeiroClient) {
+                         FinanceiroPortalClient financeiroClient,
+                         @Value("${lexo.portal.token-validade-dias}") long validadeDias) {
         this.repo = repo;
         this.processoClient = processoClient;
         this.financeiroClient = financeiroClient;
+        this.validadeDias = validadeDias;
     }
 
     @Transactional
@@ -43,13 +49,24 @@ public class PortalService {
                 .orElseThrow(() -> ApiException.notFound("Cliente não encontrado"));
         c.setPortalToken(UUID.randomUUID().toString().replace("-", "")
                 + UUID.randomUUID().toString().replace("-", ""));
+        c.setPortalTokenExpiresAt(Instant.now().plus(validadeDias, ChronoUnit.DAYS));
         repo.save(c);
         return c.getPortalToken();
+    }
+
+    @Transactional
+    public void revogarToken(AuthUser me, String clientId) {
+        Client c = repo.findByIdAndOrganizationId(clientId, me.organizationId())
+                .orElseThrow(() -> ApiException.notFound("Cliente não encontrado"));
+        c.setPortalToken(null);
+        c.setPortalTokenExpiresAt(null);
+        repo.save(c);
     }
 
     @Transactional(readOnly = true)
     public PortalResponse porToken(String token) {
         Client c = repo.findByPortalToken(token)
+                .filter(Client::portalAtivo)
                 .orElseThrow(() -> ApiException.notFound("Link inválido ou expirado"));
         String org = c.getOrganizationId();
 

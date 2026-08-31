@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Map;
 
 public final class CaseDtos {
 
@@ -38,5 +39,14 @@ public final class CaseDtos {
                     c.getId(), c.getClientId(), c.getNumber(), c.getArea(),
                     c.getStatus(), c.getDescription(), c.getResponsavelId(), c.getCreatedAt());
         }
+    }
+
+    public record CaseOpcao(String id, String number, String clientId) implements Serializable {
+        public static CaseOpcao from(Case c) {
+            return new CaseOpcao(c.getId(), c.getNumber(), c.getClientId());
+        }
+    }
+
+    public record ResumoProcessos(long total, long ativos, Map<String, Long> porStatus) {
     }
 }

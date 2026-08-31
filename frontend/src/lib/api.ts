@@ -1,7 +1,5 @@
 const BASE = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8080";
 
-const TOKEN_KEY = "lexo_token";
-
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string | null;
@@ -14,43 +12,95 @@ export class ApiError extends Error {
   }
 }
 
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+localStorage.removeItem("lexo_token");
+
+let accessToken: string | null = null;
+
+export function getAccessToken(): string | null {
+  return accessToken;
 }
-export function setToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
+export function setAccessToken(token: string) {
+  accessToken = token;
 }
-export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
+export function clearAccessToken() {
+  accessToken = null;
+}
+
+function ehRotaDeAuth(path: string) {
+  return path.startsWith("/api/auth/");
+}
+
+function deslogarLocalmente() {
+  clearAccessToken();
+  if (window.location.pathname.startsWith("/app")) {
+    window.location.href = "/login";
+  }
+}
+
+async function erroDe(res: Response): Promise<ApiError> {
+  const data = await res.json().catch(() => null);
+  const msg = (data && (data.error as string)) || `Erro ${res.status}`;
+  const code = (data && (data.code as string)) || null;
+  return new ApiError(res.status, code, msg);
+}
+
+async function executarRefresh(): Promise<string> {
+  const res = await fetch(BASE + "/api/auth/refresh", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (!res.ok) throw await erroDe(res);
+
+  const data = await res.json();
+  accessToken = data.accessToken as string;
+  return accessToken;
+}
+
+let refreshEmAndamento: Promise<string> | null = null;
+
+export function renovarSessao(): Promise<string> {
+  refreshEmAndamento ??= executarRefresh().finally(() => {
+    refreshEmAndamento = null;
+  });
+  return refreshEmAndamento;
+}
+
+function enviar(method: string, path: string, body: unknown, token: string | null) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  return fetch(BASE + path, {
+    method,
+    headers,
+    credentials: "include",
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  let res = await enviar(method, path, body, accessToken);
 
-  const res = await fetch(BASE + path, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  if (res.status === 401 && !ehRotaDeAuth(path)) {
+    try {
+      const novoToken = await renovarSessao();
+      res = await enviar(method, path, body, novoToken);
+    } catch {
+      deslogarLocalmente();
+      throw new ApiError(401, "SESSAO_EXPIRADA", "Sessão expirada. Faça login novamente.");
+    }
+  }
 
   if (res.status === 204) return null as T;
 
-  const data = await res.json().catch(() => null);
   if (!res.ok) {
-
-    if (res.status === 401 && !path.startsWith("/api/auth/")) {
-      clearToken();
-      if (window.location.pathname.startsWith("/app")) {
-        window.location.href = "/login";
-      }
+    if (res.status === 401 && !ehRotaDeAuth(path)) {
+      deslogarLocalmente();
     }
-    const msg = (data && (data.error as string)) || `Erro ${res.status}`;
-    const code = (data && (data.code as string)) || null;
-    throw new ApiError(res.status, code, msg);
+    throw await erroDe(res);
   }
-  return data as T;
+
+  return (await res.json().catch(() => null)) as T;
 }
 
 export const api = {
@@ -59,4 +109,12 @@ export const api = {
   put: <T>(path: string, body?: unknown) => request<T>("PUT", path, body),
   patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, body),
   del: <T>(path: string) => request<T>("DELETE", path),
+};
+
+export type Pagina<T> = {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 };

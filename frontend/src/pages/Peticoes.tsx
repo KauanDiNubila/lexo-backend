@@ -24,8 +24,8 @@ export function Peticoes() {
 
   useEffect(() => {
     Promise.all([
-      api.get<Processo[]>("/api/processos").catch(() => [] as Processo[]),
-      api.get<Cliente[]>("/api/clientes").catch(() => [] as Cliente[]),
+      api.get<Processo[]>("/api/processos/opcoes").catch(() => [] as Processo[]),
+      api.get<Cliente[]>("/api/clientes/opcoes").catch(() => [] as Cliente[]),
     ]).then(([ps, cs]) => {
       setProcessos(ps);
       setClientes(cs);

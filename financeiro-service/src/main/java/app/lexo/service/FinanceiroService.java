@@ -6,15 +6,19 @@ import app.lexo.domain.enums.InvoiceStatus;
 import app.lexo.dto.InvoiceDtos.FinancialReport;
 import app.lexo.dto.InvoiceDtos.InvoiceRequest;
 import app.lexo.dto.InvoiceDtos.InvoiceResponse;
+import app.lexo.dto.InvoiceDtos.ResumoFinanceiro;
 import app.lexo.repository.InvoiceRepository;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
+import app.lexo.common.web.Pagina;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class FinanceiroService {
@@ -28,9 +32,16 @@ public class FinanceiroService {
     }
 
     @Transactional(readOnly = true)
-    public List<InvoiceResponse> listar(AuthUser me) {
-        return repo.findByOrganizationIdOrderByDueDateAsc(me.organizationId())
-                .stream().map(InvoiceResponse::from).toList();
+    public Pagina<InvoiceResponse> listar(AuthUser me, Pageable pageable) {
+        return Pagina.de(repo.findByOrganizationId(me.organizationId(), pageable), InvoiceResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public ResumoFinanceiro resumo(AuthUser me) {
+        String org = me.organizationId();
+        return new ResumoFinanceiro(
+                repo.somarPorStatus(org, Set.of(InvoiceStatus.PENDENTE, InvoiceStatus.ATRASADO)),
+                repo.somarPorStatus(org, Set.of(InvoiceStatus.PAGO)));
     }
 
     @Transactional
@@ -66,7 +77,18 @@ public class FinanceiroService {
 
     @Transactional
     public void excluir(AuthUser me, String id) {
-        repo.deleteByIdAndOrganizationId(id, me.organizationId());
+        Invoice i = carregar(me, id);
+        repo.delete(i);
+    }
+
+    @Transactional
+    public int excluirPorCliente(String organizationId, String clientId) {
+        return (int) repo.deleteByClientIdAndOrganizationId(clientId, organizationId);
+    }
+
+    @Transactional
+    public int desvincularProcesso(String organizationId, String caseId) {
+        return repo.desvincularProcesso(caseId, organizationId);
     }
 
     @Transactional(readOnly = true)

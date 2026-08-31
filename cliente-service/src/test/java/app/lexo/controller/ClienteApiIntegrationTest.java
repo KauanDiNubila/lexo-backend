@@ -127,7 +127,8 @@ class ClienteApiIntegrationTest {
 
         mvc.perform(get("/api/clientes").headers(comoGateway(id)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
@@ -157,7 +158,8 @@ class ClienteApiIntegrationTest {
 
         mvc.perform(get("/api/clientes").headers(comoGateway(b)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test

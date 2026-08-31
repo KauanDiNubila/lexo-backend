@@ -3,14 +3,19 @@ package app.lexo.service;
 import app.lexo.domain.Deadline;
 import app.lexo.dto.DeadlineDtos.DeadlineRequest;
 import app.lexo.dto.DeadlineDtos.DeadlineResponse;
+import app.lexo.dto.DeadlineDtos.ResumoAgenda;
 import app.lexo.domain.enums.DeadlineStatus;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.DeadlineRepository;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
+import app.lexo.common.web.Pagina;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -27,9 +32,26 @@ public class AgendaService {
     }
 
     @Transactional(readOnly = true)
-    public List<DeadlineResponse> listar(AuthUser me) {
-        return repo.findByOrganizationIdOrderByDateAsc(me.organizationId())
-                .stream().map(DeadlineResponse::from).toList();
+    public Pagina<DeadlineResponse> listar(AuthUser me, String caseId, Pageable pageable) {
+        var pagina = (caseId == null || caseId.isBlank())
+                ? repo.findByOrganizationId(me.organizationId(), pageable)
+                : repo.findByOrganizationIdAndCaseId(me.organizationId(), caseId, pageable);
+        return Pagina.de(pagina, DeadlineResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public ResumoAgenda resumo(AuthUser me) {
+        String org = me.organizationId();
+        Instant agora = Instant.now();
+        Instant em7dias = agora.plus(7, ChronoUnit.DAYS);
+
+        return new ResumoAgenda(
+                repo.countByOrganizationIdAndStatusAndDateBetween(
+                        org, DeadlineStatus.PENDENTE, agora, em7dias),
+                repo.countByOrganizationIdAndStatusAndDateBefore(
+                        org, DeadlineStatus.PENDENTE, agora),
+                repo.findTop5ByOrganizationIdAndStatusOrderByDateAsc(org, DeadlineStatus.PENDENTE)
+                        .stream().map(DeadlineResponse::from).toList());
     }
 
     @Transactional

@@ -56,4 +56,7 @@ public final class InvoiceDtos {
             List<InvoiceResponse> invoices
     ) {
     }
+
+    public record ResumoFinanceiro(BigDecimal emAberto, BigDecimal recebido) {
+    }
 }

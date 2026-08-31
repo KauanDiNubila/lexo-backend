@@ -13,4 +13,6 @@ public interface AndamentoRepository extends JpaRepository<Andamento, String> {
     List<Andamento> findByCaseIdInAndOrganizationIdOrderByDateDesc(List<String> caseIds, String organizationId);
 
     Optional<Andamento> findByIdAndOrganizationId(String id, String organizationId);
+
+    long deleteByCaseIdAndOrganizationId(String caseId, String organizationId);
 }

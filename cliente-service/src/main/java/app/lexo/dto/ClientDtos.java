@@ -28,13 +28,24 @@ public final class ClientDtos {
             String email,
             String phone,
             String notes,
-            String portalToken,
+            boolean portalAtivo,
+            Instant portalExpiraEm,
             Instant createdAt
     ) implements Serializable {
         public static ClientResponse from(Client c) {
             return new ClientResponse(
                     c.getId(), c.getName(), c.getDocument(), c.getEmail(),
-                    c.getPhone(), c.getNotes(), c.getPortalToken(), c.getCreatedAt());
+                    c.getPhone(), c.getNotes(), c.portalAtivo(),
+                    c.getPortalTokenExpiresAt(), c.getCreatedAt());
         }
+    }
+
+    public record ClienteOpcao(String id, String name) implements Serializable {
+        public static ClienteOpcao from(Client c) {
+            return new ClienteOpcao(c.getId(), c.getName());
+        }
+    }
+
+    public record ResumoClientes(long total) {
     }
 }

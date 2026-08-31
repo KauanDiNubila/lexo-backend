@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "clients", indexes = @Index(name = "idx_client_org", columnList = "organizationId"))
 public class Client extends BaseEntity {
@@ -24,6 +26,8 @@ public class Client extends BaseEntity {
 
     @Column(unique = true)
     private String portalToken;
+
+    private Instant portalTokenExpiresAt;
 
     public String getOrganizationId() {
         return organizationId;
@@ -79,5 +83,19 @@ public class Client extends BaseEntity {
 
     public void setPortalToken(String portalToken) {
         this.portalToken = portalToken;
+    }
+
+    public Instant getPortalTokenExpiresAt() {
+        return portalTokenExpiresAt;
+    }
+
+    public void setPortalTokenExpiresAt(Instant portalTokenExpiresAt) {
+        this.portalTokenExpiresAt = portalTokenExpiresAt;
+    }
+
+    public boolean portalAtivo() {
+        return portalToken != null
+                && portalTokenExpiresAt != null
+                && portalTokenExpiresAt.isAfter(Instant.now());
     }
 }

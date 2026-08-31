@@ -3,7 +3,7 @@ package app.lexo.service;
 import app.lexo.dto.ChatDtos.ChatRequest;
 import app.lexo.dto.ChatDtos.ChatResponse;
 import app.lexo.dto.ChatDtos.Mensagem;
-import app.lexo.dto.ChatDtos.ProcessoContexto;
+import app.lexo.dto.ProcessoContexto;
 import app.lexo.dto.IaDtos.PrazoCtx;
 import app.lexo.dto.IaDtos.ResumoProcessoRequest;
 import app.lexo.dto.IaDtos.ResumoResponse;

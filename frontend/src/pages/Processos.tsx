@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Sparkles } from "lucide-react";
-import { api } from "../lib/api";
+import { api, type Pagina } from "../lib/api";
+import { Paginacao } from "../components/Paginacao";
 import { Markdown } from "../components/Markdown";
 
 type Prazo = { id: string; caseId: string; title: string; status: string; date: string };
@@ -30,6 +31,9 @@ const FORM_VAZIO = { clientId: "", numero: "", area: "", status: "ATIVO" };
 export function Processos() {
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [pagina, setPagina] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [totalRegistros, setTotalRegistros] = useState(0);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
@@ -59,10 +63,15 @@ export function Processos() {
     setErro(null);
     try {
       const [ps, cs] = await Promise.all([
-        api.get<Processo[]>("/api/processos"),
-        api.get<Cliente[]>("/api/clientes"),
+        api.get<Pagina<Processo>>(
+          `/api/processos?page=${pagina}&q=${encodeURIComponent(busca.trim())}` +
+            (filtroStatus ? `&status=${filtroStatus}` : "")
+        ),
+        api.get<Cliente[]>("/api/clientes/opcoes"),
       ]);
-      setProcessos(ps);
+      setProcessos(ps.content);
+      setTotalPaginas(ps.totalPages);
+      setTotalRegistros(ps.totalElements);
       setClientes(cs);
     } catch (e) {
       setErro((e as Error).message);
@@ -72,20 +81,16 @@ export function Processos() {
   }
 
   useEffect(() => {
-    carregar();
-  }, []);
+    const timer = setTimeout(carregar, busca ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [pagina, busca, filtroStatus]);
+
+  useEffect(() => {
+    setPagina(0);
+  }, [busca, filtroStatus]);
 
   const nomeCliente = (id: string) => clientes.find((c) => c.id === id)?.name || "—";
 
-  const filtrados = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    return processos.filter((p) => {
-      if (filtroStatus && p.status !== filtroStatus) return false;
-      if (!q) return true;
-      return [p.number, p.area, nomeCliente(p.clientId)].some((v) => v?.toLowerCase().includes(q));
-    });
-
-  }, [processos, clientes, busca, filtroStatus]);
 
   function abrirNovo() {
     setEditandoId(null);
@@ -172,7 +177,10 @@ export function Processos() {
     setIaFonte("");
     try {
 
-      const agenda = await api.get<Prazo[]>("/api/agenda").catch(() => [] as Prazo[]);
+      const agenda = await api
+        .get<Pagina<Prazo>>(`/api/agenda?caseId=${p.id}&size=100`)
+        .then((pg) => pg.content)
+        .catch(() => [] as Prazo[]);
       const prazos = agenda
         .filter((d) => d.caseId === p.id)
         .map((d) => ({
@@ -203,7 +211,7 @@ export function Processos() {
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Processos</h1>
           <p style={{ color: "var(--color-text-muted)", margin: "4px 0 0", fontSize: 14 }}>
-            {busca || filtroStatus ? `${filtrados.length} de ${processos.length}` : `${processos.length} processo(s)`} · via{" "}
+            {busca || filtroStatus ? `${totalRegistros} encontrado(s)` : `${totalRegistros} processo(s)`} · via{" "}
             <code>processo-service</code>
           </p>
         </div>
@@ -233,7 +241,7 @@ export function Processos() {
           <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>Carregando...</div>
         ) : erro ? (
           <div style={{ padding: 40, textAlign: "center", color: "var(--color-danger)" }}>{erro}</div>
-        ) : filtrados.length === 0 ? (
+        ) : processos.length === 0 ? (
           <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>
             {processos.length === 0 ? "Nenhum processo ainda." : "Nenhum processo corresponde ao filtro."}
           </div>
@@ -249,7 +257,7 @@ export function Processos() {
               </tr>
             </thead>
             <tbody>
-              {filtrados.map((p) => (
+              {processos.map((p) => (
                 <tr key={p.id} style={{ borderTop: "1px solid var(--color-border)", fontSize: 14 }}>
                   <td style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>{p.number}</td>
                   <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>{nomeCliente(p.clientId)}</td>
@@ -302,6 +310,13 @@ export function Processos() {
           </table>
         )}
       </div>
+
+      <Paginacao
+        page={pagina}
+        totalPages={totalPaginas}
+        totalElements={totalRegistros}
+        onChange={setPagina}
+      />
 
       {aberto && (
         <div

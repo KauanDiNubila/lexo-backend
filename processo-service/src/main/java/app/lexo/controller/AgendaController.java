@@ -1,11 +1,16 @@
 package app.lexo.controller;
 
 import app.lexo.dto.DeadlineDtos.DeadlineRequest;
+import app.lexo.common.web.Pagina;
 import app.lexo.dto.DeadlineDtos.DeadlineResponse;
+import app.lexo.dto.DeadlineDtos.ResumoAgenda;
 import app.lexo.dto.DeadlineDtos.StatusRequest;
 import app.lexo.common.security.AuthUser;
 import app.lexo.service.AgendaService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,11 +20,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/agenda")
@@ -32,8 +37,17 @@ public class AgendaController {
     }
 
     @GetMapping
-    public List<DeadlineResponse> list(@AuthenticationPrincipal AuthUser me) {
-        return service.listar(me);
+    public Pagina<DeadlineResponse> list(
+            @AuthenticationPrincipal AuthUser me,
+            @RequestParam(required = false) String caseId,
+            @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.ASC)
+            Pageable pageable) {
+        return service.listar(me, caseId, pageable);
+    }
+
+    @GetMapping("/resumo")
+    public ResumoAgenda resumo(@AuthenticationPrincipal AuthUser me) {
+        return service.resumo(me);
     }
 
     @PostMapping

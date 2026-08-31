@@ -2,43 +2,83 @@ package app.lexo.service;
 
 import app.lexo.client.ReferenciaGateway;
 import app.lexo.domain.Case;
+import app.lexo.domain.enums.CaseStatus;
+import app.lexo.dto.CaseDtos.CaseOpcao;
 import app.lexo.dto.CaseDtos.CaseRequest;
 import app.lexo.dto.CaseDtos.CaseResponse;
+import app.lexo.dto.CaseDtos.ResumoProcessos;
+import app.lexo.repository.ActivityLogRepository;
+import app.lexo.repository.AndamentoRepository;
 import app.lexo.repository.CaseRepository;
+import app.lexo.repository.CaseSpecs;
+import app.lexo.repository.DeadlineRepository;
 import app.lexo.evento.EventoDominio;
 import app.lexo.evento.PublicadorEventos;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
+import app.lexo.common.web.Pagina;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ProcessoService {
 
-    private static final String CACHE = "processos";
+    private static final String CACHE_OPCOES = "processos-opcoes";
 
     private final CaseRepository repo;
+    private final DeadlineRepository prazos;
+    private final AndamentoRepository andamentos;
+    private final ActivityLogRepository atividades;
     private final ReferenciaGateway referencias;
     private final AtividadeService activity;
     private final PublicadorEventos eventos;
 
-    public ProcessoService(CaseRepository repo, ReferenciaGateway referencias,
+    public ProcessoService(CaseRepository repo, DeadlineRepository prazos,
+                       AndamentoRepository andamentos, ActivityLogRepository atividades,
+                       ReferenciaGateway referencias,
                        AtividadeService activity, PublicadorEventos eventos) {
         this.repo = repo;
+        this.prazos = prazos;
+        this.andamentos = andamentos;
+        this.atividades = atividades;
         this.referencias = referencias;
         this.activity = activity;
         this.eventos = eventos;
     }
 
-    @Cacheable(value = CACHE, key = "#me.organizationId()")
     @Transactional(readOnly = true)
-    public List<CaseResponse> listar(AuthUser me) {
+    public Pagina<CaseResponse> listar(AuthUser me, String busca, CaseStatus status, Pageable pageable) {
+        var filtro = CaseSpecs.daOrganizacao(me.organizationId())
+                .and(CaseSpecs.comStatus(status))
+                .and(CaseSpecs.busca(busca));
+        return Pagina.de(repo.findAll(filtro, pageable), CaseResponse::from);
+    }
+
+    @Cacheable(value = CACHE_OPCOES, key = "#me.organizationId()")
+    @Transactional(readOnly = true)
+    public List<CaseOpcao> opcoes(AuthUser me) {
         return repo.findByOrganizationIdOrderByCreatedAtDesc(me.organizationId())
-                .stream().map(CaseResponse::from).toList();
+                .stream().map(CaseOpcao::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ResumoProcessos resumo(AuthUser me) {
+        String org = me.organizationId();
+        Map<String, Long> porStatus = new LinkedHashMap<>();
+        for (CaseStatus status : CaseStatus.values()) {
+            porStatus.put(status.name(), repo.countByOrganizationIdAndStatus(org, status));
+        }
+        return new ResumoProcessos(
+                repo.countByOrganizationId(org),
+                porStatus.getOrDefault(CaseStatus.ATIVO.name(), 0L),
+                porStatus);
     }
 
     @Transactional(readOnly = true)
@@ -46,7 +86,7 @@ public class ProcessoService {
         return CaseResponse.from(carregar(me, id));
     }
 
-    @CacheEvict(value = CACHE, key = "#me.organizationId()")
+    @CacheEvict(value = CACHE_OPCOES, key = "#me.organizationId()")
     @Transactional
     public CaseResponse criar(AuthUser me, CaseRequest req) {
         validarReferencias(me, req);
@@ -61,7 +101,7 @@ public class ProcessoService {
         return CaseResponse.from(c);
     }
 
-    @CacheEvict(value = CACHE, key = "#me.organizationId()")
+    @CacheEvict(value = CACHE_OPCOES, key = "#me.organizationId()")
     @Transactional
     public CaseResponse atualizar(AuthUser me, String id, CaseRequest req) {
         validarReferencias(me, req);
@@ -76,10 +116,29 @@ public class ProcessoService {
         return CaseResponse.from(c);
     }
 
-    @CacheEvict(value = CACHE, key = "#me.organizationId()")
+    @CacheEvict(value = CACHE_OPCOES, key = "#me.organizationId()")
     @Transactional
     public void excluir(AuthUser me, String id) {
-        repo.deleteByIdAndOrganizationId(id, me.organizationId());
+        Case c = carregar(me, id);
+        apagarComFilhos(c);
+
+        eventos.publicar(EventoDominio.de("PROCESSO_EXCLUIDO", me.organizationId(), "PROCESSO",
+                c.getId(), "Processo excluído: " + c.getNumber(), me.id(), nomeDe(me)));
+    }
+
+    @CacheEvict(value = CACHE_OPCOES, key = "#organizationId")
+    @Transactional
+    public int excluirPorCliente(String organizationId, String clientId) {
+        List<Case> casos = repo.findByClientIdAndOrganizationId(clientId, organizationId);
+        casos.forEach(this::apagarComFilhos);
+        return casos.size();
+    }
+
+    private void apagarComFilhos(Case c) {
+        prazos.deleteByCaseIdAndOrganizationId(c.getId(), c.getOrganizationId());
+        andamentos.deleteByCaseIdAndOrganizationId(c.getId(), c.getOrganizationId());
+        atividades.deleteByCaseIdAndOrganizationId(c.getId(), c.getOrganizationId());
+        repo.delete(c);
     }
 
     private Case carregar(AuthUser me, String id) {

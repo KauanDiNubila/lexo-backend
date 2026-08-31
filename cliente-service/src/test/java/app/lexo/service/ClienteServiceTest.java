@@ -4,6 +4,8 @@ import app.lexo.common.security.AuthUser;
 import app.lexo.common.security.Role;
 import app.lexo.common.web.ApiException;
 import app.lexo.domain.Client;
+import app.lexo.common.web.Pagina;
+import app.lexo.dto.ClientDtos;
 import app.lexo.dto.ClientDtos.ClientRequest;
 import app.lexo.dto.ClientDtos.ClientResponse;
 import app.lexo.evento.EventoDominio;
@@ -15,9 +17,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,16 +69,29 @@ class ClienteServiceTest {
     }
 
     @Test
-    @DisplayName("listar consulta o repositorio pela organizacao do usuario")
+    @DisplayName("listar devolve a pagina filtrada pela organizacao do usuario")
     void listarFiltraPelaOrganizacao() {
+        Pageable pagina = PageRequest.of(0, 20);
+        when(repo.findAll(ArgumentMatchers.<Specification<Client>>any(), eq(pagina)))
+                .thenReturn(new PageImpl<>(
+                        List.of(cliente("c1", ORG, "Bruno"), cliente("c2", ORG, "Carla")), pagina, 2));
+
+        Pagina<ClientResponse> resultado = service.listar(usuario(ORG), null, pagina);
+
+        assertThat(resultado.content()).hasSize(2);
+        assertThat(resultado.totalElements()).isEqualTo(2);
+        assertThat(resultado.content()).extracting(ClientResponse::name).containsExactly("Bruno", "Carla");
+    }
+
+    @Test
+    @DisplayName("opcoes devolve apenas id e nome, ordenados")
+    void opcoesEnxutas() {
         when(repo.findByOrganizationIdOrderByNameAsc(ORG))
                 .thenReturn(List.of(cliente("c1", ORG, "Bruno"), cliente("c2", ORG, "Carla")));
 
-        List<ClientResponse> resultado = service.listar(usuario(ORG));
+        var opcoes = service.opcoes(usuario(ORG));
 
-        assertThat(resultado).hasSize(2);
-        assertThat(resultado).extracting(ClientResponse::name).containsExactly("Bruno", "Carla");
-        verify(repo).findByOrganizationIdOrderByNameAsc(ORG);
+        assertThat(opcoes).extracting(ClientDtos.ClienteOpcao::name).containsExactly("Bruno", "Carla");
     }
 
     @Test
@@ -171,10 +191,33 @@ class ClienteServiceTest {
     }
 
     @Test
-    @DisplayName("excluir remove sempre restrito a organizacao do usuario (multi-tenant)")
+    @DisplayName("excluir so enxerga cliente da organizacao do usuario (multi-tenant)")
     void excluirRestringePelaOrganizacao() {
-        service.excluir(usuario(OUTRA_ORG), "c1");
+        when(repo.findByIdAndOrganizationId("c1", OUTRA_ORG)).thenReturn(Optional.empty());
 
-        verify(repo).deleteByIdAndOrganizationId(eq("c1"), eq(OUTRA_ORG));
+        assertThatThrownBy(() -> service.excluir(usuario(OUTRA_ORG), "c1"))
+                .isInstanceOf(ApiException.class)
+                .satisfies(e -> assertThat(((ApiException) e).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verify(repo, never()).delete(any(Client.class));
+    }
+
+    @Test
+    @DisplayName("excluir publica CLIENTE_EXCLUIDO para a cascata dos outros servicos")
+    void excluirPublicaEvento() {
+        Client c = new Client();
+        c.setId("c1");
+        c.setOrganizationId(ORG);
+        c.setName("Cliente");
+        when(repo.findByIdAndOrganizationId("c1", ORG)).thenReturn(Optional.of(c));
+
+        service.excluir(usuario(ORG), "c1");
+
+        verify(repo).delete(c);
+        ArgumentCaptor<EventoDominio> captor = ArgumentCaptor.forClass(EventoDominio.class);
+        verify(eventos).publicar(captor.capture());
+        assertThat(captor.getValue().tipo()).isEqualTo("CLIENTE_EXCLUIDO");
+        assertThat(captor.getValue().entityId()).isEqualTo("c1");
+        assertThat(captor.getValue().organizationId()).isEqualTo(ORG);
     }
 }

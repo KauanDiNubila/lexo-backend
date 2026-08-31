@@ -2,11 +2,16 @@ package app.lexo.controller;
 
 import app.lexo.dto.InvoiceDtos.FinancialReport;
 import app.lexo.dto.InvoiceDtos.InvoiceRequest;
+import app.lexo.common.web.Pagina;
 import app.lexo.dto.InvoiceDtos.InvoiceResponse;
+import app.lexo.dto.InvoiceDtos.ResumoFinanceiro;
 import app.lexo.dto.InvoiceDtos.StatusRequest;
 import app.lexo.common.security.AuthUser;
 import app.lexo.service.FinanceiroService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,8 +43,16 @@ public class FinanceiroController {
     }
 
     @GetMapping
-    public List<InvoiceResponse> list(@AuthenticationPrincipal AuthUser me) {
-        return service.listar(me);
+    public Pagina<InvoiceResponse> list(
+            @AuthenticationPrincipal AuthUser me,
+            @PageableDefault(size = 20, sort = "dueDate", direction = Sort.Direction.ASC)
+            Pageable pageable) {
+        return service.listar(me, pageable);
+    }
+
+    @GetMapping("/resumo")
+    public ResumoFinanceiro resumo(@AuthenticationPrincipal AuthUser me) {
+        return service.resumo(me);
     }
 
     @PostMapping

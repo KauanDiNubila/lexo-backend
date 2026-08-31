@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { api } from "../lib/api";
+import { api, type Pagina } from "../lib/api";
+import { Paginacao } from "../components/Paginacao";
 
 type Honorario = {
   id: string;
@@ -30,6 +31,9 @@ export function Financeiro() {
   const [itens, setItens] = useState<Honorario[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [processos, setProcessos] = useState<Processo[]>([]);
+  const [pagina, setPagina] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [totalRegistros, setTotalRegistros] = useState(0);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [aberto, setAberto] = useState(false);
@@ -48,11 +52,13 @@ export function Financeiro() {
     setErro(null);
     try {
       const [hs, cs, ps] = await Promise.all([
-        api.get<Honorario[]>("/api/financeiro"),
-        api.get<Cliente[]>("/api/clientes"),
-        api.get<Processo[]>("/api/processos"),
+        api.get<Pagina<Honorario>>(`/api/financeiro?page=${pagina}`),
+        api.get<Cliente[]>("/api/clientes/opcoes"),
+        api.get<Processo[]>("/api/processos/opcoes"),
       ]);
-      setItens(hs);
+      setItens(hs.content);
+      setTotalPaginas(hs.totalPages);
+      setTotalRegistros(hs.totalElements);
       setClientes(cs);
       setProcessos(ps);
     } catch (e) {
@@ -64,7 +70,7 @@ export function Financeiro() {
 
   useEffect(() => {
     carregar();
-  }, []);
+  }, [pagina]);
 
   const nomeCliente = (id: string) => clientes.find((c) => c.id === id)?.name || "—";
 
@@ -152,6 +158,13 @@ export function Financeiro() {
           </table>
         )}
       </div>
+
+      <Paginacao
+        page={pagina}
+        totalPages={totalPaginas}
+        totalElements={totalRegistros}
+        onChange={setPagina}
+      />
 
       {aberto && (
         <div onClick={() => setAberto(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}>

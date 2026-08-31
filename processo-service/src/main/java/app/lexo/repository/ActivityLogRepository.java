@@ -8,4 +8,6 @@ import java.util.List;
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, String> {
 
     List<ActivityLog> findByCaseIdAndOrganizationIdOrderByCreatedAtDesc(String caseId, String organizationId);
+
+    long deleteByCaseIdAndOrganizationId(String caseId, String organizationId);
 }

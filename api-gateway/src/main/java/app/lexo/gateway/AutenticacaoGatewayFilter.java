@@ -36,6 +36,8 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
     private static final List<String> PUBLICAS_EXATAS = List.of(
             "/api/auth/login",
             "/api/auth/register",
+            "/api/auth/refresh",
+            "/api/auth/logout",
             "/api/convites/aceitar",
             "/api/health"
     );

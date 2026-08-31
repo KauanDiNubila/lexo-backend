@@ -2,15 +2,20 @@ package app.lexo.service;
 
 import app.lexo.domain.Client;
 import app.lexo.dto.ClientDtos.ClientRequest;
+import app.lexo.dto.ClientDtos.ClienteOpcao;
 import app.lexo.dto.ClientDtos.ClientResponse;
+import app.lexo.dto.ClientDtos.ResumoClientes;
 import app.lexo.repository.ClientRepository;
+import app.lexo.repository.ClientSpecs;
 import app.lexo.evento.EventoDominio;
 import app.lexo.evento.PublicadorEventos;
 import app.lexo.common.security.AuthUser;
 import app.lexo.util.DocumentValidator;
 import app.lexo.common.web.ApiException;
+import app.lexo.common.web.Pagina;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +24,7 @@ import java.util.List;
 @Service
 public class ClienteService {
 
-    private static final String CACHE = "clientes";
+    private static final String CACHE_OPCOES = "clientes-opcoes";
 
     private final ClientRepository repo;
     private final PublicadorEventos eventos;
@@ -29,11 +34,22 @@ public class ClienteService {
         this.eventos = eventos;
     }
 
-    @Cacheable(value = CACHE, key = "#me.organizationId()")
     @Transactional(readOnly = true)
-    public List<ClientResponse> listar(AuthUser me) {
+    public Pagina<ClientResponse> listar(AuthUser me, String busca, Pageable pageable) {
+        var filtro = ClientSpecs.daOrganizacao(me.organizationId()).and(ClientSpecs.busca(busca));
+        return Pagina.de(repo.findAll(filtro, pageable), ClientResponse::from);
+    }
+
+    @Cacheable(value = CACHE_OPCOES, key = "#me.organizationId()")
+    @Transactional(readOnly = true)
+    public List<ClienteOpcao> opcoes(AuthUser me) {
         return repo.findByOrganizationIdOrderByNameAsc(me.organizationId())
-                .stream().map(ClientResponse::from).toList();
+                .stream().map(ClienteOpcao::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ResumoClientes resumo(AuthUser me) {
+        return new ResumoClientes(repo.countByOrganizationId(me.organizationId()));
     }
 
     @Transactional(readOnly = true)
@@ -43,7 +59,7 @@ public class ClienteService {
         return ClientResponse.from(c);
     }
 
-    @CacheEvict(value = CACHE, key = "#me.organizationId()")
+    @CacheEvict(value = CACHE_OPCOES, key = "#me.organizationId()")
     @Transactional
     public ClientResponse criar(AuthUser me, ClientRequest req) {
         validarDocumento(req.document());
@@ -57,7 +73,7 @@ public class ClienteService {
         return ClientResponse.from(c);
     }
 
-    @CacheEvict(value = CACHE, key = "#me.organizationId()")
+    @CacheEvict(value = CACHE_OPCOES, key = "#me.organizationId()")
     @Transactional
     public ClientResponse atualizar(AuthUser me, String id, ClientRequest req) {
         validarDocumento(req.document());
@@ -67,10 +83,15 @@ public class ClienteService {
         return ClientResponse.from(repo.save(c));
     }
 
-    @CacheEvict(value = CACHE, key = "#me.organizationId()")
+    @CacheEvict(value = CACHE_OPCOES, key = "#me.organizationId()")
     @Transactional
     public void excluir(AuthUser me, String id) {
-        repo.deleteByIdAndOrganizationId(id, me.organizationId());
+        Client c = repo.findByIdAndOrganizationId(id, me.organizationId())
+                .orElseThrow(() -> ApiException.notFound("Cliente não encontrado"));
+        repo.delete(c);
+
+        eventos.publicar(EventoDominio.de("CLIENTE_EXCLUIDO", me.organizationId(), "CLIENTE",
+                c.getId(), "Cliente excluído: " + c.getName(), me.id(), nomeDe(me)));
     }
 
     private void validarDocumento(String document) {

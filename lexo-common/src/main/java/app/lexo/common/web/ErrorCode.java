@@ -17,6 +17,8 @@ public final class ErrorCode {
     public static final String CREDENCIAIS_INVALIDAS = "CREDENCIAIS_INVALIDAS";
     public static final String TOTP_REQUIRED = "TOTP_REQUIRED";
     public static final String TOTP_INVALID = "TOTP_INVALID";
+    public static final String REFRESH_INVALIDO = "REFRESH_INVALIDO";
+    public static final String REFRESH_EXPIRADO = "REFRESH_EXPIRADO";
     public static final String EMAIL_EM_USO = "EMAIL_EM_USO";
     public static final String SENHAS_NAO_COINCIDEM = "SENHAS_NAO_COINCIDEM";
 

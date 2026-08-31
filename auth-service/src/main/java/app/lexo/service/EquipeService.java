@@ -33,11 +33,13 @@ public class EquipeService {
     private final PasswordEncoder passwordEncoder;
     private final EnfileiradorEmail enfileiradorEmail;
     private final AuditoriaService audit;
+    private final RefreshTokenService refreshTokens;
     private final String baseUrl;
 
     public EquipeService(UserRepository userRepo, UserInviteRepository inviteRepo,
                        OrganizationRepository orgRepo, PasswordEncoder passwordEncoder,
                        EnfileiradorEmail enfileiradorEmail, AuditoriaService audit,
+                       RefreshTokenService refreshTokens,
                        @Value("${lexo.base-url}") String baseUrl) {
         this.userRepo = userRepo;
         this.inviteRepo = inviteRepo;
@@ -45,6 +47,7 @@ public class EquipeService {
         this.passwordEncoder = passwordEncoder;
         this.enfileiradorEmail = enfileiradorEmail;
         this.audit = audit;
+        this.refreshTokens = refreshTokens;
         this.baseUrl = baseUrl;
     }
 
@@ -62,12 +65,13 @@ public class EquipeService {
 
     @Transactional
     public InviteResponse convidar(AuthUser me, InviteRequest req) {
-        if (userRepo.existsByEmail(req.email())) {
+        String email = AutenticacaoService.normalizarEmail(req.email());
+        if (userRepo.existsByEmail(email)) {
             throw ApiException.conflict("Já existe um usuário com este email");
         }
         boolean pending = inviteRepo
                 .findFirstByEmailAndOrganizationIdAndAcceptedAtIsNullAndExpiresAtAfter(
-                        req.email(), me.organizationId(), Instant.now())
+                        email, me.organizationId(), Instant.now())
                 .isPresent();
         if (pending) {
             throw ApiException.conflict("Já existe um convite pendente para este email");
@@ -76,7 +80,7 @@ public class EquipeService {
         UserInvite invite = new UserInvite();
         invite.setOrganizationId(me.organizationId());
         invite.setName(req.name());
-        invite.setEmail(req.email());
+        invite.setEmail(email);
         invite.setRole(req.role());
         invite.setExpiresAt(Instant.now().plus(7, ChronoUnit.DAYS));
         invite = inviteRepo.save(invite);
@@ -85,12 +89,12 @@ public class EquipeService {
                 .map(o -> o.getName()).orElse("Lexo");
         String acceptUrl = baseUrl + "/convite/" + invite.getToken();
         enfileiradorEmail.enfileirar(new TarefaEmail(
-                "CONVITE", req.email(),
+                "CONVITE", email,
                 "Convite para " + orgName + " no Lexo",
                 "Olá " + req.name() + ", você foi convidado para " + orgName + ". Acesse: " + acceptUrl));
 
         audit.registrar(me.organizationId(), me.id(), nomeDe(me), "CONVIDOU_USUARIO", "USUARIO", null,
-                "Convidou " + req.name() + " (" + req.email() + ") como " + req.role());
+                "Convidou " + req.name() + " (" + email + ") como " + req.role());
 
         return InviteResponse.from(invite);
     }
@@ -115,6 +119,7 @@ public class EquipeService {
                 .orElseThrow(() -> ApiException.notFound("Usuário não encontrado"));
         user.setRole(req.role());
         userRepo.save(user);
+        refreshTokens.revogarSessoesDoUsuario(req.userId());
 
         audit.registrar(me.organizationId(), me.id(), nomeDe(me), "ALTEROU_PAPEL", "USUARIO", req.userId(),
                 "Alterou papel do usuário para " + req.role());
@@ -127,6 +132,7 @@ public class EquipeService {
         }
         User target = userRepo.findByIdAndOrganizationId(userId, me.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Usuário não encontrado"));
+        refreshTokens.revogarSessoesDoUsuario(userId);
         userRepo.delete(target);
 
         audit.registrar(me.organizationId(), me.id(), nomeDe(me), "REMOVEU_USUARIO", "USUARIO", userId,

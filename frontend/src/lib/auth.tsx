@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, setToken, clearToken, getToken } from "./api";
+import { api, setAccessToken, clearAccessToken } from "./api";
 
 export type Usuario = {
   id: string;
@@ -10,14 +10,8 @@ export type Usuario = {
 };
 
 type AuthResponse = {
-  token: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    organizationId: string;
-  };
+  accessToken: string;
+  user: Usuario;
 };
 
 type AuthContextType = {
@@ -25,7 +19,7 @@ type AuthContextType = {
   carregando: boolean;
   login: (email: string, password: string, totpCode?: string) => Promise<void>;
   registrar: (dados: RegistroDados) => Promise<void>;
-  sair: () => void;
+  sair: () => Promise<void>;
 };
 
 export type RegistroDados = {
@@ -38,45 +32,33 @@ export type RegistroDados = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-function lerToken(token: string): Usuario | null {
-  try {
-    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-    const json = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    const claims = JSON.parse(json);
-
-    if (claims.exp && claims.exp * 1000 <= Date.now()) {
-      return null;
-    }
-    return {
-      id: claims.sub,
-      organizationId: claims.organizationId,
-      role: claims.role,
-      name: claims.name,
-      email: claims.email,
-    };
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    if (token) setUsuario(lerToken(token));
-    setCarregando(false);
+    let ativo = true;
+
+    async function restaurarSessao() {
+      try {
+        const conta = await api.post<AuthResponse>("/api/auth/refresh");
+        if (ativo) aplicar(conta);
+      } catch {
+        if (ativo) setUsuario(null);
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
+
+    restaurarSessao();
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   function aplicar(resp: AuthResponse) {
-    setToken(resp.token);
-    setUsuario(lerToken(resp.token));
+    setAccessToken(resp.accessToken);
+    setUsuario(resp.user);
   }
 
   async function login(email: string, password: string, totpCode?: string) {
@@ -93,8 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     aplicar(resp);
   }
 
-  function sair() {
-    clearToken();
+  async function sair() {
+    await api.post("/api/auth/logout").catch(() => undefined);
+    clearAccessToken();
     setUsuario(null);
   }
 

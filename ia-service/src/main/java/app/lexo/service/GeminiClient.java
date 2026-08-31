@@ -5,9 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,15 +23,22 @@ public class GeminiClient {
     private final String apiKey;
     private final String model;
     private final String baseUrl;
-    private final RestClient http = RestClient.create();
+    private final RestClient http;
 
     public GeminiClient(
             @Value("${lexo.ia.gemini.api-key}") String apiKey,
             @Value("${lexo.ia.gemini.model}") String model,
-            @Value("${lexo.ia.gemini.base-url}") String baseUrl) {
+            @Value("${lexo.ia.gemini.base-url}") String baseUrl,
+            @Value("${lexo.ia.gemini.connect-timeout-seconds}") long connectTimeout,
+            @Value("${lexo.ia.gemini.read-timeout-seconds}") long readTimeout) {
         this.apiKey = apiKey;
         this.model = model;
         this.baseUrl = baseUrl;
+
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(connectTimeout));
+        factory.setReadTimeout(Duration.ofSeconds(readTimeout));
+        this.http = RestClient.builder().requestFactory(factory).build();
     }
 
     public boolean isConfigured() {

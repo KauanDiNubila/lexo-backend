@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { api } from "../lib/api";
+import { api, type Pagina } from "../lib/api";
+import { Paginacao } from "../components/Paginacao";
 
 type Prazo = {
   id: string;
@@ -27,6 +28,9 @@ const corRisco: Record<string, string> = {
 export function Agenda() {
   const [prazos, setPrazos] = useState<Prazo[]>([]);
   const [processos, setProcessos] = useState<Processo[]>([]);
+  const [pagina, setPagina] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [totalRegistros, setTotalRegistros] = useState(0);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [aberto, setAberto] = useState(false);
@@ -42,11 +46,13 @@ export function Agenda() {
     setCarregando(true);
     setErro(null);
     try {
-      const [ps, procs] = await Promise.all([
-        api.get<Prazo[]>("/api/agenda"),
-        api.get<Processo[]>("/api/processos"),
+      const [pg, procs] = await Promise.all([
+        api.get<Pagina<Prazo>>(`/api/agenda?page=${pagina}`),
+        api.get<Processo[]>("/api/processos/opcoes"),
       ]);
-      setPrazos(ps);
+      setPrazos(pg.content);
+      setTotalPaginas(pg.totalPages);
+      setTotalRegistros(pg.totalElements);
       setProcessos(procs);
     } catch (e) {
       setErro((e as Error).message);
@@ -57,7 +63,7 @@ export function Agenda() {
 
   useEffect(() => {
     carregar();
-  }, []);
+  }, [pagina]);
 
   const numProcesso = (id: string) => processos.find((p) => p.id === id)?.number || "—";
 
@@ -152,6 +158,13 @@ export function Agenda() {
           </table>
         )}
       </div>
+
+      <Paginacao
+        page={pagina}
+        totalPages={totalPaginas}
+        totalElements={totalRegistros}
+        onChange={setPagina}
+      />
 
       {aberto && (
         <div onClick={() => setAberto(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}>
