@@ -17,6 +17,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>app.lexo</groupId>
+            <artifactId>lexo-signing</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>

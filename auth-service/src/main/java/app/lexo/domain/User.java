@@ -1,6 +1,6 @@
 package app.lexo.domain;
 
-import app.lexo.domain.enums.Role;
+import app.lexo.common.security.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

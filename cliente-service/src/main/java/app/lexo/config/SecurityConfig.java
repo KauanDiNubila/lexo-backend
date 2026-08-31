@@ -1,6 +1,7 @@
 package app.lexo.config;
 
-import app.lexo.security.HeaderAuthenticationFilter;
+import app.lexo.common.security.HeaderAuthenticationFilter;
+import app.lexo.common.security.InternalKeyFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,11 +26,14 @@ import java.util.List;
 public class SecurityConfig {
 
     private final HeaderAuthenticationFilter headerAuthenticationFilter;
+    private final InternalKeyFilter internalKeyFilter;
     private final List<String> allowedOrigins;
 
     public SecurityConfig(HeaderAuthenticationFilter headerAuthenticationFilter,
+                          InternalKeyFilter internalKeyFilter,
                           @Value("${lexo.cors.allowed-origins}") String allowedOrigins) {
         this.headerAuthenticationFilter = headerAuthenticationFilter;
+        this.internalKeyFilter = internalKeyFilter;
         this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim).filter(s -> !s.isBlank()).toList();
     }
@@ -50,18 +54,17 @@ public class SecurityConfig {
 
                                 "/api/portal/**",
 
-                                "/internal/**",
-
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        .requestMatchers("/api/cron/**").permitAll()
+                        .requestMatchers("/internal/**").hasRole(InternalKeyFilter.ROLE_INTERNAL)
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(internalKeyFilter, HeaderAuthenticationFilter.class);
 
         return http.build();
     }

@@ -1,16 +1,15 @@
 package app.lexo.service;
 
-import app.lexo.controller.ApiException;
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.web.ApiException;
 import app.lexo.domain.Andamento;
 import app.lexo.dto.AndamentoDtos.AndamentoRequest;
 import app.lexo.dto.AndamentoDtos.AndamentoResponse;
 import app.lexo.repository.AndamentoRepository;
 import app.lexo.repository.CaseRepository;
-import app.lexo.security.AuthUser;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class AndamentoService {

@@ -1,6 +1,6 @@
 package app.lexo.service;
 
-import app.lexo.controller.ApiException;
+import app.lexo.common.web.ApiException;
 import app.lexo.domain.Organization;
 import app.lexo.domain.User;
 import app.lexo.dto.ContaDtos.ContaResponse;
@@ -8,7 +8,7 @@ import app.lexo.dto.ContaDtos.OrganizacaoInfo;
 import app.lexo.dto.ContaDtos.PerfilInfo;
 import app.lexo.repository.OrganizationRepository;
 import app.lexo.repository.UserRepository;
-import app.lexo.security.AuthUser;
+import app.lexo.common.security.AuthUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

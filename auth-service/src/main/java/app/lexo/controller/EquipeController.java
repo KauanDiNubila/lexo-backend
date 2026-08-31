@@ -4,7 +4,7 @@ import app.lexo.dto.TeamDtos.InviteRequest;
 import app.lexo.dto.TeamDtos.InviteResponse;
 import app.lexo.dto.TeamDtos.UpdateRoleRequest;
 import app.lexo.dto.TeamDtos.UserResponse;
-import app.lexo.security.AuthUser;
+import app.lexo.common.security.AuthUser;
 import app.lexo.service.EquipeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

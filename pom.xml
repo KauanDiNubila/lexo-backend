@@ -25,6 +25,8 @@
     </properties>
 
     <modules>
+        <module>lexo-signing</module>
+        <module>lexo-common</module>
         <module>discovery-server</module>
         <module>api-gateway</module>
         <module>auth-service</module>

@@ -2,14 +2,14 @@ package app.lexo.service;
 
 import app.lexo.client.FinanceiroPortalClient;
 import app.lexo.client.ProcessoPortalClient;
-import app.lexo.controller.ApiException;
+import app.lexo.common.web.ApiException;
 import app.lexo.domain.Client;
 import app.lexo.dto.PortalDtos.HonorarioPortal;
 import app.lexo.dto.PortalDtos.PortalResponse;
 import app.lexo.dto.PortalDtos.ProcessoPortal;
 import app.lexo.repository.ClientRepository;
-import app.lexo.security.AuthUser;
-import app.lexo.domain.enums.Role;
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.security.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

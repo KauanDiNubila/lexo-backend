@@ -1,7 +1,8 @@
 package app.lexo.security;
 
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.security.Role;
 import app.lexo.domain.User;
-import app.lexo.domain.enums.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

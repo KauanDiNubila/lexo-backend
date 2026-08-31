@@ -2,12 +2,13 @@ package app.lexo.service;
 
 import app.lexo.domain.Organization;
 import app.lexo.domain.User;
-import app.lexo.domain.enums.Role;
+import app.lexo.common.security.Role;
 import app.lexo.dto.AuthDtos;
 import app.lexo.repository.OrganizationRepository;
 import app.lexo.repository.UserRepository;
 import app.lexo.security.JwtService;
-import app.lexo.controller.ApiException;
+import app.lexo.common.web.ApiException;
+import app.lexo.common.web.ErrorCode;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,10 +42,10 @@ public class AutenticacaoService {
     @Transactional
     public AuthDtos.AuthResponse registrar(AuthDtos.RegisterRequest req) {
         if (!req.password().equals(req.confirmPassword())) {
-            throw ApiException.badRequest("As senhas não coincidem");
+            throw ApiException.badRequest(ErrorCode.SENHAS_NAO_COINCIDEM, "As senhas não coincidem");
         }
         if (userRepo.existsByEmail(req.email())) {
-            throw ApiException.conflict("Já existe um usuário com este email");
+            throw ApiException.conflict(ErrorCode.EMAIL_EM_USO, "Já existe um usuário com este email");
         }
 
         Organization org = new Organization();
@@ -68,21 +69,26 @@ public class AutenticacaoService {
 
         String key = "login:" + req.email().toLowerCase();
         if (!rateLimit.verificar(key, 10, 15 * 60)) {
-            throw ApiException.unauthorized("Email ou senha inválidos");
+            throw ApiException.unauthorized(
+                    ErrorCode.CREDENCIAIS_INVALIDAS, "Email ou senha inválidos");
         }
 
         User user = userRepo.findByEmail(req.email()).orElse(null);
         if (user == null || !passwordEncoder.matches(req.password(), user.getPasswordHash())) {
-            throw ApiException.unauthorized("Email ou senha inválidos");
+            throw ApiException.unauthorized(
+                    ErrorCode.CREDENCIAIS_INVALIDAS, "Email ou senha inválidos");
         }
 
         if (user.isTotpEnabled() && user.getTotpSecret() != null) {
             if (req.totpCode() == null || req.totpCode().isBlank()) {
-                throw ApiException.unauthorized("Código de verificação em dois fatores obrigatório");
+                throw ApiException.unauthorized(
+                        ErrorCode.TOTP_REQUIRED,
+                        "Código de verificação em dois fatores obrigatório");
             }
             String secret = crypto.decifrar(user.getTotpSecret());
             if (!totp.verify(secret, req.totpCode())) {
-                throw ApiException.unauthorized("Código de verificação inválido");
+                throw ApiException.unauthorized(
+                        ErrorCode.TOTP_INVALID, "Código de verificação inválido");
             }
         }
 

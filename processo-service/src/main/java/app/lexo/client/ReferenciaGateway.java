@@ -1,6 +1,6 @@
 package app.lexo.client;
 
-import app.lexo.controller.ApiException;
+import app.lexo.common.web.ApiException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

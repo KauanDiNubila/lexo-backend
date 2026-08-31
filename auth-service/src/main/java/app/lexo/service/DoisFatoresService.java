@@ -3,8 +3,8 @@ package app.lexo.service;
 import app.lexo.domain.User;
 import app.lexo.dto.TotpDtos.InitiateResponse;
 import app.lexo.repository.UserRepository;
-import app.lexo.security.AuthUser;
-import app.lexo.controller.ApiException;
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.web.ApiException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Scale } from "lucide-react";
+import { Scale, ShieldCheck } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { ApiError } from "../lib/api";
 
 export function Login() {
   const { login, registrar } = useAuth();
@@ -10,6 +11,7 @@ export function Login() {
   const [modo, setModo] = useState<"login" | "registro">(
     params.get("modo") === "registro" ? "registro" : "login"
   );
+  const [passo, setPasso] = useState<"credenciais" | "totp">("credenciais");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -17,6 +19,18 @@ export function Login() {
   const [senha, setSenha] = useState("");
   const [nome, setNome] = useState("");
   const [organizacao, setOrganizacao] = useState("");
+  const [codigo, setCodigo] = useState("");
+
+  function voltarParaCredenciais() {
+    setPasso("credenciais");
+    setCodigo("");
+    setErro(null);
+  }
+
+  function trocarModo() {
+    setModo(modo === "login" ? "registro" : "login");
+    voltarParaCredenciais();
+  }
 
   async function enviar(e: FormEvent) {
     e.preventDefault();
@@ -24,7 +38,7 @@ export function Login() {
     setEnviando(true);
     try {
       if (modo === "login") {
-        await login(email, senha);
+        await login(email, senha, passo === "totp" ? codigo : undefined);
       } else {
         await registrar({
           organizationName: organizacao,
@@ -36,11 +50,18 @@ export function Login() {
       }
       navigate("/app");
     } catch (err) {
-      setErro((err as Error).message);
+      if (err instanceof ApiError && err.code === "TOTP_REQUIRED") {
+        setPasso("totp");
+        setCodigo("");
+      } else {
+        setErro((err as Error).message);
+      }
     } finally {
       setEnviando(false);
     }
   }
+
+  const emTotp = modo === "login" && passo === "totp";
 
   return (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "2rem" }}>
@@ -63,30 +84,73 @@ export function Login() {
           <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: -0.4 }}>Lexo</span>
         </Link>
         <p style={{ color: "var(--color-text-muted)", fontSize: 14, marginBottom: 22 }}>
-          {modo === "login" ? "Acesse a plataforma do seu escritório." : "Crie a conta do seu escritório."}
+          {emTotp
+            ? "Digite o código do seu app autenticador."
+            : modo === "login"
+              ? "Acesse a plataforma do seu escritório."
+              : "Crie a conta do seu escritório."}
         </p>
 
         <form onSubmit={enviar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {modo === "registro" && (
+          {emTotp ? (
             <>
-              <div>
-                <label className="label">Nome do escritório</label>
-                <input className="input" value={organizacao} onChange={(e) => setOrganizacao(e.target.value)} required />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontSize: 13,
+                  color: "var(--color-text-muted)",
+                  background: "rgba(99,102,241,0.08)",
+                  border: "1px solid rgba(99,102,241,0.25)",
+                  borderRadius: 8,
+                  padding: "0.6rem 0.75rem",
+                }}
+              >
+                <ShieldCheck size={18} />
+                <span>
+                  Verificação em dois fatores ativada para <strong>{email}</strong>.
+                </span>
               </div>
               <div>
-                <label className="label">Seu nome</label>
-                <input className="input" value={nome} onChange={(e) => setNome(e.target.value)} required />
+                <label className="label">Código de verificação</label>
+                <input
+                  className="input"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  maxLength={6}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  required
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {modo === "registro" && (
+                <>
+                  <div>
+                    <label className="label">Nome do escritório</label>
+                    <input className="input" value={organizacao} onChange={(e) => setOrganizacao(e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className="label">Seu nome</label>
+                    <input className="input" value={nome} onChange={(e) => setNome(e.target.value)} required />
+                  </div>
+                </>
+              )}
+              <div>
+                <label className="label">Email</label>
+                <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+              <div>
+                <label className="label">Senha</label>
+                <input className="input" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
               </div>
             </>
           )}
-          <div>
-            <label className="label">Email</label>
-            <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div>
-            <label className="label">Senha</label>
-            <input className="input" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
-          </div>
 
           {erro && (
             <div
@@ -103,22 +167,35 @@ export function Login() {
             </div>
           )}
 
-          <button className="btn btn-primary" type="submit" disabled={enviando} style={{ marginTop: 4 }}>
-            {enviando ? "Aguarde..." : modo === "login" ? "Entrar" : "Criar conta"}
+          <button
+            className="btn btn-primary"
+            type="submit"
+            disabled={enviando || (emTotp && codigo.length < 6)}
+            style={{ marginTop: 4 }}
+          >
+            {enviando ? "Aguarde..." : emTotp ? "Verificar" : modo === "login" ? "Entrar" : "Criar conta"}
           </button>
         </form>
 
         <div style={{ marginTop: 18, textAlign: "center", fontSize: 13, color: "var(--color-text-muted)" }}>
-          {modo === "login" ? "Não tem conta?" : "Já tem conta?"}{" "}
-          <button
-            onClick={() => {
-              setModo(modo === "login" ? "registro" : "login");
-              setErro(null);
-            }}
-            style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontWeight: 600 }}
-          >
-            {modo === "login" ? "Criar escritório" : "Fazer login"}
-          </button>
+          {emTotp ? (
+            <button
+              onClick={voltarParaCredenciais}
+              style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontWeight: 600 }}
+            >
+              Voltar
+            </button>
+          ) : (
+            <>
+              {modo === "login" ? "Não tem conta?" : "Já tem conta?"}{" "}
+              <button
+                onClick={trocarModo}
+                style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontWeight: 600 }}
+              >
+                {modo === "login" ? "Criar escritório" : "Fazer login"}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

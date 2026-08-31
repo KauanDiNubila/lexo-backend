@@ -7,8 +7,8 @@ import app.lexo.dto.InvoiceDtos.FinancialReport;
 import app.lexo.dto.InvoiceDtos.InvoiceRequest;
 import app.lexo.dto.InvoiceDtos.InvoiceResponse;
 import app.lexo.repository.InvoiceRepository;
-import app.lexo.security.AuthUser;
-import app.lexo.controller.ApiException;
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.web.ApiException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

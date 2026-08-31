@@ -4,7 +4,7 @@ import app.lexo.dto.InvoiceDtos.FinancialReport;
 import app.lexo.dto.InvoiceDtos.InvoiceRequest;
 import app.lexo.dto.InvoiceDtos.InvoiceResponse;
 import app.lexo.dto.InvoiceDtos.StatusRequest;
-import app.lexo.security.AuthUser;
+import app.lexo.common.security.AuthUser;
 import app.lexo.service.FinanceiroService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;

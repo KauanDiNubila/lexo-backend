@@ -18,6 +18,7 @@ x-infra-env: &infra-env
   SPRING_DATASOURCE_USERNAME: postgres
   SPRING_DATASOURCE_PASSWORD: postgres
   AUTH_SECRET: ${AUTH_SECRET:-lexo-docker-dev-secret-com-mais-de-32-bytes-0123456789}
+  GATEWAY_SIGNING_KEY: ${GATEWAY_SIGNING_KEY:-lexo-docker-gateway-signing-key-com-mais-de-32-bytes}
   LEXO_INTERNAL_KEY: ${LEXO_INTERNAL_KEY:-lexo-docker-internal-key-dev}
 
 services:

@@ -5,7 +5,7 @@ import app.lexo.dto.ContaDtos.AtualizarPerfilRequest;
 import app.lexo.dto.ContaDtos.ContaResponse;
 import app.lexo.dto.ContaDtos.OrganizacaoInfo;
 import app.lexo.dto.ContaDtos.PerfilInfo;
-import app.lexo.security.AuthUser;
+import app.lexo.common.security.AuthUser;
 import app.lexo.service.ContaService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;

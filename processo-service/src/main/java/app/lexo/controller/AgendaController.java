@@ -3,7 +3,7 @@ package app.lexo.controller;
 import app.lexo.dto.DeadlineDtos.DeadlineRequest;
 import app.lexo.dto.DeadlineDtos.DeadlineResponse;
 import app.lexo.dto.DeadlineDtos.StatusRequest;
-import app.lexo.security.AuthUser;
+import app.lexo.common.security.AuthUser;
 import app.lexo.service.AgendaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

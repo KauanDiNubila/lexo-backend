@@ -2,7 +2,7 @@ package app.lexo.controller;
 
 import app.lexo.dto.PortalDtos.PortalLinkResponse;
 import app.lexo.dto.PortalDtos.PortalResponse;
-import app.lexo.security.AuthUser;
+import app.lexo.common.security.AuthUser;
 import app.lexo.service.PortalService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -2,6 +2,18 @@ const BASE = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8080";
 
 const TOKEN_KEY = "lexo_token";
 
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: string | null;
+
+  constructor(status: number, code: string | null, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -35,7 +47,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       }
     }
     const msg = (data && (data.error as string)) || `Erro ${res.status}`;
-    throw new Error(msg);
+    const code = (data && (data.code as string)) || null;
+    throw new ApiError(res.status, code, msg);
   }
   return data as T;
 }

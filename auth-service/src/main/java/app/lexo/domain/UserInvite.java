@@ -1,6 +1,6 @@
 package app.lexo.domain;
 
-import app.lexo.domain.enums.Role;
+import app.lexo.common.security.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,7 +8,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-
 import java.time.Instant;
 import java.util.UUID;
 

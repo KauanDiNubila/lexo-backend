@@ -1,14 +1,16 @@
 package app.lexo.service;
 
-import app.lexo.controller.ApiException;
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.security.Role;
+import app.lexo.common.web.ApiException;
 import app.lexo.domain.Client;
-import app.lexo.domain.enums.Role;
 import app.lexo.dto.ClientDtos.ClientRequest;
 import app.lexo.dto.ClientDtos.ClientResponse;
 import app.lexo.evento.EventoDominio;
 import app.lexo.evento.PublicadorEventos;
 import app.lexo.repository.ClientRepository;
-import app.lexo.security.AuthUser;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,9 +19,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

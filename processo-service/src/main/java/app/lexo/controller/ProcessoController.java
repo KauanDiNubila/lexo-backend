@@ -2,7 +2,7 @@ package app.lexo.controller;
 
 import app.lexo.dto.CaseDtos.CaseRequest;
 import app.lexo.dto.CaseDtos.CaseResponse;
-import app.lexo.security.AuthUser;
+import app.lexo.common.security.AuthUser;
 import app.lexo.service.ProcessoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

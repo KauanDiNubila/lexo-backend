@@ -2,7 +2,7 @@ package app.lexo.controller;
 
 import app.lexo.dto.TotpDtos.CodeRequest;
 import app.lexo.dto.TotpDtos.InitiateResponse;
-import app.lexo.security.AuthUser;
+import app.lexo.common.security.AuthUser;
 import app.lexo.service.DoisFatoresService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

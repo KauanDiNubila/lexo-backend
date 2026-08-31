@@ -6,8 +6,8 @@ import app.lexo.dto.DeadlineDtos.DeadlineResponse;
 import app.lexo.domain.enums.DeadlineStatus;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.DeadlineRepository;
-import app.lexo.security.AuthUser;
-import app.lexo.controller.ApiException;
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.web.ApiException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

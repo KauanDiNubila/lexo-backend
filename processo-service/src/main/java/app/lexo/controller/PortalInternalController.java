@@ -9,9 +9,7 @@ import app.lexo.dto.PortalDtos.ProcessoPortal;
 import app.lexo.repository.AndamentoRepository;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.DeadlineRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,23 +23,16 @@ public class PortalInternalController {
     private final CaseRepository casos;
     private final DeadlineRepository prazos;
     private final AndamentoRepository andamentos;
-    private final String chaveInterna;
 
     public PortalInternalController(CaseRepository casos, DeadlineRepository prazos,
-                                    AndamentoRepository andamentos,
-                                    @Value("${lexo.internal.api-key}") String chaveInterna) {
+                                    AndamentoRepository andamentos) {
         this.casos = casos;
         this.prazos = prazos;
         this.andamentos = andamentos;
-        this.chaveInterna = chaveInterna;
     }
 
     @GetMapping("/internal/portal/processos")
-    public List<ProcessoPortal> porCliente(@RequestParam String clientId, @RequestParam String orgId,
-                                           @RequestHeader(value = "X-Internal-Key", required = false) String chave) {
-        if (!chaveInterna.equals(chave)) {
-            throw ApiException.forbidden("Acesso interno negado");
-        }
+    public List<ProcessoPortal> porCliente(@RequestParam String clientId, @RequestParam String orgId) {
         List<Case> lista = casos.findByClientIdAndOrganizationIdOrderByCreatedAtDesc(clientId, orgId);
         if (lista.isEmpty()) {
             return List.of();

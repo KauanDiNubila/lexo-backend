@@ -2,7 +2,7 @@ package app.lexo.dto;
 
 import app.lexo.domain.User;
 import app.lexo.domain.UserInvite;
-import app.lexo.domain.enums.Role;
+import app.lexo.common.security.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
