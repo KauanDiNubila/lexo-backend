@@ -21,7 +21,7 @@ SPA (React + Vite + TypeScript) que consome a API de microserviços do Lexo atra
 # 2. no frontend:
 cd frontend
 npm install
-npm run dev          # http://localhost:5173
+npm run dev          # http://localhost:5180
 ```
 
 A URL do gateway vem de `VITE_GATEWAY_URL` (`.env`), com fallback para `http://localhost:8090`.

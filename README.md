@@ -158,7 +158,7 @@ SPA em **React + Vite + TypeScript** que consome o backend via gateway:
 ```bash
 cd frontend
 npm install
-npm run dev          # http://localhost:5173
+npm run dev          # http://localhost:5180
 ```
 
 ---
@@ -275,7 +275,7 @@ Painéis úteis: **Eureka** (8761) · **Zipkin** (9411) · **Mailpit** (8025) ·
 | 8090 | API Gateway (entrada única) |
 | 8081–8087 | Serviços (financeiro, auth, cliente, auditoria, notificacao, processo, ia) |
 | 8761 | Eureka |
-| 5173 | Frontend (Vite) |
+| 5180 | Frontend (Vite) |
 | 5434–5438 | PostgreSQL (um por serviço) |
 | 6380 | Redis · 9094 Kafka · 5673/15673 RabbitMQ · 9411 Zipkin · 1025/8025 Mailpit |
 
