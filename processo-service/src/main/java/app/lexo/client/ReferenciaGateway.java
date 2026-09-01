@@ -1,10 +1,13 @@
 package app.lexo.client;
 
+import app.lexo.common.usuario.UsuarioInterno;
 import app.lexo.common.web.ApiException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 @Component
 public class ReferenciaGateway {
@@ -41,5 +44,16 @@ public class ReferenciaGateway {
         log.warn("auth-service indisponivel (circuit breaker): {}", causa.toString());
         throw ApiException.serviceUnavailable(
                 "Serviço de usuários temporariamente indisponível. Tente novamente em instantes.");
+    }
+
+    @CircuitBreaker(name = "auth-service", fallbackMethod = "buscarUsuarioFallback")
+    public Optional<UsuarioInterno> buscarUsuario(String id, String orgId) {
+        return Optional.ofNullable(authClient.buscarUsuario(id, orgId));
+    }
+
+    @SuppressWarnings("unused")
+    private Optional<UsuarioInterno> buscarUsuarioFallback(String id, String orgId, Throwable causa) {
+        log.warn("auth-service indisponivel (circuit breaker) ao buscar usuario {}: {}", id, causa.toString());
+        return Optional.empty();
     }
 }
