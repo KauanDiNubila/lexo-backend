@@ -52,11 +52,7 @@ public class SecurityConfig {
                                 "/api/convites/info/**",
                                 "/api/health",
 
-                                "/api/portal/**",
-
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/api/portal/**"
                         ).permitAll()
 
                         .requestMatchers("/internal/**").hasRole(InternalKeyFilter.ROLE_INTERNAL)

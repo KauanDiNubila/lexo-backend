@@ -24,7 +24,7 @@ public class ReferenciaGateway {
 
     @CircuitBreaker(name = "cliente-service", fallbackMethod = "clienteExisteFallback")
     public boolean clienteExiste(String id, String orgId) {
-        return Boolean.TRUE.equals(clienteClient.clienteExiste(id, orgId).get("existe"));
+        return clienteClient.clienteExiste(id, orgId).existe();
     }
 
     @SuppressWarnings("unused")
@@ -36,7 +36,7 @@ public class ReferenciaGateway {
 
     @CircuitBreaker(name = "auth-service", fallbackMethod = "usuarioExisteFallback")
     public boolean usuarioExiste(String id, String orgId) {
-        return Boolean.TRUE.equals(authClient.usuarioExiste(id, orgId).get("existe"));
+        return authClient.usuarioExiste(id, orgId).existe();
     }
 
     @SuppressWarnings("unused")

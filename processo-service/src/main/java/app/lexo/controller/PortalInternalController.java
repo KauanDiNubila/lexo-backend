@@ -1,21 +1,20 @@
 package app.lexo.controller;
 
+import app.lexo.common.portal.PortalDtos.AndamentoPortal;
+import app.lexo.common.portal.PortalDtos.PrazoPortal;
+import app.lexo.common.portal.PortalDtos.ProcessoPortal;
 import app.lexo.domain.Andamento;
 import app.lexo.domain.Case;
 import app.lexo.domain.Deadline;
-import app.lexo.dto.PortalDtos.AndamentoPortal;
-import app.lexo.dto.PortalDtos.PrazoPortal;
-import app.lexo.dto.PortalDtos.ProcessoPortal;
 import app.lexo.repository.AndamentoRepository;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.DeadlineRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class PortalInternalController {

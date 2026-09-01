@@ -52,8 +52,7 @@ public final class InvoiceDtos {
             Instant end,
             BigDecimal totalPago,
             BigDecimal totalPendente,
-            BigDecimal totalAtrasado,
-            List<InvoiceResponse> invoices
+            BigDecimal totalAtrasado
     ) {
     }
 

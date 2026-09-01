@@ -1,5 +1,6 @@
 package app.lexo.controller;
 
+import app.lexo.common.referencia.ExisteResponse;
 import app.lexo.common.usuario.UsuarioInterno;
 import app.lexo.common.web.ApiException;
 import app.lexo.domain.User;
@@ -8,8 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 public class InternalUserController {
@@ -21,8 +20,8 @@ public class InternalUserController {
     }
 
     @GetMapping("/internal/usuarios/{id}/existe")
-    public Map<String, Boolean> existe(@PathVariable String id, @RequestParam String orgId) {
-        return Map.of("existe", userRepo.existsByIdAndOrganizationId(id, orgId));
+    public ExisteResponse existe(@PathVariable String id, @RequestParam String orgId) {
+        return new ExisteResponse(userRepo.existsByIdAndOrganizationId(id, orgId));
     }
 
     @GetMapping("/internal/usuarios/{id}")

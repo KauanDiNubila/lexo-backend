@@ -1,11 +1,10 @@
 package app.lexo.client;
 
-import app.lexo.dto.PortalDtos.HonorarioPortal;
+import app.lexo.common.portal.PortalDtos.HonorarioPortal;
+import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
 
 @FeignClient(name = "financeiro-service")
 public interface FinanceiroPortalClient {

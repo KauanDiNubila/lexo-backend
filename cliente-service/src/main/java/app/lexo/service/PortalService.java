@@ -2,26 +2,25 @@ package app.lexo.service;
 
 import app.lexo.client.FinanceiroPortalClient;
 import app.lexo.client.ProcessoPortalClient;
+import app.lexo.common.portal.PortalDtos.HonorarioPortal;
+import app.lexo.common.portal.PortalDtos.ProcessoPortal;
+import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
 import app.lexo.domain.Client;
-import app.lexo.dto.PortalDtos.HonorarioPortal;
 import app.lexo.dto.PortalDtos.PortalResponse;
-import app.lexo.dto.PortalDtos.ProcessoPortal;
 import app.lexo.dto.PortalDtos.ResumoPortal;
 import app.lexo.repository.ClientRepository;
-import app.lexo.common.security.AuthUser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PortalService {

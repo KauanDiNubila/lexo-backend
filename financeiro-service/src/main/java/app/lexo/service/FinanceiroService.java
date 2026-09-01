@@ -100,8 +100,7 @@ public class FinanceiroService {
         BigDecimal pendente = somarPorStatus(invoices, InvoiceStatus.PENDENTE);
         BigDecimal atrasado = somarPorStatus(invoices, InvoiceStatus.ATRASADO);
 
-        return new FinancialReport(start, end, pago, pendente, atrasado,
-                invoices.stream().map(InvoiceResponse::from).toList());
+        return new FinancialReport(start, end, pago, pendente, atrasado);
     }
 
     private BigDecimal somarPorStatus(List<Invoice> invoices, InvoiceStatus status) {

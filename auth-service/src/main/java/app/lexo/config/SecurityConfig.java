@@ -52,11 +52,7 @@ public class SecurityConfig {
                                 "/api/auth/logout",
                                 "/api/convites/aceitar",
                                 "/api/convites/info/**",
-                                "/api/health",
-
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/api/health"
                         ).permitAll()
 
                         .requestMatchers("/internal/**").hasRole(InternalKeyFilter.ROLE_INTERNAL)
