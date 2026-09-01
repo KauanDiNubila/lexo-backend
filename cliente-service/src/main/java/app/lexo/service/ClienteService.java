@@ -1,25 +1,24 @@
 package app.lexo.service;
 
-import app.lexo.domain.Client;
-import app.lexo.dto.ClientDtos.ClientRequest;
-import app.lexo.dto.ClientDtos.ClienteOpcao;
-import app.lexo.dto.ClientDtos.ClientResponse;
-import app.lexo.dto.ClientDtos.ResumoClientes;
-import app.lexo.repository.ClientRepository;
-import app.lexo.repository.ClientSpecs;
-import app.lexo.evento.EventoDominio;
-import app.lexo.evento.PublicadorEventos;
+import app.lexo.common.evento.EventoDominio;
 import app.lexo.common.security.AuthUser;
-import app.lexo.util.DocumentValidator;
 import app.lexo.common.web.ApiException;
 import app.lexo.common.web.Pagina;
+import app.lexo.domain.Client;
+import app.lexo.dto.ClientDtos.ClientRequest;
+import app.lexo.dto.ClientDtos.ClientResponse;
+import app.lexo.dto.ClientDtos.ClienteOpcao;
+import app.lexo.dto.ClientDtos.ResumoClientes;
+import app.lexo.evento.PublicadorEventos;
+import app.lexo.repository.ClientRepository;
+import app.lexo.repository.ClientSpecs;
+import app.lexo.util.DocumentValidator;
+import java.util.List;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class ClienteService {

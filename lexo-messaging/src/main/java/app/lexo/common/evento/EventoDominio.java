@@ -1,4 +1,4 @@
-package app.lexo.evento;
+package app.lexo.common.evento;
 
 import java.io.Serializable;
 import java.time.Instant;

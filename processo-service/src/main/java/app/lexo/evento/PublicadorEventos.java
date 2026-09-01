@@ -1,5 +1,6 @@
 package app.lexo.evento;
 
+import app.lexo.common.evento.EventoDominio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;

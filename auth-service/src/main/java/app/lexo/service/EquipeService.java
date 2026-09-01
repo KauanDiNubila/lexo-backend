@@ -1,5 +1,8 @@
 package app.lexo.service;
 
+import app.lexo.common.email.TarefaEmail;
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.web.ApiException;
 import app.lexo.domain.User;
 import app.lexo.domain.UserInvite;
 import app.lexo.dto.TeamDtos.AcceptInviteRequest;
@@ -9,20 +12,16 @@ import app.lexo.dto.TeamDtos.InviteResponse;
 import app.lexo.dto.TeamDtos.UpdateRoleRequest;
 import app.lexo.dto.TeamDtos.UserResponse;
 import app.lexo.email.EnfileiradorEmail;
-import app.lexo.email.TarefaEmail;
 import app.lexo.repository.OrganizationRepository;
 import app.lexo.repository.UserInviteRepository;
 import app.lexo.repository.UserRepository;
-import app.lexo.common.security.AuthUser;
-import app.lexo.common.web.ApiException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @Service
 public class EquipeService {

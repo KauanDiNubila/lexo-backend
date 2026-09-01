@@ -1,31 +1,30 @@
 package app.lexo.service;
 
 import app.lexo.client.ReferenciaGateway;
+import app.lexo.common.evento.EventoDominio;
+import app.lexo.common.security.AuthUser;
+import app.lexo.common.web.ApiException;
+import app.lexo.common.web.Pagina;
 import app.lexo.domain.Case;
 import app.lexo.domain.enums.CaseStatus;
 import app.lexo.dto.CaseDtos.CaseOpcao;
 import app.lexo.dto.CaseDtos.CaseRequest;
 import app.lexo.dto.CaseDtos.CaseResponse;
 import app.lexo.dto.CaseDtos.ResumoProcessos;
+import app.lexo.evento.PublicadorEventos;
 import app.lexo.repository.ActivityLogRepository;
 import app.lexo.repository.AndamentoRepository;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.CaseSpecs;
 import app.lexo.repository.DeadlineRepository;
-import app.lexo.evento.EventoDominio;
-import app.lexo.evento.PublicadorEventos;
-import app.lexo.common.security.AuthUser;
-import app.lexo.common.web.ApiException;
-import app.lexo.common.web.Pagina;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class ProcessoService {

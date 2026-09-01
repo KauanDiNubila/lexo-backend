@@ -18,6 +18,12 @@
     <dependencies>
         <dependency>
             <groupId>app.lexo</groupId>
+            <artifactId>lexo-messaging</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>app.lexo</groupId>
             <artifactId>lexo-common</artifactId>
             <version>${project.version}</version>
         </dependency>

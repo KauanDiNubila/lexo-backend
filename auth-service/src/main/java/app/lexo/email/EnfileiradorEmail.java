@@ -1,5 +1,6 @@
 package app.lexo.email;
 
+import app.lexo.common.email.TarefaEmail;
 import app.lexo.config.RabbitConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

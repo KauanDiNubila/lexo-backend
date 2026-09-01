@@ -1,6 +1,6 @@
 package app.lexo.service;
 
-import app.lexo.email.TarefaEmail;
+import app.lexo.common.email.TarefaEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

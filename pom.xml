@@ -26,6 +26,7 @@
 
     <modules>
         <module>lexo-signing</module>
+        <module>lexo-messaging</module>
         <module>lexo-common</module>
         <module>discovery-server</module>
         <module>api-gateway</module>

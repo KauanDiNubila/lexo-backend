@@ -1,5 +1,6 @@
 package app.lexo.evento;
 
+import app.lexo.common.evento.EventoDominio;
 import app.lexo.service.AuditoriaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,14 +1,14 @@
 package app.lexo.service;
 
+import app.lexo.common.evento.EventoDominio;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.security.Role;
 import app.lexo.common.web.ApiException;
-import app.lexo.domain.Client;
 import app.lexo.common.web.Pagina;
-import app.lexo.dto.ClientDtos;
+import app.lexo.domain.Client;
 import app.lexo.dto.ClientDtos.ClientRequest;
 import app.lexo.dto.ClientDtos.ClientResponse;
-import app.lexo.evento.EventoDominio;
+import app.lexo.dto.ClientDtos;
 import app.lexo.evento.PublicadorEventos;
 import app.lexo.repository.ClientRepository;
 import java.util.List;
@@ -26,7 +26,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;

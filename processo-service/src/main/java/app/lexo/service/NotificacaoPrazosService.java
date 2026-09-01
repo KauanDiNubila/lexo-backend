@@ -1,19 +1,18 @@
 package app.lexo.service;
 
+import app.lexo.common.email.TarefaEmail;
 import app.lexo.domain.Deadline;
 import app.lexo.domain.enums.DeadlineStatus;
 import app.lexo.email.EnfileiradorEmail;
-import app.lexo.email.TarefaEmail;
 import app.lexo.repository.DeadlineRepository;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @Service
 public class NotificacaoPrazosService {

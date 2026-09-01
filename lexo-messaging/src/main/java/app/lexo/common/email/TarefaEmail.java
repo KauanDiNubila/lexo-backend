@@ -1,4 +1,4 @@
-package app.lexo.email;
+package app.lexo.common.email;
 
 import java.io.Serializable;
 
