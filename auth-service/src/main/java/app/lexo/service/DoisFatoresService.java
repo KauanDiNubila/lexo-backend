@@ -1,10 +1,12 @@
 package app.lexo.service;
 
-import app.lexo.domain.User;
-import app.lexo.dto.TotpDtos.InitiateResponse;
-import app.lexo.repository.UserRepository;
+import app.lexo.common.evento.EventoDominio;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
+import app.lexo.domain.User;
+import app.lexo.dto.TotpDtos.InitiateResponse;
+import app.lexo.evento.PublicadorEventos;
+import app.lexo.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,14 +16,14 @@ public class DoisFatoresService {
     private final UserRepository userRepo;
     private final TotpProvider totp;
     private final CriptografiaService crypto;
-    private final AuditoriaService audit;
+    private final PublicadorEventos eventos;
 
     public DoisFatoresService(UserRepository userRepo, TotpProvider totp,
-                       CriptografiaService crypto, AuditoriaService audit) {
+                       CriptografiaService crypto, PublicadorEventos eventos) {
         this.userRepo = userRepo;
         this.totp = totp;
         this.crypto = crypto;
-        this.audit = audit;
+        this.eventos = eventos;
     }
 
     @Transactional
@@ -50,8 +52,8 @@ public class DoisFatoresService {
         user.setTotpPendingSecret(null);
         userRepo.save(user);
 
-        audit.registrar(me.organizationId(), me.id(), nomeDe(me), "ATIVOU_2FA",
-                "Ativou verificação em dois fatores");
+        eventos.publicar(EventoDominio.de("ATIVOU_2FA", me.organizationId(), null, null,
+                "Ativou verificação em dois fatores", me.id(), nomeDe(me)));
     }
 
     @Transactional
@@ -68,8 +70,8 @@ public class DoisFatoresService {
         user.setTotpPendingSecret(null);
         userRepo.save(user);
 
-        audit.registrar(me.organizationId(), me.id(), nomeDe(me), "DESATIVOU_2FA",
-                "Desativou verificação em dois fatores");
+        eventos.publicar(EventoDominio.de("DESATIVOU_2FA", me.organizationId(), null, null,
+                "Desativou verificação em dois fatores", me.id(), nomeDe(me)));
     }
 
     private User usuarioAtual(AuthUser me) {

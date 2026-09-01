@@ -2,6 +2,7 @@ package app.lexo.service;
 
 import app.lexo.common.email.TarefaEmail;
 import app.lexo.common.security.AuthUser;
+import app.lexo.common.evento.EventoDominio;
 import app.lexo.common.web.ApiException;
 import app.lexo.domain.User;
 import app.lexo.domain.UserInvite;
@@ -12,6 +13,7 @@ import app.lexo.dto.TeamDtos.InviteResponse;
 import app.lexo.dto.TeamDtos.UpdateRoleRequest;
 import app.lexo.dto.TeamDtos.UserResponse;
 import app.lexo.email.EnfileiradorEmail;
+import app.lexo.evento.PublicadorEventos;
 import app.lexo.repository.OrganizationRepository;
 import app.lexo.repository.UserInviteRepository;
 import app.lexo.repository.UserRepository;
@@ -31,13 +33,13 @@ public class EquipeService {
     private final OrganizationRepository orgRepo;
     private final PasswordEncoder passwordEncoder;
     private final EnfileiradorEmail enfileiradorEmail;
-    private final AuditoriaService audit;
+    private final PublicadorEventos eventos;
     private final RefreshTokenService refreshTokens;
     private final String baseUrl;
 
     public EquipeService(UserRepository userRepo, UserInviteRepository inviteRepo,
                        OrganizationRepository orgRepo, PasswordEncoder passwordEncoder,
-                       EnfileiradorEmail enfileiradorEmail, AuditoriaService audit,
+                       EnfileiradorEmail enfileiradorEmail, PublicadorEventos eventos,
                        RefreshTokenService refreshTokens,
                        @Value("${lexo.base-url}") String baseUrl) {
         this.userRepo = userRepo;
@@ -45,7 +47,7 @@ public class EquipeService {
         this.orgRepo = orgRepo;
         this.passwordEncoder = passwordEncoder;
         this.enfileiradorEmail = enfileiradorEmail;
-        this.audit = audit;
+        this.eventos = eventos;
         this.refreshTokens = refreshTokens;
         this.baseUrl = baseUrl;
     }
@@ -92,8 +94,8 @@ public class EquipeService {
                 "Convite para " + orgName + " no Lexo",
                 "Olá " + req.name() + ", você foi convidado para " + orgName + ". Acesse: " + acceptUrl));
 
-        audit.registrar(me.organizationId(), me.id(), nomeDe(me), "CONVIDOU_USUARIO", "USUARIO", null,
-                "Convidou " + req.name() + " (" + email + ") como " + req.role());
+        eventos.publicar(EventoDominio.de("CONVIDOU_USUARIO", me.organizationId(), "USUARIO", null,
+                "Convidou " + req.name() + " (" + email + ") como " + req.role(), me.id(), nomeDe(me)));
 
         return InviteResponse.from(invite);
     }
@@ -104,8 +106,8 @@ public class EquipeService {
                 .orElse(null);
         inviteRepo.deleteByIdAndOrganizationId(inviteId, me.organizationId());
         if (invite != null) {
-            audit.registrar(me.organizationId(), me.id(), nomeDe(me), "REVOGOU_CONVITE", "USUARIO", null,
-                    "Revogou convite de " + invite.getEmail());
+            eventos.publicar(EventoDominio.de("REVOGOU_CONVITE", me.organizationId(), "USUARIO", null,
+                    "Revogou convite de " + invite.getEmail(), me.id(), nomeDe(me)));
         }
     }
 
@@ -120,8 +122,8 @@ public class EquipeService {
         userRepo.save(user);
         refreshTokens.revogarSessoesDoUsuario(req.userId());
 
-        audit.registrar(me.organizationId(), me.id(), nomeDe(me), "ALTEROU_PAPEL", "USUARIO", req.userId(),
-                "Alterou papel do usuário para " + req.role());
+        eventos.publicar(EventoDominio.de("ALTEROU_PAPEL", me.organizationId(), "USUARIO", req.userId(),
+                "Alterou papel do usuário para " + req.role(), me.id(), nomeDe(me)));
     }
 
     @Transactional
@@ -134,8 +136,8 @@ public class EquipeService {
         refreshTokens.revogarSessoesDoUsuario(userId);
         userRepo.delete(target);
 
-        audit.registrar(me.organizationId(), me.id(), nomeDe(me), "REMOVEU_USUARIO", "USUARIO", userId,
-                "Removeu " + target.getName() + " (" + target.getEmail() + ")");
+        eventos.publicar(EventoDominio.de("REMOVEU_USUARIO", me.organizationId(), "USUARIO", userId,
+                "Removeu " + target.getName() + " (" + target.getEmail() + ")", me.id(), nomeDe(me)));
     }
 
     @Transactional(readOnly = true)
