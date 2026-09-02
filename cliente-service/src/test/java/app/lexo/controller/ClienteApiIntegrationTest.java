@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -37,8 +38,12 @@ class ClienteApiIntegrationTest {
 
     private record Identidade(String userId, String orgId, String role, String name) {
         static Identidade nova() {
+            return nova("ADMIN");
+        }
+
+        static Identidade nova(String role) {
             return new Identidade(UUID.randomUUID().toString(), UUID.randomUUID().toString(),
-                    "ADMIN", "Admin Teste");
+                    role, "Usuario Teste");
         }
     }
 
@@ -160,6 +165,40 @@ class ClienteApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0))
                 .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    @DisplayName("secretaria nao pode excluir cliente")
+    void secretariaNaoExclui() throws Exception {
+        Identidade admin = Identidade.nova("ADMIN");
+        String cliente = om.writeValueAsString(Map.of("name", "Cliente X"));
+        String id = om.readTree(mvc.perform(post("/api/clientes").headers(comoGateway(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(cliente))
+                .andReturn().getResponse().getContentAsString()).get("id").asText();
+
+        Identidade secretaria = new Identidade(UUID.randomUUID().toString(), admin.orgId(), "SECRETARIA", "Secretaria Teste");
+
+        mvc.perform(delete("/api/clientes/{id}", id).headers(comoGateway(secretaria)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("advogado e admin podem excluir cliente (hierarquia de papeis)")
+    void advogadoEAdminExcluem() throws Exception {
+        Identidade admin = Identidade.nova("ADMIN");
+
+        String clienteAdvogado = om.readTree(mvc.perform(post("/api/clientes").headers(comoGateway(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(om.writeValueAsString(Map.of("name", "Cliente Advogado"))))
+                .andReturn().getResponse().getContentAsString()).get("id").asText();
+        Identidade advogado = new Identidade(UUID.randomUUID().toString(), admin.orgId(), "ADVOGADO", "Advogado Teste");
+        mvc.perform(delete("/api/clientes/{id}", clienteAdvogado).headers(comoGateway(advogado)))
+                .andExpect(status().isNoContent());
+
+        String clienteAdmin = om.readTree(mvc.perform(post("/api/clientes").headers(comoGateway(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(om.writeValueAsString(Map.of("name", "Cliente Admin"))))
+                .andReturn().getResponse().getContentAsString()).get("id").asText();
+        mvc.perform(delete("/api/clientes/{id}", clienteAdmin).headers(comoGateway(admin)))
+                .andExpect(status().isNoContent());
     }
 
     @Test

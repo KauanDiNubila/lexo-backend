@@ -33,7 +33,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/financeiro")
-@PreAuthorize("hasAnyRole('ADMIN','ADVOGADO')")
+@PreAuthorize("hasRole('ADVOGADO')")
 public class FinanceiroController {
 
     private final FinanceiroService service;
