@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Scale, Sparkles, Check, ArrowRight } from "lucide-react";
+import { Sparkles, Check, ArrowRight } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,19 +15,28 @@ import {
   rodape,
 } from "@/content/landing";
 
+function LogoMark({ tamanho }: { tamanho: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={tamanho} height={tamanho} fill="none" aria-hidden>
+      <path
+        d="M7 4V17C7 18.66 8.34 20 10 20H18"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function Marca({ tamanho = 34 }: { tamanho?: number }) {
   return (
     <div className="flex items-center gap-2.5">
       <div
-        className="grid place-items-center text-white"
-        style={{
-          width: tamanho,
-          height: tamanho,
-          borderRadius: tamanho * 0.27,
-          background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-        }}
+        className="grid place-items-center rounded-[27%] bg-white text-[#0b1220]"
+        style={{ width: tamanho, height: tamanho }}
       >
-        <Scale size={tamanho * 0.56} strokeWidth={2.3} />
+        <LogoMark tamanho={tamanho * 0.58} />
       </div>
       <span className="font-bold tracking-tight" style={{ fontSize: tamanho * 0.55 }}>
         {marcaConteudo.nome}
