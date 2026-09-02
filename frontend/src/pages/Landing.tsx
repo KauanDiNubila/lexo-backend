@@ -8,10 +8,12 @@ import {
   Wallet,
   ShieldCheck,
   Check,
+  ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { Button } from "@/components/ui/button";
+import { hero } from "@/content/landing";
 
 function Marca({ tamanho = 34 }: { tamanho?: number }) {
   return (
@@ -80,7 +82,7 @@ export function Landing() {
   const { usuario } = useAuth();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg)" }}>
+    <div className="dark min-h-screen" style={{ backgroundColor: "var(--color-bg)", color: "var(--color-text)" }}>
 
       <header className="sticky top-0 z-50 border-b border-border bg-background/75 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
@@ -104,75 +106,69 @@ export function Landing() {
         </div>
       </header>
 
-      <Secao className="pt-20 pb-16 text-center">
-        <span
-          className="inline-block rounded-full px-3 py-1 text-xs font-semibold"
-          style={{ background: "var(--color-primary-soft)", color: "var(--color-primary)" }}
-        >
-          Gestão jurídica com inteligência artificial
+      <Secao className="relative overflow-hidden pt-24 pb-16 text-center">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 mx-auto h-96 w-96 rounded-full bg-primary/20 blur-3xl"
+        />
+
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+          {hero.badge}
         </span>
-        <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
-          O escritório inteiro,{" "}
-          <span style={{ background: "linear-gradient(135deg,#818cf8,#c084fc)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
-            unificado e inteligente
-          </span>
+        <h1 className="mx-auto mt-6 max-w-4xl text-5xl leading-[1.05] font-bold tracking-tight md:text-7xl">
+          {hero.tituloParte1}
+          <br />
+          {hero.tituloParte2}
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg" style={{ color: "var(--color-text-muted)" }}>
-          Processos, prazos, financeiro e relacionamento com o cliente numa só plataforma —
-          com a Lexo IA cuidando do trabalho repetitivo para você advogar.
-        </p>
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">{hero.subtitulo}</p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg" className="px-6 text-[0.95rem]">
-            <Link to="/login?modo=registro">Começar teste de 14 dias</Link>
+            <Link to={hero.ctaPrimaria.href}>
+              {hero.ctaPrimaria.label}
+              <ArrowRight className="size-4" />
+            </Link>
           </Button>
-          <Button asChild variant="ghost" size="lg" className="px-6 text-[0.95rem]">
-            <Link to="/login">Área do cliente</Link>
+          <Button asChild variant="secondary" size="lg" className="px-6 text-[0.95rem]">
+            <Link to={hero.ctaSecundaria.href}>{hero.ctaSecundaria.label}</Link>
           </Button>
         </div>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
-          {["Sem cartão de crédito", "Migração assistida", "LGPD & ISO 27001"].map((t) => (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+          {hero.selos.map((t) => (
             <span key={t} className="inline-flex items-center gap-1.5">
-              <Check size={14} strokeWidth={3} style={{ color: "var(--color-success)" }} /> {t}
+              <Check size={14} strokeWidth={3} className="text-success" /> {t}
             </span>
           ))}
         </div>
 
-        <div className="card mx-auto mt-14 max-w-4xl overflow-hidden text-left" style={{ boxShadow: "0 30px 80px -40px rgba(99,102,241,0.5)" }}>
-          <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: "1px solid var(--color-border)" }}>
-            <span className="h-3 w-3 rounded-full" style={{ background: "#f87171" }} />
-            <span className="h-3 w-3 rounded-full" style={{ background: "#fbbf24" }} />
-            <span className="h-3 w-3 rounded-full" style={{ background: "#34d399" }} />
-            <span className="ml-3 text-xs" style={{ color: "var(--color-text-muted)" }}>app.lexo.com.br</span>
+        <div className="card relative z-10 mx-auto mt-14 max-w-4xl overflow-hidden text-left shadow-[0_30px_80px_-30px_rgba(129,140,248,0.4)]">
+          <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+            <span className="h-3 w-3 rounded-full bg-destructive" />
+            <span className="h-3 w-3 rounded-full bg-warning" />
+            <span className="h-3 w-3 rounded-full bg-success" />
+            <span className="ml-3 text-xs text-muted-foreground">{hero.mockup.urlFake}</span>
           </div>
           <div className="grid gap-4 p-6 md:grid-cols-3">
-            {[
-              { v: "148", r: "Processos ativos", c: "var(--color-primary)" },
-              { v: "9", r: "Prazos urgentes", c: "var(--color-warning)" },
-              { v: "312h", r: "Horas faturáveis no mês", c: "var(--color-success)" },
-            ].map((m) => (
-              <div key={m.r} className="card p-4" style={{ background: "var(--color-surface-2)" }}>
-                <div className="text-3xl font-extrabold" style={{ color: m.c }}>{m.v}</div>
-                <div className="mt-1 text-sm" style={{ color: "var(--color-text-muted)" }}>{m.r}</div>
+            {hero.mockup.metricas.map((m, i) => (
+              <div key={m.rotulo} className="card bg-muted p-4">
+                <div className={`text-3xl font-extrabold ${["text-primary", "text-warning", "text-success"][i]}`}>
+                  {m.valor}
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">{m.rotulo}</div>
               </div>
             ))}
           </div>
-          <div className="mx-6 mb-6 rounded-xl p-4" style={{ background: "var(--color-primary-soft)", border: "1px solid var(--color-border)" }}>
-            <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--color-primary)" }}>
-              <Sparkles size={14} strokeWidth={2.4} /> Resumo da Lexo IA
+          <div className="mx-6 mb-6 rounded-xl border border-border bg-accent p-4">
+            <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-primary">
+              <Sparkles size={14} strokeWidth={2.4} /> {hero.mockup.resumoIA.titulo}
             </div>
-            <p className="text-sm" style={{ color: "var(--color-text)" }}>
-              3 processos entram em prazo fatal nesta semana. O caso <b>0001-23.2026</b> aguarda contestação
-              até sexta. Recomendo priorizar a defesa de <b>Andrade vs. Município</b>.
-            </p>
+            <p className="text-sm text-foreground">{hero.mockup.resumoIA.texto}</p>
           </div>
         </div>
 
         <div className="mt-14">
-          <p className="text-xs uppercase tracking-widest" style={{ color: "var(--color-text-muted)" }}>
-            Escritórios que confiam na Lexo
-          </p>
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm font-semibold" style={{ color: "var(--color-text-muted)" }}>
-            {["Andrade Adv.", "Mendonça & Cruz", "Vector Legal", "Bittencourt Adv.", "Núcleo Jurídico"].map((n) => (
+          <p className="text-xs tracking-widest text-muted-foreground uppercase">{hero.logosConfianca.rotulo}</p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm font-semibold text-muted-foreground">
+            {hero.logosConfianca.nomes.map((n) => (
               <span key={n}>{n}</span>
             ))}
           </div>
