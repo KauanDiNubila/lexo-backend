@@ -95,11 +95,17 @@ export function Landing() {
           </nav>
           <div className="flex items-center gap-3">
             {usuario ? (
-              <Link to="/app" className="btn btn-primary">Ir para o app</Link>
+              <Button asChild size="sm" className="bg-white text-black hover:bg-white/85">
+                <Link to="/app">Ir para o app</Link>
+              </Button>
             ) : (
               <>
-                <Link to="/login" className="btn btn-ghost hidden sm:inline-flex">Entrar</Link>
-                <Link to="/login?modo=registro" className="btn btn-primary">Criar conta grátis</Link>
+                <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                  <Link to="/login">Entrar</Link>
+                </Button>
+                <Button asChild size="sm" className="bg-white text-black hover:bg-white/85">
+                  <Link to="/login?modo=registro">Criar conta grátis</Link>
+                </Button>
               </>
             )}
           </div>
@@ -109,7 +115,7 @@ export function Landing() {
       <Secao className="relative overflow-hidden pt-24 pb-16 text-left">
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-24 bottom-0 -z-10 h-96 w-96 rounded-full bg-primary/20 blur-3xl"
+          className="pointer-events-none absolute -right-24 bottom-0 -z-10 h-96 w-96 rounded-full bg-white/10 blur-3xl"
         />
 
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
@@ -122,7 +128,7 @@ export function Landing() {
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-muted-foreground">{hero.subtitulo}</p>
         <div className="mt-9 flex flex-wrap items-center justify-start gap-3">
-          <Button asChild size="lg" className="px-6 text-[0.95rem]">
+          <Button asChild size="lg" className="bg-white px-6 text-[0.95rem] text-black hover:bg-white/85">
             <Link to={hero.ctaPrimaria.href}>
               {hero.ctaPrimaria.label}
               <ArrowRight className="size-4" />
@@ -135,12 +141,12 @@ export function Landing() {
         <div className="mt-6 flex flex-wrap items-center justify-start gap-x-6 gap-y-2 text-xs text-muted-foreground">
           {hero.selos.map((t) => (
             <span key={t} className="inline-flex items-center gap-1.5">
-              <Check size={14} strokeWidth={3} className="text-success" /> {t}
+              <Check size={14} strokeWidth={3} className="text-foreground" /> {t}
             </span>
           ))}
         </div>
 
-        <div className="card relative z-10 mt-14 max-w-4xl overflow-hidden text-left shadow-[0_30px_80px_-30px_rgba(129,140,248,0.4)]">
+        <div className="card relative z-10 mt-14 max-w-4xl overflow-hidden text-left shadow-[0_30px_80px_-30px_rgba(255,255,255,0.15)]">
           <div className="flex items-center gap-2 border-b border-border px-5 py-3">
             <span className="h-3 w-3 rounded-full bg-destructive" />
             <span className="h-3 w-3 rounded-full bg-warning" />
@@ -148,17 +154,15 @@ export function Landing() {
             <span className="ml-3 text-xs text-muted-foreground">{hero.mockup.urlFake}</span>
           </div>
           <div className="grid gap-4 p-6 md:grid-cols-3">
-            {hero.mockup.metricas.map((m, i) => (
+            {hero.mockup.metricas.map((m) => (
               <div key={m.rotulo} className="card bg-muted p-4">
-                <div className={`text-3xl font-extrabold ${["text-primary", "text-warning", "text-success"][i]}`}>
-                  {m.valor}
-                </div>
+                <div className="text-3xl font-extrabold text-foreground">{m.valor}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{m.rotulo}</div>
               </div>
             ))}
           </div>
-          <div className="mx-6 mb-6 rounded-xl border border-border bg-accent p-4">
-            <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-primary">
+          <div className="mx-6 mb-6 rounded-xl border border-border bg-secondary p-4">
+            <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-foreground">
               <Sparkles size={14} strokeWidth={2.4} /> {hero.mockup.resumoIA.titulo}
             </div>
             <p className="text-sm text-foreground">{hero.mockup.resumoIA.texto}</p>
