@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { Button } from "@/components/ui/button";
 
 function Marca({ tamanho = 34 }: { tamanho?: number }) {
   return (
@@ -81,17 +82,14 @@ export function Landing() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg)" }}>
 
-      <header
-        className="sticky top-0 z-50 backdrop-blur"
-        style={{ borderBottom: "1px solid var(--color-border)", background: "rgba(11,13,20,0.75)" }}
-      >
+      <header className="sticky top-0 z-50 border-b border-border bg-background/75 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
           <Marca />
           <nav className="hidden items-center gap-7 text-sm md:flex" style={{ color: "var(--color-text-muted)" }}>
-            <a href="#recursos" className="hover:text-white">Recursos</a>
-            <a href="#como-funciona" className="hover:text-white">Como funciona</a>
-            <a href="#ia" className="hover:text-white">Lexo IA</a>
-            <a href="#precos" className="hover:text-white">Preços</a>
+            <a href="#recursos" className="hover:text-foreground">Recursos</a>
+            <a href="#como-funciona" className="hover:text-foreground">Como funciona</a>
+            <a href="#ia" className="hover:text-foreground">Lexo IA</a>
+            <a href="#precos" className="hover:text-foreground">Preços</a>
           </nav>
           <div className="flex items-center gap-3">
             {usuario ? (
@@ -124,12 +122,12 @@ export function Landing() {
           com a Lexo IA cuidando do trabalho repetitivo para você advogar.
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Link to="/login?modo=registro" className="btn btn-primary" style={{ padding: "0.7rem 1.4rem", fontSize: "0.95rem" }}>
-            Começar teste de 14 dias
-          </Link>
-          <Link to="/login" className="btn btn-ghost" style={{ padding: "0.7rem 1.4rem", fontSize: "0.95rem" }}>
-            Área do cliente
-          </Link>
+          <Button asChild size="lg" className="px-6 text-[0.95rem]">
+            <Link to="/login?modo=registro">Começar teste de 14 dias</Link>
+          </Button>
+          <Button asChild variant="ghost" size="lg" className="px-6 text-[0.95rem]">
+            <Link to="/login">Área do cliente</Link>
+          </Button>
         </div>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
           {["Sem cartão de crédito", "Migração assistida", "LGPD & ISO 27001"].map((t) => (
