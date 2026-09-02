@@ -106,22 +106,22 @@ export function Landing() {
         </div>
       </header>
 
-      <Secao className="relative overflow-hidden pt-24 pb-16 text-center">
+      <Secao className="relative overflow-hidden pt-24 pb-16 text-left">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 mx-auto h-96 w-96 rounded-full bg-primary/20 blur-3xl"
+          className="pointer-events-none absolute -right-24 bottom-0 -z-10 h-96 w-96 rounded-full bg-primary/20 blur-3xl"
         />
 
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
           {hero.badge}
         </span>
-        <h1 className="mx-auto mt-6 max-w-4xl text-5xl leading-[1.05] font-bold tracking-tight md:text-7xl">
+        <h1 className="mt-6 max-w-4xl text-5xl leading-[1.05] font-bold tracking-tight md:text-7xl">
           {hero.tituloParte1}
           <br />
           {hero.tituloParte2}
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">{hero.subtitulo}</p>
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+        <p className="mt-6 max-w-2xl text-lg text-muted-foreground">{hero.subtitulo}</p>
+        <div className="mt-9 flex flex-wrap items-center justify-start gap-3">
           <Button asChild size="lg" className="px-6 text-[0.95rem]">
             <Link to={hero.ctaPrimaria.href}>
               {hero.ctaPrimaria.label}
@@ -132,7 +132,7 @@ export function Landing() {
             <Link to={hero.ctaSecundaria.href}>{hero.ctaSecundaria.label}</Link>
           </Button>
         </div>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+        <div className="mt-6 flex flex-wrap items-center justify-start gap-x-6 gap-y-2 text-xs text-muted-foreground">
           {hero.selos.map((t) => (
             <span key={t} className="inline-flex items-center gap-1.5">
               <Check size={14} strokeWidth={3} className="text-success" /> {t}
@@ -140,7 +140,7 @@ export function Landing() {
           ))}
         </div>
 
-        <div className="card relative z-10 mx-auto mt-14 max-w-4xl overflow-hidden text-left shadow-[0_30px_80px_-30px_rgba(129,140,248,0.4)]">
+        <div className="card relative z-10 mt-14 max-w-4xl overflow-hidden text-left shadow-[0_30px_80px_-30px_rgba(129,140,248,0.4)]">
           <div className="flex items-center gap-2 border-b border-border px-5 py-3">
             <span className="h-3 w-3 rounded-full bg-destructive" />
             <span className="h-3 w-3 rounded-full bg-warning" />
@@ -167,7 +167,7 @@ export function Landing() {
 
         <div className="mt-14">
           <p className="text-xs tracking-widest text-muted-foreground uppercase">{hero.logosConfianca.rotulo}</p>
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm font-semibold text-muted-foreground">
+          <div className="mt-5 flex flex-wrap items-center justify-start gap-x-10 gap-y-3 text-sm font-semibold text-muted-foreground">
             {hero.logosConfianca.nomes.map((n) => (
               <span key={n}>{n}</span>
             ))}
