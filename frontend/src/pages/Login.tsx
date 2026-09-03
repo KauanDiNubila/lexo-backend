@@ -1,8 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Scale, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { ApiError } from "../lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Silk from "@/components/ui/silk";
 
 export function Login() {
   const { login, registrar } = useAuth();
@@ -64,138 +68,118 @@ export function Login() {
   const emTotp = modo === "login" && passo === "totp";
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "2rem" }}>
-      <div className="card" style={{ width: 400, maxWidth: "100%", padding: "2rem" }}>
-        <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, textDecoration: "none", color: "inherit", width: "fit-content" }}>
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-              display: "grid",
-              placeItems: "center",
-              color: "white",
-              boxShadow: "0 6px 16px -6px #6366f1",
-            }}
-          >
-            <Scale size={21} strokeWidth={2.3} />
+    <div className="grid min-h-screen md:grid-cols-2">
+      <div className="relative hidden overflow-hidden bg-[#08293d] md:flex">
+        <div aria-hidden className="pointer-events-none absolute inset-0 h-full w-full">
+          <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
+        </div>
+        <div className="relative flex h-full w-full flex-col p-12">
+          <Link to="/" className="w-fit text-lg font-bold tracking-tight text-white">
+            Lexo
+          </Link>
+          <div className="flex flex-1 flex-col justify-center">
+            <p className="max-w-sm text-3xl leading-snug font-medium text-white">
+              Gestão jurídica para escritórios de advocacia.
+            </p>
+            <p className="mt-4 max-w-sm text-sm text-white/60">
+              Processos, prazos, financeiro e o portal do seu cliente, tudo num só lugar.
+            </p>
           </div>
-          <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: -0.4 }}>Lexo</span>
-        </Link>
-        <p style={{ color: "var(--color-text-muted)", fontSize: 14, marginBottom: 22 }}>
-          {emTotp
-            ? "Digite o código do seu app autenticador."
-            : modo === "login"
-              ? "Acesse a plataforma do seu escritório."
-              : "Crie a conta do seu escritório."}
-        </p>
+          <p className="text-xs text-white/40">© {new Date().getFullYear()} Lexo</p>
+        </div>
+      </div>
 
-        <form onSubmit={enviar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {emTotp ? (
-            <>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  fontSize: 13,
-                  color: "var(--color-text-muted)",
-                  background: "rgba(99,102,241,0.08)",
-                  border: "1px solid rgba(99,102,241,0.25)",
-                  borderRadius: 8,
-                  padding: "0.6rem 0.75rem",
-                }}
-              >
-                <ShieldCheck size={18} />
-                <span>
-                  Verificação em dois fatores ativada para <strong>{email}</strong>.
-                </span>
-              </div>
-              <div>
-                <label className="label">Código de verificação</label>
-                <input
-                  className="input"
-                  value={codigo}
-                  onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
-                  placeholder="000000"
-                  maxLength={6}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  autoFocus
-                  required
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              {modo === "registro" && (
-                <>
-                  <div>
-                    <label className="label">Nome do escritório</label>
-                    <input className="input" value={organizacao} onChange={(e) => setOrganizacao(e.target.value)} required />
-                  </div>
-                  <div>
-                    <label className="label">Seu nome</label>
-                    <input className="input" value={nome} onChange={(e) => setNome(e.target.value)} required />
-                  </div>
-                </>
-              )}
-              <div>
-                <label className="label">Email</label>
-                <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
-              <div>
-                <label className="label">Senha</label>
-                <input className="input" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
-              </div>
-            </>
-          )}
+      <div className="flex flex-col justify-center px-6 py-16 md:px-16">
+        <div className="mx-auto w-full max-w-sm">
+          <Link to="/" className="mb-10 inline-flex text-lg font-bold tracking-tight md:hidden">
+            Lexo
+          </Link>
 
-          {erro && (
-            <div
-              style={{
-                fontSize: 13,
-                color: "var(--color-danger)",
-                background: "rgba(248,113,113,0.1)",
-                border: "1px solid rgba(248,113,113,0.3)",
-                borderRadius: 8,
-                padding: "0.55rem 0.75rem",
-              }}
-            >
-              {erro}
-            </div>
-          )}
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {emTotp ? "Verificação em duas etapas" : modo === "login" ? "Entrar" : "Criar escritório"}
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {emTotp
+              ? "Digite o código do seu app autenticador."
+              : modo === "login"
+                ? "Acesse a plataforma do seu escritório."
+                : "Crie a conta do seu escritório em poucos minutos."}
+          </p>
 
-          <button
-            className="btn btn-primary"
-            type="submit"
-            disabled={enviando || (emTotp && codigo.length < 6)}
-            style={{ marginTop: 4 }}
-          >
-            {enviando ? "Aguarde..." : emTotp ? "Verificar" : modo === "login" ? "Entrar" : "Criar conta"}
-          </button>
-        </form>
+          <form onSubmit={enviar} className="mt-8 flex flex-col gap-4">
+            {emTotp ? (
+              <>
+                <div className="flex items-center gap-2.5 rounded-lg border border-primary/20 bg-primary/8 px-3 py-2.5 text-sm text-muted-foreground">
+                  <ShieldCheck size={18} className="shrink-0 text-primary" />
+                  <span>
+                    Verificação em dois fatores ativada para <strong className="text-foreground">{email}</strong>.
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="codigo">Código de verificação</Label>
+                  <Input
+                    id="codigo"
+                    value={codigo}
+                    onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
+                    placeholder="000000"
+                    maxLength={6}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    required
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                {modo === "registro" && (
+                  <>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="organizacao">Nome do escritório</Label>
+                      <Input id="organizacao" value={organizacao} onChange={(e) => setOrganizacao(e.target.value)} required />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="nome">Seu nome</Label>
+                      <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+                    </div>
+                  </>
+                )}
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="senha">Senha</Label>
+                  <Input id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+                </div>
+              </>
+            )}
 
-        <div style={{ marginTop: 18, textAlign: "center", fontSize: 13, color: "var(--color-text-muted)" }}>
-          {emTotp ? (
-            <button
-              onClick={voltarParaCredenciais}
-              style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontWeight: 600 }}
-            >
-              Voltar
-            </button>
-          ) : (
-            <>
-              {modo === "login" ? "Não tem conta?" : "Já tem conta?"}{" "}
-              <button
-                onClick={trocarModo}
-                style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontWeight: 600 }}
-              >
-                {modo === "login" ? "Criar escritório" : "Fazer login"}
+            {erro && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                {erro}
+              </div>
+            )}
+
+            <Button type="submit" size="lg" disabled={enviando || (emTotp && codigo.length < 6)} className="mt-1 w-full">
+              {enviando ? "Aguarde..." : emTotp ? "Verificar" : modo === "login" ? "Entrar" : "Criar conta"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            {emTotp ? (
+              <button onClick={voltarParaCredenciais} className="font-semibold text-primary hover:underline">
+                Voltar
               </button>
-            </>
-          )}
+            ) : (
+              <>
+                {modo === "login" ? "Não tem conta?" : "Já tem conta?"}{" "}
+                <button onClick={trocarModo} className="font-semibold text-primary hover:underline">
+                  {modo === "login" ? "Criar escritório" : "Fazer login"}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

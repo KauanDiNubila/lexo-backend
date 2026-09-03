@@ -9,11 +9,9 @@ import { Processos } from "./pages/Processos";
 import { Agenda } from "./pages/Agenda";
 import { Financeiro } from "./pages/Financeiro";
 import { Equipe } from "./pages/Equipe";
-import { Auditoria } from "./pages/Auditoria";
 import { Configuracoes } from "./pages/Configuracoes";
 import { Dashboard } from "./pages/Dashboard";
-import { Assistente } from "./pages/Assistente";
-import { Peticoes } from "./pages/Peticoes";
+import { LexoIA } from "./pages/LexoIA";
 import type { ReactNode } from "react";
 
 function Protegida({ children }: { children: ReactNode }) {
@@ -32,15 +30,17 @@ export default function App() {
       <Route path="/portal/:token" element={<PortalCliente />} />
 
       <Route path="/app" element={<Protegida><Dashboard /></Protegida>} />
-      <Route path="/app/assistente" element={<Protegida><Assistente /></Protegida>} />
-      <Route path="/app/peticoes" element={<Protegida><Peticoes /></Protegida>} />
+      <Route path="/app/ia" element={<Protegida><LexoIA /></Protegida>} />
       <Route path="/app/clientes" element={<Protegida><Clientes /></Protegida>} />
       <Route path="/app/processos" element={<Protegida><Processos /></Protegida>} />
       <Route path="/app/agenda" element={<Protegida><Agenda /></Protegida>} />
       <Route path="/app/financeiro" element={<Protegida><Financeiro /></Protegida>} />
       <Route path="/app/equipe" element={<Protegida><Equipe /></Protegida>} />
-      <Route path="/app/auditoria" element={<Protegida><Auditoria /></Protegida>} />
       <Route path="/app/configuracoes" element={<Protegida><Configuracoes /></Protegida>} />
+
+      <Route path="/app/assistente" element={<Navigate to="/app/ia" replace />} />
+      <Route path="/app/peticoes" element={<Navigate to="/app/ia" replace />} />
+      <Route path="/app/auditoria" element={<Navigate to="/app/configuracoes" replace />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

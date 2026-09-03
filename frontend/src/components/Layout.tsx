@@ -7,30 +7,27 @@ import {
   CalendarDays,
   Wallet,
   UsersRound,
-  ScrollText,
   Settings,
   Scale,
   Sparkles,
-  FileText,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
 const navItens = [
-  { para: "/app", rotulo: "Visão geral", icone: LayoutDashboard },
-  { para: "/app/assistente", rotulo: "Assistente", icone: Sparkles },
-  { para: "/app/peticoes", rotulo: "Petições", icone: FileText },
-  { para: "/app/clientes", rotulo: "Clientes", icone: Users },
-  { para: "/app/processos", rotulo: "Processos", icone: Briefcase },
-  { para: "/app/agenda", rotulo: "Agenda", icone: CalendarDays },
-  { para: "/app/financeiro", rotulo: "Financeiro", icone: Wallet },
-  { para: "/app/equipe", rotulo: "Equipe", icone: UsersRound },
-  { para: "/app/auditoria", rotulo: "Auditoria", icone: ScrollText },
-  { para: "/app/configuracoes", rotulo: "Configurações", icone: Settings },
+  { para: "/app", rotulo: "Visão geral", icone: LayoutDashboard, apenasAdmin: false },
+  { para: "/app/clientes", rotulo: "Clientes", icone: Users, apenasAdmin: false },
+  { para: "/app/processos", rotulo: "Processos", icone: Briefcase, apenasAdmin: false },
+  { para: "/app/agenda", rotulo: "Agenda", icone: CalendarDays, apenasAdmin: false },
+  { para: "/app/financeiro", rotulo: "Financeiro", icone: Wallet, apenasAdmin: false },
+  { para: "/app/ia", rotulo: "Lexo IA", icone: Sparkles, apenasAdmin: false },
+  { para: "/app/equipe", rotulo: "Equipe", icone: UsersRound, apenasAdmin: true },
+  { para: "/app/configuracoes", rotulo: "Configurações", icone: Settings, apenasAdmin: false },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
   const { usuario, sair } = useAuth();
   const navigate = useNavigate();
+  const itensVisiveis = navItens.filter((item) => !item.apenasAdmin || usuario?.role === "ADMIN");
 
   function logout() {
     sair();
@@ -86,7 +83,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </Link>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {navItens.map((item) => (
+          {itensVisiveis.map((item) => (
             <NavLink
               key={item.para}
               to={item.para}

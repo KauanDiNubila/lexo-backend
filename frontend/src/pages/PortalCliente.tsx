@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Scale, Briefcase, CalendarClock, Wallet, History } from "lucide-react";
+import { Briefcase, CalendarClock, Wallet, History, Lock, type LucideIcon } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const BASE = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8090";
 
@@ -19,28 +21,31 @@ const moeda = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency",
 const data = (iso: string) => new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 
 const corProcesso: Record<string, string> = {
-  ATIVO: "#34d399", SUSPENSO: "#fbbf24", ARQUIVADO: "#9aa3b8", ENCERRADO: "#f87171",
+  ATIVO: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  SUSPENSO: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  ARQUIVADO: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
+  ENCERRADO: "bg-red-500/10 text-red-700 dark:text-red-400",
 };
 const corHonorario: Record<string, string> = {
-  PAGO: "#34d399", PENDENTE: "#fbbf24", ATRASADO: "#f87171", CANCELADO: "#9aa3b8",
+  PAGO: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  PENDENTE: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  ATRASADO: "bg-red-500/10 text-red-700 dark:text-red-400",
+  CANCELADO: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
 };
 
-function Marca() {
+function Badge({ texto, className }: { texto: string; className?: string }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="grid h-9 w-9 place-items-center rounded-[10px] text-white" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
-        <Scale size={20} strokeWidth={2.3} />
-      </div>
-      <span className="text-xl font-bold tracking-tight">Lexo</span>
-    </div>
+    <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold", className)}>
+      {texto}
+    </span>
   );
 }
 
-function Badge({ texto, cor }: { texto: string; cor: string }) {
+function IconeChip({ icone: Icone }: { icone: LucideIcon }) {
   return (
-    <span style={{ fontSize: 12, fontWeight: 700, color: cor, background: "var(--color-surface-2)", padding: "0.2rem 0.6rem", borderRadius: 999 }}>
-      {texto}
-    </span>
+    <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+      <Icone size={20} />
+    </div>
   );
 }
 
@@ -63,128 +68,130 @@ export function PortalCliente() {
   }, [token]);
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
-      <header style={{ borderBottom: "1px solid var(--color-border)" }}>
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <Marca />
-          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>Portal do cliente</span>
+          <span className="text-lg font-bold tracking-tight">Lexo</span>
+          <span className="text-xs text-muted-foreground">Portal do cliente</span>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-10">
         {carregando ? (
-          <div className="card" style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>Carregando...</div>
+          <Card className="items-center px-6 py-16 text-center text-sm text-muted-foreground">Carregando…</Card>
         ) : erro ? (
-          <div className="card" style={{ padding: 40, textAlign: "center" }}>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>🔒</div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 6px" }}>Link inválido</h1>
-            <p style={{ color: "var(--color-text-muted)", margin: 0 }}>{erro}</p>
-          </div>
+          <Card className="items-center px-6 py-16 text-center">
+            <div className="mx-auto grid size-12 place-items-center rounded-full bg-muted text-muted-foreground">
+              <Lock size={20} />
+            </div>
+            <h1 className="mt-4 text-lg font-semibold">Link inválido</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{erro}</p>
+          </Card>
         ) : portal ? (
           <>
-            <h1 style={{ fontSize: 26, fontWeight: 800, margin: "0 0 4px", letterSpacing: -0.4 }}>
-              Olá, {portal.cliente} 👋
-            </h1>
-            <p style={{ color: "var(--color-text-muted)", margin: "0 0 24px" }}>
+            <h1 className="text-2xl font-bold tracking-tight">Olá, {portal.cliente}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Acompanhe aqui o andamento dos seus processos e sua situação financeira, em tempo real.
             </p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
-              <div className="card" style={{ padding: "1.1rem 1.25rem", display: "flex", alignItems: "center", gap: 14 }}>
-                <div className="grid h-11 w-11 place-items-center rounded-xl text-white" style={{ background: "linear-gradient(135deg,#34d399,#10b981)" }}>
-                  <Briefcase size={20} />
-                </div>
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Card className="flex-row items-center gap-4 px-5 py-5">
+                <IconeChip icone={Briefcase} />
                 <div>
-                  <div style={{ fontSize: 24, fontWeight: 800 }}>{portal.resumo.totalProcessos}</div>
-                  <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>processo(s)</div>
+                  <div className="text-2xl font-bold">{portal.resumo.totalProcessos}</div>
+                  <div className="text-sm text-muted-foreground">processo(s)</div>
                 </div>
-              </div>
-              <div className="card" style={{ padding: "1.1rem 1.25rem", display: "flex", alignItems: "center", gap: 14 }}>
-                <div className="grid h-11 w-11 place-items-center rounded-xl text-white" style={{ background: "linear-gradient(135deg,#c084fc,#8b5cf6)" }}>
-                  <Wallet size={20} />
-                </div>
+              </Card>
+              <Card className="flex-row items-center gap-4 px-5 py-5">
+                <IconeChip icone={Wallet} />
                 <div>
-                  <div style={{ fontSize: 24, fontWeight: 800 }}>{moeda(portal.resumo.emAberto)}</div>
-                  <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>em aberto</div>
+                  <div className="text-2xl font-bold">{moeda(portal.resumo.emAberto)}</div>
+                  <div className="text-sm text-muted-foreground">em aberto</div>
                 </div>
-              </div>
+              </Card>
             </div>
 
-            <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Seus processos</h2>
+            <h2 className="mt-10 mb-3 text-base font-semibold">Seus processos</h2>
             {portal.processos.length === 0 ? (
-              <div className="card" style={{ padding: 24, color: "var(--color-text-muted)", marginBottom: 24 }}>Nenhum processo cadastrado ainda.</div>
+              <Card className="px-6 py-6 text-sm text-muted-foreground">Nenhum processo cadastrado ainda.</Card>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
+              <div className="flex flex-col gap-3">
                 {portal.processos.map((p, i) => (
-                  <div key={i} className="card" style={{ padding: "1.1rem 1.25rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                  <Card key={i} className="px-5 py-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <div style={{ fontSize: 15, fontWeight: 700 }}>{p.number}</div>
-                        <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>{p.area || "Área não informada"}</div>
+                        <div className="text-[15px] font-semibold">{p.number}</div>
+                        <div className="text-sm text-muted-foreground">{p.area || "Área não informada"}</div>
                       </div>
-                      <Badge texto={p.status} cor={corProcesso[p.status] || "#9aa3b8"} />
+                      <Badge texto={p.status} className={corProcesso[p.status] || corProcesso.ARQUIVADO} />
                     </div>
                     {p.prazos.length > 0 && (
-                      <div style={{ marginTop: 12, borderTop: "1px solid var(--color-border)", paddingTop: 10 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                      <div className="mt-3 border-t border-border pt-3">
+                        <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                           <CalendarClock size={13} /> Próximos compromissos
                         </div>
                         {p.prazos.map((pr, j) => (
-                          <div key={j} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "3px 0" }}>
+                          <div key={j} className="flex justify-between py-1 text-sm">
                             <span>{pr.title}</span>
-                            <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>{data(pr.date)}</span>
+                            <span className="font-semibold text-muted-foreground">{data(pr.date)}</span>
                           </div>
                         ))}
                       </div>
                     )}
                     {p.andamentos && p.andamentos.length > 0 && (
-                      <div style={{ marginTop: 12, borderTop: "1px solid var(--color-border)", paddingTop: 10 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                      <div className="mt-3 border-t border-border pt-3">
+                        <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                           <History size={13} /> Andamentos
                         </div>
                         {p.andamentos.map((a, j) => (
-                          <div key={j} style={{ display: "flex", gap: 10 }}>
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--color-primary)", marginTop: 5, flexShrink: 0 }} />
-                              {j < p.andamentos.length - 1 && <span style={{ flex: 1, width: 2, background: "var(--color-border)" }} />}
+                          <div key={j} className="flex gap-2.5">
+                            <div className="flex flex-col items-center">
+                              <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
+                              {j < p.andamentos.length - 1 && <span className="w-px flex-1 bg-border" />}
                             </div>
-                            <div style={{ paddingBottom: 12, flex: 1 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13.5 }}>
-                                <span style={{ fontWeight: 600 }}>{a.title}</span>
-                                <span style={{ color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>{data(a.date)}</span>
+                            <div className="flex-1 pb-3">
+                              <div className="flex justify-between gap-2 text-[13.5px]">
+                                <span className="font-semibold">{a.title}</span>
+                                <span className="whitespace-nowrap text-muted-foreground">{data(a.date)}</span>
                               </div>
-                              {a.description && <div style={{ fontSize: 13, color: "var(--color-text-muted)", marginTop: 2 }}>{a.description}</div>}
+                              {a.description && <div className="mt-0.5 text-sm text-muted-foreground">{a.description}</div>}
                             </div>
                           </div>
                         ))}
                       </div>
                     )}
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}
 
-            <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Financeiro</h2>
+            <h2 className="mt-10 mb-3 text-base font-semibold">Financeiro</h2>
             {portal.honorarios.length === 0 ? (
-              <div className="card" style={{ padding: 24, color: "var(--color-text-muted)" }}>Nenhum lançamento financeiro.</div>
+              <Card className="px-6 py-6 text-sm text-muted-foreground">Nenhum lançamento financeiro.</Card>
             ) : (
-              <div className="card" style={{ overflow: "hidden" }}>
+              <Card className="gap-0 py-0">
                 {portal.honorarios.map((h, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "0.85rem 1.25rem", borderTop: i ? "1px solid var(--color-border)" : "none" }}>
+                  <div
+                    key={i}
+                    className={cn(
+                      "flex items-center justify-between gap-3 px-5 py-3.5",
+                      i > 0 && "border-t border-border"
+                    )}
+                  >
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{h.description}</div>
-                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>vence em {data(h.dueDate)}</div>
+                      <div className="text-sm font-semibold">{h.description}</div>
+                      <div className="text-xs text-muted-foreground">vence em {data(h.dueDate)}</div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700 }}>{moeda(h.amount)}</span>
-                      <Badge texto={h.status} cor={corHonorario[h.status] || "#9aa3b8"} />
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold">{moeda(h.amount)}</span>
+                      <Badge texto={h.status} className={corHonorario[h.status] || corHonorario.CANCELADO} />
                     </div>
                   </div>
                 ))}
-              </div>
+              </Card>
             )}
 
-            <p style={{ textAlign: "center", fontSize: 12, color: "var(--color-text-muted)", marginTop: 32 }}>
+            <p className="mt-8 text-center text-xs text-muted-foreground">
               Dúvidas? Fale com seu advogado. · Powered by Lexo
             </p>
           </>

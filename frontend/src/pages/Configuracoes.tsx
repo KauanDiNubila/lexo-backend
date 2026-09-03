@@ -8,6 +8,15 @@ type Conta = { organizacao: OrganizacaoInfo; usuario: PerfilInfo };
 
 type Aviso = { tipo: "ok" | "erro"; texto: string } | null;
 
+type RegistroAuditoria = {
+  id: string;
+  userName: string;
+  action: string;
+  entityType: string | null;
+  description: string;
+  createdAt: string;
+};
+
 const rotuloPlano: Record<string, string> = {
   trial: "Teste grátis",
   solo: "Solo",
@@ -119,6 +128,10 @@ export function Configuracoes() {
   const [codigoOff, setCodigoOff] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const [registros, setRegistros] = useState<RegistroAuditoria[]>([]);
+  const [carregandoAuditoria, setCarregandoAuditoria] = useState(true);
+  const [erroAuditoria, setErroAuditoria] = useState<string | null>(null);
+
   async function carregar() {
     try {
       setConta(await api.get<Conta>("/api/conta"));
@@ -130,6 +143,15 @@ export function Configuracoes() {
   useEffect(() => {
     carregar();
   }, []);
+
+  useEffect(() => {
+    if (conta?.usuario.role !== "ADMIN") return;
+    api
+      .get<RegistroAuditoria[]>("/api/auditoria")
+      .then(setRegistros)
+      .catch((e) => setErroAuditoria((e as Error).message))
+      .finally(() => setCarregandoAuditoria(false));
+  }, [conta?.usuario.role]);
 
   function flash(a: Aviso) {
     setAviso(a);
@@ -205,7 +227,7 @@ export function Configuracoes() {
   const ehAdmin = conta?.usuario.role === "ADMIN";
 
   return (
-    <div style={{ maxWidth: 620 }}>
+    <div>
       <div style={{ marginBottom: 22 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Configurações</h1>
         <p style={{ color: "var(--color-text-muted)", margin: "4px 0 0", fontSize: 14 }}>
@@ -216,6 +238,7 @@ export function Configuracoes() {
       {aviso && (
         <div
           style={{
+            maxWidth: 620,
             marginBottom: 18,
             fontSize: 14,
             padding: "0.7rem 1rem",
@@ -230,11 +253,12 @@ export function Configuracoes() {
       )}
 
       {erro ? (
-        <div className="card" style={{ padding: "1.5rem", color: "var(--color-danger)" }}>{erro}</div>
+        <div className="card" style={{ maxWidth: 620, padding: "1.5rem", color: "var(--color-danger)" }}>{erro}</div>
       ) : !conta ? (
-        <div className="card" style={{ padding: "1.5rem", color: "var(--color-text-muted)" }}>Carregando...</div>
+        <div className="card" style={{ maxWidth: 620, padding: "1.5rem", color: "var(--color-text-muted)" }}>Carregando...</div>
       ) : (
         <>
+        <div style={{ maxWidth: 620 }}>
 
           <Secao titulo="Escritório" descricao={ehAdmin ? "Dados da sua organização." : "Apenas administradores podem editar o escritório."}>
             <Linha rotulo="Nome do escritório">
@@ -354,6 +378,54 @@ export function Configuracoes() {
               </div>
             )}
           </Secao>
+        </div>
+
+        {ehAdmin && (
+          <div style={{ marginTop: 8 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 4px" }}>Auditoria</h2>
+            <p style={{ color: "var(--color-text-muted)", fontSize: 14, margin: "0 0 16px" }}>
+              {registros.length} evento(s) · consumidos do Kafka pelo <code>auditoria-service</code>
+            </p>
+            <div className="card" style={{ overflow: "hidden" }}>
+              {carregandoAuditoria ? (
+                <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>Carregando...</div>
+              ) : erroAuditoria ? (
+                <div style={{ padding: 40, textAlign: "center", color: "var(--color-danger)" }}>{erroAuditoria}</div>
+              ) : registros.length === 0 ? (
+                <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>
+                  Nenhum evento ainda. Crie um cliente ou processo para gerar eventos.
+                </div>
+              ) : (
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ textAlign: "left", color: "var(--color-text-muted)", fontSize: 12 }}>
+                      <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>AÇÃO</th>
+                      <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>DESCRIÇÃO</th>
+                      <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>POR</th>
+                      <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>QUANDO</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registros.map((r) => (
+                      <tr key={r.id} style={{ borderTop: "1px solid var(--color-border)", fontSize: 14 }}>
+                        <td style={{ padding: "0.85rem 1.25rem" }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--color-primary)", background: "var(--color-primary-soft)", padding: "0.2rem 0.6rem", borderRadius: 6 }}>
+                            {r.action}
+                          </span>
+                        </td>
+                        <td style={{ padding: "0.85rem 1.25rem" }}>{r.description}</td>
+                        <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>{r.userName}</td>
+                        <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>
+                          {new Date(r.createdAt).toLocaleString("pt-BR")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
         </>
       )}
     </div>
