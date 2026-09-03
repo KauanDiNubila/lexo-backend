@@ -1,0 +1,366 @@
+name: lexo-prod
+
+x-java-build: &java-build
+  context: .
+  dockerfile: Dockerfile
+
+x-infra-env: &infra-env
+  SPRING_PROFILES_ACTIVE: prod
+  JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70
+  LEXO_EUREKA_URL: http://discovery-server:8761/eureka/
+  LEXO_ZIPKIN: http://zipkin:9411/api/v2/spans
+  LEXO_REDIS_HOST: redis
+  LEXO_REDIS_PORT: "6379"
+  LEXO_REDIS_PASSWORD: ${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env.prod}
+  LEXO_KAFKA_BOOTSTRAP: kafka:9092
+  LEXO_RABBIT_HOST: rabbitmq
+  LEXO_RABBIT_PORT: "5672"
+  LEXO_SMTP_HOST: mailpit
+  LEXO_SMTP_PORT: "1025"
+  LEXO_CORS_ORIGINS: https://${APP_DOMAIN:?defina APP_DOMAIN no .env.prod}
+  SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?defina POSTGRES_USER no .env.prod}
+  SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.prod}
+  AUTH_SECRET: ${AUTH_SECRET:?defina AUTH_SECRET no .env.prod}
+  GATEWAY_SIGNING_KEY: ${GATEWAY_SIGNING_KEY:?defina GATEWAY_SIGNING_KEY no .env.prod}
+  LEXO_INTERNAL_KEY: ${LEXO_INTERNAL_KEY:?defina LEXO_INTERNAL_KEY no .env.prod}
+
+x-db-env: &db-env
+  POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env.prod}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.prod}
+
+services:
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?defina APP_DOMAIN no .env.prod}
+      ACME_EMAIL: ${ACME_EMAIL:?defina ACME_EMAIL no .env.prod}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - api-gateway
+
+  auth-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      <<: *db-env
+      POSTGRES_DB: lexo_auth
+    volumes:
+      - lexo_authdata:/var/lib/postgresql/data
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d lexo_auth"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cliente-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      <<: *db-env
+      POSTGRES_DB: lexo_cliente
+    volumes:
+      - lexo_clientedata:/var/lib/postgresql/data
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d lexo_cliente"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  processo-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      <<: *db-env
+      POSTGRES_DB: lexo_processo
+    volumes:
+      - lexo_processodata:/var/lib/postgresql/data
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d lexo_processo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  financeiro-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      <<: *db-env
+      POSTGRES_DB: lexo_financeiro
+    volumes:
+      - lexo_financeirodata:/var/lib/postgresql/data
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d lexo_financeiro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auditoria-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      <<: *db-env
+      POSTGRES_DB: lexo_auditoria
+    volumes:
+      - lexo_auditoriadata:/var/lib/postgresql/data
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d lexo_auditoria"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env.prod}"]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: apache/kafka:3.8.1
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - lexo_kafkadata:/var/lib/kafka/data
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER:?defina RABBIT_USER no .env.prod}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:?defina RABBIT_PASSWORD no .env.prod}
+    volumes:
+      - lexo_rabbitdata:/var/lib/rabbitmq
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    restart: unless-stopped
+    mem_limit: 512m
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    mem_limit: 128m
+
+  discovery-server:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: discovery-server
+    restart: unless-stopped
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70
+    mem_limit: 384m
+
+  api-gateway:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: api-gateway
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: api-gateway
+    mem_limit: 512m
+    depends_on:
+      discovery-server:
+        condition: service_started
+
+  auth-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: auth-service
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: auth-service
+      LEXO_AUTH_DB_URL: jdbc:postgresql://auth-db:5432/lexo_auth
+      BASE_URL: https://${APP_DOMAIN}
+    mem_limit: 640m
+    depends_on:
+      discovery-server:
+        condition: service_started
+      auth-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  cliente-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: cliente-service
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: cliente-service
+      LEXO_CLIENTE_DB_URL: jdbc:postgresql://cliente-db:5432/lexo_cliente
+    mem_limit: 640m
+    depends_on:
+      discovery-server:
+        condition: service_started
+      cliente-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  processo-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: processo-service
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: processo-service
+      LEXO_PROCESSO_DB_URL: jdbc:postgresql://processo-db:5432/lexo_processo
+    mem_limit: 640m
+    depends_on:
+      discovery-server:
+        condition: service_started
+      processo-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  financeiro-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: financeiro-service
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: financeiro-service
+      LEXO_FINANCEIRO_DB_URL: jdbc:postgresql://financeiro-db:5432/lexo_financeiro
+    mem_limit: 640m
+    depends_on:
+      discovery-server:
+        condition: service_started
+      financeiro-db:
+        condition: service_healthy
+
+  auditoria-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: auditoria-service
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: auditoria-service
+      LEXO_AUDITORIA_DB_URL: jdbc:postgresql://auditoria-db:5432/lexo_auditoria
+    mem_limit: 640m
+    depends_on:
+      discovery-server:
+        condition: service_started
+      auditoria-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  notificacao-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: notificacao-service
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: notificacao-service
+      BASE_URL: https://${APP_DOMAIN}
+    mem_limit: 512m
+    depends_on:
+      discovery-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  ia-service:
+    build:
+      <<: *java-build
+      args:
+        SERVICE: ia-service
+    restart: unless-stopped
+    environment:
+      <<: *infra-env
+      LEXO_EUREKA_HOSTNAME: ia-service
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    mem_limit: 512m
+    depends_on:
+      discovery-server:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_GATEWAY_URL: https://${APP_DOMAIN:?defina APP_DOMAIN no .env.prod}
+    restart: unless-stopped
+    mem_limit: 128m
+    depends_on:
+      - api-gateway
+
+volumes:
+  lexo_authdata:
+  lexo_clientedata:
+  lexo_processodata:
+  lexo_financeirodata:
+  lexo_auditoriadata:
+  lexo_kafkadata:
+  lexo_rabbitdata:
+  caddy_data:
+  caddy_config:

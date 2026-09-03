@@ -16,3 +16,6 @@ scripts/logs/
 
 scripts/env.local.ps1
 .env.local
+
+.env
+.env.prod
