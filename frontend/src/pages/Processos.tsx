@@ -3,6 +3,19 @@ import { Sparkles } from "lucide-react";
 import { api, type Pagina } from "../lib/api";
 import { Paginacao } from "../components/Paginacao";
 import { Markdown } from "../components/Markdown";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 type Prazo = { id: string; caseId: string; title: string; status: string; date: string };
 type Andamento = { id: string; title: string; description: string | null; date: string };
@@ -20,13 +33,25 @@ type Cliente = { id: string; name: string };
 const STATUS = ["ATIVO", "SUSPENSO", "ARQUIVADO", "ENCERRADO"];
 
 const corStatus: Record<string, string> = {
-  ATIVO: "#34d399",
-  SUSPENSO: "#fbbf24",
-  ARQUIVADO: "#9aa3b8",
-  ENCERRADO: "#f87171",
+  ATIVO: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  SUSPENSO: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  ARQUIVADO: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
+  ENCERRADO: "bg-red-500/10 text-red-700 dark:text-red-400",
 };
 
 const FORM_VAZIO = { clientId: "", numero: "", area: "", status: "ATIVO" };
+
+const selectClass =
+  "flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+
+function AcaoLinha({ tom = "muted", ...props }: React.ComponentProps<"button"> & { tom?: "muted" | "primary" | "destructive" }) {
+  const tons = {
+    muted: "text-foreground/80 hover:text-foreground",
+    primary: "text-primary hover:underline",
+    destructive: "text-destructive hover:underline",
+  };
+  return <button className={cn("text-[13px] font-medium", tons[tom])} {...props} />;
+}
 
 export function Processos() {
   const [processos, setProcessos] = useState<Processo[]>([]);
@@ -90,7 +115,6 @@ export function Processos() {
   }, [busca, filtroStatus]);
 
   const nomeCliente = (id: string) => clientes.find((c) => c.id === id)?.name || "—";
-
 
   function abrirNovo() {
     setEditandoId(null);
@@ -176,7 +200,6 @@ export function Processos() {
     setIaResumo("");
     setIaFonte("");
     try {
-
       const agenda = await api
         .get<Pagina<Prazo>>(`/api/agenda?caseId=${p.id}&size=100`)
         .then((pg) => pg.content)
@@ -197,7 +220,7 @@ export function Processos() {
       });
       setIaResumo(r.resumo);
       setIaFonte(r.fonte);
-    } catch (e) {
+    } catch {
       setIaResumo("Não foi possível gerar o resumo agora. Tente novamente.");
       setIaFonte("erro");
     } finally {
@@ -207,28 +230,31 @@ export function Processos() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+      <div className="mb-5.5 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Processos</h1>
-          <p style={{ color: "var(--color-text-muted)", margin: "4px 0 0", fontSize: 14 }}>
+          <h1 className="text-2xl font-bold tracking-tight">Processos</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {busca || filtroStatus ? `${totalRegistros} encontrado(s)` : `${totalRegistros} processo(s)`} · via{" "}
             <code>processo-service</code>
           </p>
         </div>
-        <button className="btn btn-primary" onClick={abrirNovo}>
+        <Button size="lg" onClick={abrirNovo}>
           + Novo processo
-        </button>
+        </Button>
       </div>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <input
-          className="input"
+      <div className="mb-3.5 flex flex-wrap gap-2.5">
+        <Input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar por número, cliente ou área..."
-          style={{ maxWidth: 360 }}
+          className="max-w-[360px]"
         />
-        <select className="input" value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)} style={{ maxWidth: 180 }}>
+        <select
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value)}
+          className={cn(selectClass, "max-w-[180px]")}
+        >
           <option value="">Todos os status</option>
           {STATUS.map((s) => (
             <option key={s} value={s}>{s}</option>
@@ -236,235 +262,228 @@ export function Processos() {
         </select>
       </div>
 
-      <div className="card" style={{ overflow: "hidden" }}>
+      <Card className="gap-0 overflow-hidden py-0">
         {carregando ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>Carregando...</div>
+          <div className="p-10 text-center text-sm text-muted-foreground">Carregando...</div>
         ) : erro ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--color-danger)" }}>{erro}</div>
+          <div className="p-10 text-center text-sm text-destructive">{erro}</div>
         ) : processos.length === 0 ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>
-            {processos.length === 0 ? "Nenhum processo ainda." : "Nenhum processo corresponde ao filtro."}
+          <div className="p-10 text-center text-sm text-muted-foreground">
+            {busca || filtroStatus ? "Nenhum processo corresponde ao filtro." : "Nenhum processo ainda."}
           </div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table className="w-full border-collapse">
             <thead>
-              <tr style={{ textAlign: "left", color: "var(--color-text-muted)", fontSize: 12 }}>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>NÚMERO</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>CLIENTE</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>ÁREA</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>STATUS</th>
-                <th style={{ padding: "0.85rem 1.25rem" }}></th>
+              <tr className="text-left text-xs text-muted-foreground">
+                <th className="px-5 py-3.5 font-semibold">NÚMERO</th>
+                <th className="px-5 py-3.5 font-semibold">CLIENTE</th>
+                <th className="px-5 py-3.5 font-semibold">ÁREA</th>
+                <th className="px-5 py-3.5 font-semibold">STATUS</th>
+                <th className="px-5 py-3.5" />
               </tr>
             </thead>
             <tbody>
               {processos.map((p) => (
-                <tr key={p.id} style={{ borderTop: "1px solid var(--color-border)", fontSize: 14 }}>
-                  <td style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>{p.number}</td>
-                  <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>{nomeCliente(p.clientId)}</td>
-                  <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>{p.area || "—"}</td>
-                  <td style={{ padding: "0.85rem 1.25rem" }}>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: corStatus[p.status] || "#9aa3b8",
-                        background: "var(--color-surface-2)",
-                        padding: "0.2rem 0.6rem",
-                        borderRadius: 999,
-                      }}
-                    >
+                <tr key={p.id} className="border-t border-border text-sm">
+                  <td className="px-5 py-3.5 font-semibold">{p.number}</td>
+                  <td className="px-5 py-3.5 text-muted-foreground">{nomeCliente(p.clientId)}</td>
+                  <td className="px-5 py-3.5 text-muted-foreground">{p.area || "—"}</td>
+                  <td className="px-5 py-3.5">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", corStatus[p.status] || corStatus.ARQUIVADO)}>
                       {p.status}
                     </span>
                   </td>
-                  <td style={{ padding: "0.85rem 1.25rem", textAlign: "right", whiteSpace: "nowrap" }}>
-                    <button
-                      onClick={() => abrirAndamentos(p)}
-                      title="Ver/adicionar andamentos"
-                      style={{ background: "none", border: "none", color: "var(--color-text)", cursor: "pointer", fontSize: 13, marginRight: 14 }}
-                    >
-                      Andamentos
-                    </button>
-                    <button
-                      onClick={() => resumirIA(p)}
-                      title="Resumir com a Lexo IA"
-                      style={{ background: "none", border: "none", color: "#c084fc", cursor: "pointer", fontSize: 13, marginRight: 14, display: "inline-flex", alignItems: "center", gap: 4, verticalAlign: "middle" }}
-                    >
-                      <Sparkles size={13} /> Resumir
-                    </button>
-                    <button
-                      onClick={() => abrirEdicao(p)}
-                      style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontSize: 13, marginRight: 14 }}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => excluir(p.id)}
-                      style={{ background: "none", border: "none", color: "var(--color-danger)", cursor: "pointer", fontSize: 13 }}
-                    >
-                      Excluir
-                    </button>
+                  <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-3.5">
+                      <AcaoLinha onClick={() => abrirAndamentos(p)} title="Ver/adicionar andamentos">
+                        Andamentos
+                      </AcaoLinha>
+                      <AcaoLinha tom="primary" onClick={() => resumirIA(p)} title="Resumir com a Lexo IA">
+                        <span className="inline-flex items-center gap-1">
+                          <Sparkles size={13} /> Resumir
+                        </span>
+                      </AcaoLinha>
+                      <AcaoLinha tom="primary" onClick={() => abrirEdicao(p)}>
+                        Editar
+                      </AcaoLinha>
+                      <AcaoLinha tom="destructive" onClick={() => excluir(p.id)}>
+                        Excluir
+                      </AcaoLinha>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-      </div>
+      </Card>
 
-      <Paginacao
-        page={pagina}
-        totalPages={totalPaginas}
-        totalElements={totalRegistros}
-        onChange={setPagina}
-      />
+      <Paginacao page={pagina} totalPages={totalPaginas} totalElements={totalRegistros} onChange={setPagina} />
 
-      {aberto && (
-        <div
-          onClick={() => setAberto(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}
-        >
-          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: 440, maxWidth: "100%", padding: "1.75rem" }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 18px" }}>
-              {editandoId ? "Editar processo" : "Novo processo"}
-            </h2>
-            <form onSubmit={salvar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <label className="label">Cliente *</label>
-                <select className="input" value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} required>
-                  <option value="">Selecione...</option>
-                  {clientes.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="label">Número do processo *</label>
-                <input className="input" value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} required placeholder="0001-23.2026" />
-              </div>
-              <div>
-                <label className="label">Área</label>
-                <input className="input" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Cível" />
-              </div>
-              <div>
-                <label className="label">Status</label>
-                <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                  {STATUS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-              {erroForm && <div style={{ color: "var(--color-danger)", fontSize: 13 }}>{erroForm}</div>}
-              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 6 }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setAberto(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" disabled={salvando}>
-                  {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Salvar"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Dialog open={aberto} onOpenChange={setAberto}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editandoId ? "Editar processo" : "Novo processo"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={salvar} className="flex flex-col gap-3.5">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cliente">Cliente *</Label>
+              <select
+                id="cliente"
+                value={form.clientId}
+                onChange={(e) => setForm({ ...form, clientId: e.target.value })}
+                required
+                className={selectClass}
+              >
+                <option value="">Selecione...</option>
+                {clientes.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="numero">Número do processo *</Label>
+              <Input id="numero" value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} required placeholder="0001-23.2026" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="area">Área</Label>
+              <Input id="area" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Cível" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="status">Status</Label>
+              <select
+                id="status"
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+                className={selectClass}
+              >
+                {STATUS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            {erroForm && <div className="text-[13px] text-destructive">{erroForm}</div>}
+            <DialogFooter>
+              <Button type="button" variant="ghost" size="lg" onClick={() => setAberto(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" size="lg" disabled={salvando}>
+                {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      {iaAberto && (
-        <div
-          onClick={() => setIaAberto(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}
-        >
-          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: 480, maxWidth: "100%", padding: "1.75rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span className="grid h-7 w-7 place-items-center rounded-lg text-white" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
+      <Dialog open={iaAberto} onOpenChange={setIaAberto}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2.5">
+              <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                 <Sparkles size={15} />
               </span>
-              <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Resumo do processo</h2>
-            </div>
-            <p style={{ fontSize: 13, color: "var(--color-text-muted)", margin: "0 0 16px" }}>
-              {iaProcesso?.number}
-            </p>
+              Resumo do processo
+            </DialogTitle>
+            <p className="mt-1 text-[13px] text-muted-foreground">{iaProcesso?.number}</p>
+          </DialogHeader>
 
-            {iaCarregando ? (
-              <div style={{ padding: "20px 0", color: "var(--color-text-muted)", fontSize: 14 }}>
-                Analisando o processo...
+          {iaCarregando ? (
+            <div className="py-5 text-sm text-muted-foreground">Analisando o processo...</div>
+          ) : (
+            <>
+              <div className="text-[14.5px]">
+                <Markdown>{iaResumo}</Markdown>
               </div>
-            ) : (
-              <>
-                <div style={{ fontSize: 14.5 }}><Markdown>{iaResumo}</Markdown></div>
-                {iaFonte && iaFonte !== "erro" && (
-                  <div style={{ marginTop: 14, fontSize: 12, color: "var(--color-text-muted)" }}>
-                    {iaFonte === "gemini"
-                      ? "✨ Gerado pela Lexo IA (Gemini)"
-                      : "Resumo automático · configure a Lexo IA (GEMINI_API_KEY) para análises mais ricas"}
-                  </div>
-                )}
-              </>
-            )}
+              {iaFonte && iaFonte !== "erro" && (
+                <div className="mt-3.5 text-xs text-muted-foreground">
+                  {iaFonte === "gemini"
+                    ? "✨ Gerado pela Lexo IA (Gemini)"
+                    : "Resumo automático · configure a Lexo IA (GEMINI_API_KEY) para análises mais ricas"}
+                </div>
+              )}
+            </>
+          )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
-              <button className="btn btn-ghost" onClick={() => setIaAberto(false)}>Fechar</button>
-            </div>
-          </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="ghost" size="lg" onClick={() => setIaAberto(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {andAberto && (
-        <div
-          onClick={() => setAndAberto(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}
-        >
-          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: 540, maxWidth: "100%", padding: "1.75rem", maxHeight: "88vh", overflowY: "auto" }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 2px" }}>Andamentos</h2>
-            <p style={{ fontSize: 13, color: "var(--color-text-muted)", margin: "0 0 18px" }}>
+      <Dialog open={andAberto} onOpenChange={setAndAberto}>
+        <DialogContent className="max-h-[88vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Andamentos</DialogTitle>
+            <p className="mt-0.5 text-[13px] text-muted-foreground">
               {andProcesso?.number} — o cliente também vê estes andamentos no portal.
             </p>
+          </DialogHeader>
 
-            {andCarregando ? (
-              <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Carregando...</div>
-            ) : andamentos.length === 0 ? (
-              <div style={{ color: "var(--color-text-muted)", fontSize: 14, marginBottom: 8 }}>Nenhum andamento ainda.</div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 8 }}>
-                {andamentos.map((a) => (
-                  <div key={a.id} style={{ display: "flex", gap: 12, position: "relative" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--color-primary)", marginTop: 5, flexShrink: 0 }} />
-                      <span style={{ flex: 1, width: 2, background: "var(--color-border)" }} />
-                    </div>
-                    <div style={{ paddingBottom: 16, flex: 1 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                        <span style={{ fontSize: 14, fontWeight: 600 }}>{a.title}</span>
-                        <button
-                          onClick={() => excluirAndamento(a.id)}
-                          style={{ background: "none", border: "none", color: "var(--color-danger)", cursor: "pointer", fontSize: 12, flexShrink: 0 }}
-                        >
-                          remover
-                        </button>
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                        {new Date(a.date).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
-                      </div>
-                      {a.description && <div style={{ fontSize: 13, marginTop: 3, color: "var(--color-text)" }}>{a.description}</div>}
-                    </div>
+          {andCarregando ? (
+            <div className="text-sm text-muted-foreground">Carregando...</div>
+          ) : andamentos.length === 0 ? (
+            <div className="mb-2 text-sm text-muted-foreground">Nenhum andamento ainda.</div>
+          ) : (
+            <div className="mb-2 flex flex-col">
+              {andamentos.map((a) => (
+                <div key={a.id} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <span className="mt-1.5 size-2.5 shrink-0 rounded-full bg-primary" />
+                    <span className="w-px flex-1 bg-border" />
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="flex-1 pb-4">
+                    <div className="flex justify-between gap-2">
+                      <span className="text-sm font-semibold">{a.title}</span>
+                      <button onClick={() => excluirAndamento(a.id)} className="shrink-0 text-xs text-destructive hover:underline">
+                        remover
+                      </button>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(a.date).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+                    </div>
+                    {a.description && <div className="mt-0.5 text-[13px]">{a.description}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-            <form onSubmit={adicionarAndamento} style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12, borderTop: "1px solid var(--color-border)", paddingTop: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-muted)" }}>Novo andamento</div>
-              <div style={{ display: "flex", gap: 10 }}>
-                <input className="input" placeholder="Ex.: Sentença publicada" value={andForm.title} onChange={(e) => setAndForm({ ...andForm, title: e.target.value })} required />
-                <input className="input" type="date" style={{ maxWidth: 160 }} value={andForm.date} onChange={(e) => setAndForm({ ...andForm, date: e.target.value })} required />
-              </div>
-              <textarea className="input" placeholder="Detalhes (opcional)" rows={2} style={{ resize: "vertical", fontFamily: "inherit" }} value={andForm.description} onChange={(e) => setAndForm({ ...andForm, description: e.target.value })} />
-              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setAndAberto(false)}>Fechar</button>
-                <button type="submit" className="btn btn-primary" disabled={andSalvando || !andForm.title.trim() || !andForm.date}>
-                  {andSalvando ? "Adicionando..." : "Adicionar"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+          <form onSubmit={adicionarAndamento} className="mt-3 flex flex-col gap-2.5 border-t border-border pt-4">
+            <div className="text-[13px] font-semibold text-muted-foreground">Novo andamento</div>
+            <div className="flex gap-2.5">
+              <Input
+                placeholder="Ex.: Sentença publicada"
+                value={andForm.title}
+                onChange={(e) => setAndForm({ ...andForm, title: e.target.value })}
+                required
+              />
+              <Input
+                type="date"
+                className="max-w-[160px]"
+                value={andForm.date}
+                onChange={(e) => setAndForm({ ...andForm, date: e.target.value })}
+                required
+              />
+            </div>
+            <Textarea
+              placeholder="Detalhes (opcional)"
+              rows={2}
+              value={andForm.description}
+              onChange={(e) => setAndForm({ ...andForm, description: e.target.value })}
+            />
+            <div className="flex justify-end gap-2.5">
+              <Button type="button" variant="ghost" onClick={() => setAndAberto(false)}>
+                Fechar
+              </Button>
+              <Button type="submit" disabled={andSalvando || !andForm.title.trim() || !andForm.date}>
+                {andSalvando ? "Adicionando..." : "Adicionar"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,6 +1,18 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, type Pagina } from "../lib/api";
 import { Paginacao } from "../components/Paginacao";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 type Honorario = {
   id: string;
@@ -18,11 +30,14 @@ type Processo = { id: string; number: string };
 const STATUS = ["PENDENTE", "PAGO", "ATRASADO", "CANCELADO"];
 
 const corStatus: Record<string, string> = {
-  PAGO: "#34d399",
-  PENDENTE: "#fbbf24",
-  ATRASADO: "#f87171",
-  CANCELADO: "#9aa3b8",
+  PAGO: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  PENDENTE: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  ATRASADO: "bg-red-500/10 text-red-700 dark:text-red-400",
+  CANCELADO: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
 };
+
+const selectClass =
+  "flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 const moeda = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -110,45 +125,49 @@ export function Financeiro() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+      <div className="mb-5.5 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Financeiro</h1>
-          <p style={{ color: "var(--color-text-muted)", margin: "4px 0 0", fontSize: 14 }}>
-            {itens.length} honorário(s) · recebido: <strong style={{ color: "#34d399" }}>{moeda(total)}</strong> · via <code>financeiro-service</code>
+          <h1 className="text-2xl font-bold tracking-tight">Financeiro</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {itens.length} honorário(s) · recebido:{" "}
+            <strong className="text-emerald-600 dark:text-emerald-400">{moeda(total)}</strong> · via{" "}
+            <code>financeiro-service</code>
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => setAberto(true)}>+ Novo honorário</button>
+        <Button size="lg" onClick={() => setAberto(true)}>
+          + Novo honorário
+        </Button>
       </div>
 
-      <div className="card" style={{ overflow: "hidden" }}>
+      <Card className="gap-0 overflow-hidden py-0">
         {carregando ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>Carregando...</div>
+          <div className="p-10 text-center text-sm text-muted-foreground">Carregando...</div>
         ) : erro ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--color-danger)" }}>{erro}</div>
+          <div className="p-10 text-center text-sm text-destructive">{erro}</div>
         ) : itens.length === 0 ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>Nenhum honorário ainda.</div>
+          <div className="p-10 text-center text-sm text-muted-foreground">Nenhum honorário ainda.</div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table className="w-full border-collapse">
             <thead>
-              <tr style={{ textAlign: "left", color: "var(--color-text-muted)", fontSize: 12 }}>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>DESCRIÇÃO</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>CLIENTE</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>VALOR</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>VENCIMENTO</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>STATUS</th>
+              <tr className="text-left text-xs text-muted-foreground">
+                <th className="px-5 py-3.5 font-semibold">DESCRIÇÃO</th>
+                <th className="px-5 py-3.5 font-semibold">CLIENTE</th>
+                <th className="px-5 py-3.5 font-semibold">VALOR</th>
+                <th className="px-5 py-3.5 font-semibold">VENCIMENTO</th>
+                <th className="px-5 py-3.5 font-semibold">STATUS</th>
               </tr>
             </thead>
             <tbody>
               {itens.map((i) => (
-                <tr key={i.id} style={{ borderTop: "1px solid var(--color-border)", fontSize: 14 }}>
-                  <td style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>{i.description}</td>
-                  <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>{nomeCliente(i.clientId)}</td>
-                  <td style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>{moeda(i.amount)}</td>
-                  <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>
+                <tr key={i.id} className="border-t border-border text-sm">
+                  <td className="px-5 py-3.5 font-semibold">{i.description}</td>
+                  <td className="px-5 py-3.5 text-muted-foreground">{nomeCliente(i.clientId)}</td>
+                  <td className="px-5 py-3.5 font-semibold">{moeda(i.amount)}</td>
+                  <td className="px-5 py-3.5 text-muted-foreground">
                     {new Date(i.dueDate).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
                   </td>
-                  <td style={{ padding: "0.85rem 1.25rem" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: corStatus[i.status] || "#9aa3b8", background: "var(--color-surface-2)", padding: "0.2rem 0.6rem", borderRadius: 999 }}>
+                  <td className="px-5 py-3.5">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", corStatus[i.status] || corStatus.CANCELADO)}>
                       {i.status}
                     </span>
                   </td>
@@ -157,73 +176,78 @@ export function Financeiro() {
             </tbody>
           </table>
         )}
-      </div>
+      </Card>
 
-      <Paginacao
-        page={pagina}
-        totalPages={totalPaginas}
-        totalElements={totalRegistros}
-        onChange={setPagina}
-      />
+      <Paginacao page={pagina} totalPages={totalPaginas} totalElements={totalRegistros} onChange={setPagina} />
 
-      {aberto && (
-        <div onClick={() => setAberto(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}>
-          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: 440, maxWidth: "100%", padding: "1.75rem" }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 18px" }}>Novo honorário</h2>
-            <form onSubmit={criar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <label className="label">Cliente *</label>
-                <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)} required>
-                  <option value="">Selecione...</option>
-                  {clientes.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-                </select>
+      <Dialog open={aberto} onOpenChange={setAberto}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo honorário</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={criar} className="flex flex-col gap-3.5">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cliente">Cliente *</Label>
+              <select id="cliente" value={clientId} onChange={(e) => setClientId(e.target.value)} required className={selectClass}>
+                <option value="">Selecione...</option>
+                {clientes.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="processo">Processo (opcional)</Label>
+              <select id="processo" value={caseId} onChange={(e) => setCaseId(e.target.value)} className={selectClass}>
+                <option value="">Nenhum</option>
+                {processos.map((p) => (
+                  <option key={p.id} value={p.id}>{p.number}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="descricao">Descrição *</Label>
+              <Input id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
+            </div>
+            <div className="flex gap-3">
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="valor">Valor *</Label>
+                <Input
+                  id="valor"
+                  type="text"
+                  inputMode="numeric"
+                  value={valorCentavos ? moeda(valorCentavos / 100) : ""}
+                  onChange={(e) => {
+                    const digitos = e.target.value.replace(/\D/g, "");
+                    setValorCentavos(digitos ? parseInt(digitos, 10) : 0);
+                  }}
+                  placeholder="R$ 0,00"
+                />
               </div>
-              <div>
-                <label className="label">Processo (opcional)</label>
-                <select className="input" value={caseId} onChange={(e) => setCaseId(e.target.value)}>
-                  <option value="">Nenhum</option>
-                  {processos.map((p) => (<option key={p.id} value={p.id}>{p.number}</option>))}
-                </select>
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="vencimento">Vencimento *</Label>
+                <Input id="vencimento" type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} required />
               </div>
-              <div>
-                <label className="label">Descrição *</label>
-                <input className="input" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
-              </div>
-              <div style={{ display: "flex", gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label className="label">Valor *</label>
-                  <input
-                    className="input"
-                    type="text"
-                    inputMode="numeric"
-                    value={valorCentavos ? moeda(valorCentavos / 100) : ""}
-                    onChange={(e) => {
-                      const digitos = e.target.value.replace(/\D/g, "");
-                      setValorCentavos(digitos ? parseInt(digitos, 10) : 0);
-                    }}
-                    placeholder="R$ 0,00"
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label className="label">Vencimento *</label>
-                  <input className="input" type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} required />
-                </div>
-              </div>
-              <div>
-                <label className="label">Status</label>
-                <select className="input" value={status} onChange={(e) => setStatus(e.target.value)}>
-                  {STATUS.map((s) => (<option key={s} value={s}>{s}</option>))}
-                </select>
-              </div>
-              {erroForm && <div style={{ color: "var(--color-danger)", fontSize: 13 }}>{erroForm}</div>}
-              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 6 }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setAberto(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" disabled={salvando}>{salvando ? "Salvando..." : "Salvar"}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="status">Status</Label>
+              <select id="status" value={status} onChange={(e) => setStatus(e.target.value)} className={selectClass}>
+                {STATUS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            {erroForm && <div className="text-[13px] text-destructive">{erroForm}</div>}
+            <DialogFooter>
+              <Button type="button" variant="ghost" size="lg" onClick={() => setAberto(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" size="lg" disabled={salvando}>
+                {salvando ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

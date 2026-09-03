@@ -1,11 +1,25 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Usuario = { id: string; name: string; email: string; role: string; totpEnabled: boolean };
 type Convite = { id: string; name: string; email: string; role: string };
 
 const PAPEIS = ["ADMIN", "ADVOGADO", "SECRETARIA"];
+
+const selectClass =
+  "flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export function Equipe() {
   const { usuario: eu } = useAuth();
@@ -82,54 +96,68 @@ export function Equipe() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+      <div className="mb-5.5 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Equipe</h1>
-          <p style={{ color: "var(--color-text-muted)", margin: "4px 0 0", fontSize: 14 }}>
+          <h1 className="text-2xl font-bold tracking-tight">Equipe</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {usuarios.length} usuário(s) · via <code>auth-service</code>
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => setAberto(true)}>+ Convidar</button>
+        <Button size="lg" onClick={() => setAberto(true)}>
+          + Convidar
+        </Button>
       </div>
 
-      {erro && <div style={{ color: "var(--color-danger)", marginBottom: 16 }}>{erro}</div>}
+      {erro && <div className="mb-4 text-sm text-destructive">{erro}</div>}
 
-      <div className="card" style={{ overflow: "hidden", marginBottom: 22 }}>
+      <Card className="mb-5.5 gap-0 overflow-hidden py-0">
         {carregando ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--color-text-muted)" }}>Carregando...</div>
+          <div className="p-10 text-center text-sm text-muted-foreground">Carregando...</div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table className="w-full border-collapse">
             <thead>
-              <tr style={{ textAlign: "left", color: "var(--color-text-muted)", fontSize: 12 }}>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>NOME</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>EMAIL</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>PAPEL</th>
-                <th style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>2FA</th>
-                <th style={{ padding: "0.85rem 1.25rem" }}></th>
+              <tr className="text-left text-xs text-muted-foreground">
+                <th className="px-5 py-3.5 font-semibold">NOME</th>
+                <th className="px-5 py-3.5 font-semibold">EMAIL</th>
+                <th className="px-5 py-3.5 font-semibold">PAPEL</th>
+                <th className="px-5 py-3.5 font-semibold">2FA</th>
+                <th className="px-5 py-3.5" />
               </tr>
             </thead>
             <tbody>
               {usuarios.map((u) => (
-                <tr key={u.id} style={{ borderTop: "1px solid var(--color-border)", fontSize: 14 }}>
-                  <td style={{ padding: "0.85rem 1.25rem", fontWeight: 600 }}>
-                    {u.name} {u.id === eu?.id && <span style={{ color: "var(--color-primary)", fontSize: 12 }}>(você)</span>}
+                <tr key={u.id} className="border-t border-border text-sm">
+                  <td className="px-5 py-3.5 font-semibold">
+                    {u.name} {u.id === eu?.id && <span className="text-xs text-primary">(você)</span>}
                   </td>
-                  <td style={{ padding: "0.85rem 1.25rem", color: "var(--color-text-muted)" }}>{u.email}</td>
-                  <td style={{ padding: "0.85rem 1.25rem" }}>
+                  <td className="px-5 py-3.5 text-muted-foreground">{u.email}</td>
+                  <td className="px-5 py-3.5">
                     {u.id === eu?.id ? (
-                      <span style={{ color: "var(--color-text-muted)" }}>{u.role}</span>
+                      <span className="text-muted-foreground">{u.role}</span>
                     ) : (
-                      <select className="input" style={{ width: "auto", padding: "0.3rem 0.5rem" }} value={u.role} onChange={(e) => mudarPapel(u.id, e.target.value)}>
-                        {PAPEIS.map((p) => (<option key={p} value={p}>{p}</option>))}
+                      <select
+                        value={u.role}
+                        onChange={(e) => mudarPapel(u.id, e.target.value)}
+                        className="h-8 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        {PAPEIS.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
                       </select>
                     )}
                   </td>
-                  <td style={{ padding: "0.85rem 1.25rem" }}>
-                    {u.totpEnabled ? <span style={{ color: "#34d399" }}>●</span> : <span style={{ color: "var(--color-text-muted)" }}>○</span>}
+                  <td className="px-5 py-3.5">
+                    {u.totpEnabled ? (
+                      <span className="text-emerald-600 dark:text-emerald-400">●</span>
+                    ) : (
+                      <span className="text-muted-foreground">○</span>
+                    )}
                   </td>
-                  <td style={{ padding: "0.85rem 1.25rem", textAlign: "right" }}>
+                  <td className="px-5 py-3.5 text-right">
                     {u.id !== eu?.id && (
-                      <button onClick={() => remover(u.id)} style={{ background: "none", border: "none", color: "var(--color-danger)", cursor: "pointer", fontSize: 13 }}>Remover</button>
+                      <button onClick={() => remover(u.id)} className="text-[13px] font-medium text-destructive hover:underline">
+                        Remover
+                      </button>
                     )}
                   </td>
                 </tr>
@@ -137,52 +165,66 @@ export function Equipe() {
             </tbody>
           </table>
         )}
-      </div>
+      </Card>
 
       {convites.length > 0 && (
         <>
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--color-text-muted)", margin: "0 0 10px" }}>Convites pendentes</h2>
-          <div className="card" style={{ overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <h2 className="mb-2.5 text-[15px] font-semibold text-muted-foreground">Convites pendentes</h2>
+          <Card className="gap-0 overflow-hidden py-0">
+            <table className="w-full border-collapse">
               <tbody>
                 {convites.map((c) => (
-                  <tr key={c.id} style={{ borderTop: "1px solid var(--color-border)", fontSize: 14 }}>
-                    <td style={{ padding: "0.7rem 1.25rem", fontWeight: 600 }}>{c.name}</td>
-                    <td style={{ padding: "0.7rem 1.25rem", color: "var(--color-text-muted)" }}>{c.email}</td>
-                    <td style={{ padding: "0.7rem 1.25rem", color: "var(--color-text-muted)" }}>{c.role}</td>
-                    <td style={{ padding: "0.7rem 1.25rem", textAlign: "right" }}>
-                      <button onClick={() => revogar(c.id)} style={{ background: "none", border: "none", color: "var(--color-danger)", cursor: "pointer", fontSize: 13 }}>Revogar</button>
+                  <tr key={c.id} className="border-t border-border text-sm first:border-t-0">
+                    <td className="px-5 py-3 font-semibold">{c.name}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{c.email}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{c.role}</td>
+                    <td className="px-5 py-3 text-right">
+                      <button onClick={() => revogar(c.id)} className="text-[13px] font-medium text-destructive hover:underline">
+                        Revogar
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         </>
       )}
 
-      {aberto && (
-        <div onClick={() => setAberto(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "grid", placeItems: "center", padding: 20 }}>
-          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: 420, maxWidth: "100%", padding: "1.75rem" }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 18px" }}>Convidar para a equipe</h2>
-            <form onSubmit={convidar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div><label className="label">Nome *</label><input className="input" value={nome} onChange={(e) => setNome(e.target.value)} required /></div>
-              <div><label className="label">Email *</label><input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-              <div>
-                <label className="label">Papel</label>
-                <select className="input" value={papel} onChange={(e) => setPapel(e.target.value)}>
-                  {PAPEIS.map((p) => (<option key={p} value={p}>{p}</option>))}
-                </select>
-              </div>
-              {erroForm && <div style={{ color: "var(--color-danger)", fontSize: 13 }}>{erroForm}</div>}
-              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 6 }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setAberto(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" disabled={salvando}>{salvando ? "Enviando..." : "Enviar convite"}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Dialog open={aberto} onOpenChange={setAberto}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convidar para a equipe</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={convidar} className="flex flex-col gap-3.5">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="nome">Nome *</Label>
+              <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email">Email *</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="papel">Papel</Label>
+              <select id="papel" value={papel} onChange={(e) => setPapel(e.target.value)} className={selectClass}>
+                {PAPEIS.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            {erroForm && <div className="text-[13px] text-destructive">{erroForm}</div>}
+            <DialogFooter>
+              <Button type="button" variant="ghost" size="lg" onClick={() => setAberto(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" size="lg" disabled={salvando}>
+                {salvando ? "Enviando..." : "Enviar convite"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

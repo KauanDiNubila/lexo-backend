@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 type Props = {
   page: number;
   totalPages: number;
@@ -8,42 +10,18 @@ type Props = {
 export function Paginacao({ page, totalPages, totalElements, onChange }: Props) {
   if (totalPages <= 1) return null;
 
-  const botao = (rotulo: string, destino: number, desabilitado: boolean) => (
-    <button
-      onClick={() => onChange(destino)}
-      disabled={desabilitado}
-      style={{
-        background: "none",
-        border: "1px solid var(--color-border)",
-        borderRadius: 8,
-        padding: "0.35rem 0.7rem",
-        color: desabilitado ? "var(--color-text-muted)" : "var(--color-text)",
-        cursor: desabilitado ? "default" : "pointer",
-        fontSize: 13,
-      }}
-    >
-      {rotulo}
-    </button>
-  );
-
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        marginTop: 14,
-        fontSize: 13,
-        color: "var(--color-text-muted)",
-      }}
-    >
+    <div className="mt-3.5 flex items-center justify-between gap-3 text-[13px] text-muted-foreground">
       <span>
         Página {page + 1} de {totalPages} · {totalElements} registro(s)
       </span>
-      <div style={{ display: "flex", gap: 8 }}>
-        {botao("Anterior", page - 1, page <= 0)}
-        {botao("Próxima", page + 1, page >= totalPages - 1)}
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={() => onChange(page - 1)} disabled={page <= 0}>
+          Anterior
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => onChange(page + 1)} disabled={page >= totalPages - 1}>
+          Próxima
+        </Button>
       </div>
     </div>
   );

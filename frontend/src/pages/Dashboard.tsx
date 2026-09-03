@@ -3,18 +3,19 @@ import { Link } from "react-router-dom";
 import { Users, Briefcase, AlarmClock, Wallet, Sparkles, type LucideIcon } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 type Prazo = { id: string; title: string; status: string; date: string; risk: string | null };
 
 const moeda = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
 const corStatusProcesso: Record<string, string> = {
-  ATIVO: "#34d399",
-  SUSPENSO: "#fbbf24",
-  ARQUIVADO: "#9aa3b8",
-  ENCERRADO: "#f87171",
+  ATIVO: "bg-emerald-500",
+  SUSPENSO: "bg-amber-500",
+  ARQUIVADO: "bg-zinc-500",
+  ENCERRADO: "bg-red-500",
 };
-
 
 function formatarData(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
@@ -25,92 +26,36 @@ type Metrica = {
   valor: string | number;
   sub?: string;
   icone: LucideIcon;
-  cor: string;
-  grad: string;
   para: string;
 };
 
 function KpiCard({ m }: { m: Metrica }) {
   return (
-    <Link
-      to={m.para}
-      className="card transition-transform hover:-translate-y-1"
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        padding: "1.3rem",
-        textDecoration: "none",
-        color: "inherit",
-        display: "block",
-        boxShadow: `0 18px 40px -32px ${m.cor}`,
-      }}
-    >
-
-      <div
-        style={{
-          position: "absolute",
-          top: -40,
-          right: -40,
-          width: 130,
-          height: 130,
-          borderRadius: "50%",
-          background: m.cor,
-          opacity: 0.14,
-          filter: "blur(28px)",
-          pointerEvents: "none",
-        }}
-      />
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative" }}>
-        <span style={{ color: "var(--color-text-muted)", fontSize: 13, fontWeight: 600 }}>{m.rotulo}</span>
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 11,
-            display: "grid",
-            placeItems: "center",
-            background: m.grad,
-            boxShadow: `0 6px 18px -6px ${m.cor}`,
-          }}
-        >
-          <m.icone size={20} color="white" strokeWidth={2.2} />
+    <Link to={m.para}>
+      <Card className="gap-2.5 p-5 transition-colors hover:bg-muted/40">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-semibold text-muted-foreground">{m.rotulo}</span>
+          <div className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-primary/10 text-primary">
+            <m.icone size={18} strokeWidth={2.2} />
+          </div>
         </div>
-      </div>
-      <div
-        style={{
-          fontSize: 32,
-          fontWeight: 800,
-          marginTop: 12,
-          background: m.grad,
-          WebkitBackgroundClip: "text",
-          backgroundClip: "text",
-          color: "transparent",
-          width: "fit-content",
-        }}
-      >
-        {m.valor}
-      </div>
-      {m.sub && <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 2 }}>{m.sub}</div>}
+        <div className="text-[28px] font-bold tracking-tight">{m.valor}</div>
+        {m.sub && <div className="text-xs text-muted-foreground">{m.sub}</div>}
+      </Card>
     </Link>
-  );
-}
-
-function CardBase({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <div className="card" style={{ padding: "1.35rem", boxShadow: "0 20px 45px -40px rgba(0,0,0,0.9)", ...style }}>
-      {children}
-    </div>
   );
 }
 
 function TituloSecao({ texto, link, para }: { texto: string; link: string; para: string }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-      <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ width: 4, height: 16, borderRadius: 2, background: "linear-gradient(180deg,#818cf8,#8b5cf6)" }} />
+    <div className="mb-4 flex items-center justify-between">
+      <h2 className="flex items-center gap-2 text-[15px] font-bold">
+        <span className="h-4 w-1 rounded-sm bg-primary" />
         {texto}
       </h2>
-      <Link to={para} style={{ fontSize: 13, color: "var(--color-primary)", textDecoration: "none" }}>{link} →</Link>
+      <Link to={para} className="text-[13px] text-primary hover:underline">
+        {link} →
+      </Link>
     </div>
   );
 }
@@ -153,92 +98,92 @@ export function Dashboard() {
     });
   }, []);
 
-
   const primeiroNome = usuario?.name?.split(" ")[0];
 
   const metricas: Metrica[] = [
-    { rotulo: "Clientes", valor: carregando ? "—" : m.totalClientes, icone: Users, cor: "#6366f1", grad: "linear-gradient(135deg,#818cf8,#6366f1)", para: "/app/clientes" },
-    { rotulo: "Processos ativos", valor: carregando ? "—" : m.ativos, sub: `${m.totalProcessos} no total`, icone: Briefcase, cor: "#34d399", grad: "linear-gradient(135deg,#34d399,#10b981)", para: "/app/processos" },
-    { rotulo: "Prazos urgentes", valor: carregando ? "—" : m.urgentes, sub: m.vencidos ? `${m.vencidos} vencido(s)` : "próximos 7 dias", icone: AlarmClock, cor: "#fbbf24", grad: "linear-gradient(135deg,#fbbf24,#f59e0b)", para: "/app/agenda" },
-    { rotulo: "Em aberto", valor: carregando ? "—" : moeda(m.emAberto), sub: `recebido: ${moeda(m.recebido)}`, icone: Wallet, cor: "#a78bfa", grad: "linear-gradient(135deg,#c084fc,#8b5cf6)", para: "/app/financeiro" },
+    { rotulo: "Clientes", valor: carregando ? "—" : m.totalClientes, icone: Users, para: "/app/clientes" },
+    { rotulo: "Processos ativos", valor: carregando ? "—" : m.ativos, sub: `${m.totalProcessos} no total`, icone: Briefcase, para: "/app/processos" },
+    { rotulo: "Prazos urgentes", valor: carregando ? "—" : m.urgentes, sub: m.vencidos ? `${m.vencidos} vencido(s)` : "próximos 7 dias", icone: AlarmClock, para: "/app/agenda" },
+    { rotulo: "Em aberto", valor: carregando ? "—" : moeda(m.emAberto), sub: `recebido: ${moeda(m.recebido)}`, icone: Wallet, para: "/app/financeiro" },
   ];
 
   return (
     <div>
-      <h1 style={{ fontSize: 27, fontWeight: 800, margin: "0 0 4px", letterSpacing: -0.4 }}>
-        Olá,{" "}
-        <span style={{ background: "linear-gradient(135deg,#818cf8,#c084fc)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
-          {primeiroNome}
-        </span>{" "}
-        👋
-      </h1>
-      <p style={{ color: "var(--color-text-muted)", margin: "0 0 24px" }}>
+      <h1 className="text-[26px] font-bold tracking-tight">Olá, {primeiroNome}</h1>
+      <p className="mt-1 mb-6 text-muted-foreground">
         Visão geral do seu escritório — dados dos microserviços via API Gateway.
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(215px, 1fr))", gap: 16 }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(215px,1fr))] gap-4">
         {metricas.map((mt) => (
           <KpiCard key={mt.rotulo} m={mt} />
         ))}
       </div>
 
       {!carregando && (
-        <div
-          className="card"
-          style={{
-            marginTop: 16,
-            padding: "1.15rem 1.35rem",
-            background: "linear-gradient(120deg, var(--color-primary-soft), var(--color-surface) 70%)",
-            borderColor: "rgba(129,140,248,0.35)",
-            boxShadow: "0 20px 50px -38px rgba(99,102,241,0.9)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-            <span
-              style={{
-                width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center",
-                background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-              }}
-            >
-              <Sparkles size={15} color="white" strokeWidth={2.2} />
+        <Card className="mt-4 gap-1.5 p-5">
+          <div className="flex items-center gap-2">
+            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+              <Sparkles size={13} strokeWidth={2.2} />
             </span>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: "#c7d2fe", letterSpacing: 0.2 }}>Resumo do dia</span>
+            <span className="text-xs font-bold tracking-wide text-muted-foreground">RESUMO DO DIA</span>
           </div>
-          <p style={{ fontSize: 14.5, margin: 0, color: "var(--color-text)", lineHeight: 1.55 }}>
+          <p className="text-[14.5px] leading-relaxed">
             {m.urgentes > 0 ? (
               <>
                 Você tem <b>{m.urgentes} prazo(s)</b> nos próximos 7 dias
-                {m.vencidos > 0 && <> (<b style={{ color: "var(--color-danger)" }}>{m.vencidos} já vencido(s)</b>)</>}.{" "}
+                {m.vencidos > 0 && (
+                  <>
+                    {" "}(<b className="text-destructive">{m.vencidos} já vencido(s)</b>)
+                  </>
+                )}
+                .{" "}
               </>
             ) : (
               <>Nenhum prazo urgente nos próximos 7 dias. </>
             )}
-            {m.emAberto > 0
-              ? <>Há <b>{moeda(m.emAberto)}</b> em honorários a receber.</>
-              : <>Nenhum honorário em aberto no momento.</>}
+            {m.emAberto > 0 ? (
+              <>
+                Há <b>{moeda(m.emAberto)}</b> em honorários a receber.
+              </>
+            ) : (
+              <>Nenhum honorário em aberto no momento.</>
+            )}
           </p>
-        </div>
+        </Card>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginTop: 16 }}>
-
-        <CardBase>
+      <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
+        <Card className="p-5">
           <TituloSecao texto="Próximos prazos" link="Ver agenda" para="/app/agenda" />
           {carregando ? (
-            <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Carregando...</div>
+            <div className="text-sm text-muted-foreground">Carregando...</div>
           ) : m.proximos.length === 0 ? (
-            <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Nenhum prazo em aberto.</div>
+            <div className="text-sm text-muted-foreground">Nenhum prazo em aberto.</div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div className="flex flex-col">
               {m.proximos.map((p) => {
                 const vencido = new Date(p.date).getTime() < Date.now();
                 return (
-                  <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "0.65rem 0", borderTop: "1px solid var(--color-border)" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: vencido ? "var(--color-danger)" : "var(--color-primary)", flexShrink: 0 }} />
-                      <span style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</span>
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between gap-3 border-t border-border py-2.5 first:border-t-0"
+                  >
+                    <span className="flex items-center gap-2.5 overflow-hidden">
+                      <span
+                        className={cn(
+                          "size-2 shrink-0 rounded-full",
+                          vencido ? "bg-destructive" : "bg-primary"
+                        )}
+                      />
+                      <span className="truncate text-sm font-semibold">{p.title}</span>
                     </span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: vencido ? "var(--color-danger)" : "var(--color-text-muted)", whiteSpace: "nowrap" }}>
+                    <span
+                      className={cn(
+                        "whitespace-nowrap text-[13px] font-bold",
+                        vencido ? "text-destructive" : "text-muted-foreground"
+                      )}
+                    >
                       {formatarData(p.date)}
                     </span>
                   </div>
@@ -246,35 +191,37 @@ export function Dashboard() {
               })}
             </div>
           )}
-        </CardBase>
+        </Card>
 
-        <CardBase>
+        <Card className="p-5">
           <TituloSecao texto="Processos por status" link="Ver todos" para="/app/processos" />
           {carregando ? (
-            <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Carregando...</div>
+            <div className="text-sm text-muted-foreground">Carregando...</div>
           ) : m.totalProcessos === 0 ? (
-            <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Nenhum processo cadastrado.</div>
+            <div className="text-sm text-muted-foreground">Nenhum processo cadastrado.</div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+            <div className="flex flex-col gap-3.5">
               {["ATIVO", "SUSPENSO", "ARQUIVADO", "ENCERRADO"].map((s) => {
                 const qtd = m.porStatus[s] || 0;
                 const pct = m.totalProcessos ? (qtd / m.totalProcessos) * 100 : 0;
-                const cor = corStatusProcesso[s];
                 return (
                   <div key={s}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
-                      <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>{s}</span>
-                      <span style={{ fontWeight: 700 }}>{qtd}</span>
+                    <div className="mb-1.5 flex justify-between text-xs">
+                      <span className="font-semibold text-muted-foreground">{s}</span>
+                      <span className="font-bold">{qtd}</span>
                     </div>
-                    <div style={{ height: 8, borderRadius: 999, background: "var(--color-surface-2)", overflow: "hidden" }}>
-                      <div style={{ width: `${pct}%`, height: "100%", background: `linear-gradient(90deg, ${cor}99, ${cor})`, borderRadius: 999, transition: "width .4s ease" }} />
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={cn("h-full rounded-full transition-[width] duration-300", corStatusProcesso[s])}
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </CardBase>
+        </Card>
       </div>
     </div>
   );

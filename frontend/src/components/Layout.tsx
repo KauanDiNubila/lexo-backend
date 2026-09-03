@@ -1,33 +1,41 @@
 import type { ReactNode } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Users,
-  Briefcase,
-  CalendarDays,
-  Wallet,
-  UsersRound,
-  Settings,
-  Scale,
-  Sparkles,
-} from "lucide-react";
+  DashboardCircleIcon,
+  UserMultipleIcon,
+  Briefcase03Icon,
+  Calendar03Icon,
+  Wallet01Icon,
+  SparklesIcon,
+  UserGroupIcon,
+  Setting07Icon,
+  Logout03Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { MacOSSidebar, type SidebarNavItem } from "@/components/ui/macos-sidebar";
 import { useAuth } from "../lib/auth";
+import { cn } from "@/lib/utils";
 
-const navItens = [
-  { para: "/app", rotulo: "Visão geral", icone: LayoutDashboard, apenasAdmin: false },
-  { para: "/app/clientes", rotulo: "Clientes", icone: Users, apenasAdmin: false },
-  { para: "/app/processos", rotulo: "Processos", icone: Briefcase, apenasAdmin: false },
-  { para: "/app/agenda", rotulo: "Agenda", icone: CalendarDays, apenasAdmin: false },
-  { para: "/app/financeiro", rotulo: "Financeiro", icone: Wallet, apenasAdmin: false },
-  { para: "/app/ia", rotulo: "Lexo IA", icone: Sparkles, apenasAdmin: false },
-  { para: "/app/equipe", rotulo: "Equipe", icone: UsersRound, apenasAdmin: true },
-  { para: "/app/configuracoes", rotulo: "Configurações", icone: Settings, apenasAdmin: false },
+const navItens: (SidebarNavItem & { apenasAdmin: boolean })[] = [
+  { to: "/app", label: "Visão geral", icon: DashboardCircleIcon, apenasAdmin: false },
+  { to: "/app/clientes", label: "Clientes", icon: UserMultipleIcon, apenasAdmin: false },
+  { to: "/app/processos", label: "Processos", icon: Briefcase03Icon, apenasAdmin: false },
+  { to: "/app/agenda", label: "Agenda", icon: Calendar03Icon, apenasAdmin: false },
+  { to: "/app/financeiro", label: "Financeiro", icon: Wallet01Icon, apenasAdmin: false },
+  { to: "/app/ia", label: "Lexo IA", icon: SparklesIcon, apenasAdmin: false },
+  { to: "/app/equipe", label: "Equipe", icon: UserGroupIcon, apenasAdmin: true },
+  { to: "/app/configuracoes", label: "Configurações", icon: Setting07Icon, apenasAdmin: false },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
   const { usuario, sair } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const itensVisiveis = navItens.filter((item) => !item.apenasAdmin || usuario?.role === "ADMIN");
+  const activeIndex = itensVisiveis.findIndex((item) =>
+    item.to === "/app" ? location.pathname === "/app" : location.pathname.startsWith(item.to)
+  );
 
   function logout() {
     sair();
@@ -42,112 +50,45 @@ export function Layout({ children }: { children: ReactNode }) {
     .toUpperCase();
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-
-      <aside
-        style={{
-          width: 240,
-          borderRight: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-surface)",
-          display: "flex",
-          flexDirection: "column",
-          padding: "1.25rem 0.75rem",
-        }}
-      >
-        <Link
-          to="/"
-          style={{
-            padding: "0 0.75rem 1.25rem",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            textDecoration: "none",
-            color: "inherit",
-          }}
-        >
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 9,
-              background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-              display: "grid",
-              placeItems: "center",
-              color: "white",
-              boxShadow: "0 6px 16px -6px #6366f1",
-            }}
+    <MacOSSidebar
+      items={itensVisiveis}
+      activeIndex={activeIndex}
+      onSelect={(item) => navigate(item.to)}
+      header={(isOpen) =>
+        isOpen ? (
+          <Link to="/" className="text-lg font-bold tracking-tight">
+            Lexo
+          </Link>
+        ) : null
+      }
+      footer={(isOpen) => (
+        <div className="flex flex-col gap-1 border-t border-border pt-3">
+          <div className={cn("flex items-center gap-2.5 px-1", !isOpen && "justify-center px-0")}>
+            <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+              {iniciais}
+            </div>
+            {isOpen && (
+              <div className="min-w-0 leading-tight">
+                <div className="truncate text-[13px] font-semibold">{usuario?.name}</div>
+                <div className="truncate text-[11px] text-muted-foreground">{usuario?.role}</div>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={logout}
+            title="Sair"
+            className={cn(
+              "flex items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
+              !isOpen && "justify-center px-0"
+            )}
           >
-            <Scale size={19} strokeWidth={2.3} />
-          </div>
-          <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: -0.3 }}>Lexo</span>
-        </Link>
-
-        <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {itensVisiveis.map((item) => (
-            <NavLink
-              key={item.para}
-              to={item.para}
-              end={item.para === "/app"}
-              style={({ isActive }) => ({
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "0.6rem 0.75rem",
-                borderRadius: 9,
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: "none",
-                color: isActive ? "var(--color-text)" : "var(--color-text-muted)",
-                background: isActive ? "linear-gradient(100deg, var(--color-primary-soft), transparent)" : "transparent",
-                boxShadow: isActive ? "inset 3px 0 0 var(--color-primary)" : "none",
-              })}
-            >
-              <item.icone size={17} strokeWidth={2} />
-              {item.rotulo}
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
-
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <header
-          style={{
-            height: 60,
-            borderBottom: "1px solid var(--color-border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            padding: "0 1.5rem",
-            gap: 14,
-          }}
-        >
-          <div style={{ textAlign: "right", lineHeight: 1.2 }}>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{usuario?.name}</div>
-            <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{usuario?.role}</div>
-          </div>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-              color: "white",
-              display: "grid",
-              placeItems: "center",
-              fontWeight: 700,
-              fontSize: 13,
-              boxShadow: "0 4px 12px -4px #6366f1",
-            }}
-          >
-            {iniciais}
-          </div>
-          <button className="btn btn-ghost" onClick={logout} style={{ padding: "0.4rem 0.7rem" }}>
-            Sair
+            <HugeiconsIcon icon={Logout03Icon} className="size-[18px] shrink-0" />
+            {isOpen && "Sair"}
           </button>
-        </header>
-
-        <main style={{ padding: "2rem", flex: 1 }}>{children}</main>
-      </div>
-    </div>
+        </div>
+      )}
+    >
+      <main className="p-8">{children}</main>
+    </MacOSSidebar>
   );
 }
