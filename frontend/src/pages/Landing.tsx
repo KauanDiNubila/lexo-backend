@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, Check, ArrowRight } from "lucide-react";
+import { Check, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { Button } from "@/components/ui/button";
-import { ScrollProgress } from "@/components/ui/scroll-progress";
+import { GlowingEffect } from "@/components/ui/glowing-effect";
+import Silk from "@/components/ui/silk";
 import {
   marca as marcaConteudo,
   navegacao,
@@ -12,7 +14,6 @@ import {
   lexoIA,
   depoimentos,
   precos,
-  ctaFinal,
   rodape,
 } from "@/content/landing";
 
@@ -54,26 +55,85 @@ function Secao({ id, children, className = "" }: { id?: string; children: React.
   );
 }
 
+const SUPERFICIES = {
+  base: "bg-background",
+  elevada: "bg-[#0a0a0a] border-y border-border",
+  marca: "bg-[#08293d]",
+} as const;
+
+function Bloco({
+  id,
+  superficie = "base",
+  className = "",
+  children,
+}: {
+  id?: string;
+  superficie?: keyof typeof SUPERFICIES;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`w-full ${SUPERFICIES[superficie]}`}>
+      <Secao id={id} className={className}>
+        {children}
+      </Secao>
+    </div>
+  );
+}
+
+function RecursoItem({
+  icone: Icone,
+  titulo,
+  texto,
+}: {
+  icone: LucideIcon;
+  titulo: string;
+  texto: string;
+}) {
+  return (
+    <div className="relative h-full rounded-2xl border border-border p-2 md:rounded-3xl md:p-3">
+      <GlowingEffect
+        variant="white"
+        spread={40}
+        glow={true}
+        disabled={false}
+        proximity={64}
+        inactiveZone={0.01}
+      />
+      <div className="relative flex h-full flex-col gap-4 overflow-hidden rounded-xl bg-card p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+        <div className="grid h-11 w-11 place-items-center rounded-xl border border-border bg-secondary">
+          <Icone size={22} strokeWidth={2.2} />
+        </div>
+        <h3 className="text-lg font-bold">{titulo}</h3>
+        <p className="text-sm text-muted-foreground">{texto}</p>
+      </div>
+    </div>
+  );
+}
+
 export function Landing() {
   const { usuario } = useAuth();
 
+  useEffect(() => {
+    document.documentElement.classList.add("scrollbar-fina");
+    return () => document.documentElement.classList.remove("scrollbar-fina");
+  }, []);
+
   return (
     <div className="dark min-h-screen" style={{ backgroundColor: "var(--color-bg)", color: "var(--color-text)" }}>
-      <ScrollProgress className="top-16" />
-
       <header className="sticky top-0 z-50 border-b border-border bg-background/75 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
           <Marca />
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
             {navegacao.map((item) => (
-              <a key={item.href} href={item.href} className="hover:text-foreground">
+              <a key={item.href} href={item.href} className="hover:text-primary">
                 {item.label}
               </a>
             ))}
           </nav>
           <div className="flex items-center gap-3">
             {usuario ? (
-              <Button asChild size="sm" className="bg-white text-black hover:bg-white/85">
+              <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
                 <Link to="/app">Ir para o app</Link>
               </Button>
             ) : (
@@ -81,7 +141,7 @@ export function Landing() {
                 <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                   <Link to="/login">Entrar</Link>
                 </Button>
-                <Button asChild size="sm" className="bg-white text-black hover:bg-white/85">
+                <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
                   <Link to="/login?modo=registro">Criar conta grátis</Link>
                 </Button>
               </>
@@ -90,139 +150,85 @@ export function Landing() {
         </div>
       </header>
 
-      <Secao className="relative overflow-hidden pt-24 pb-16 text-left">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 bottom-0 -z-10 h-96 w-96 rounded-full bg-white/10 blur-3xl"
-        />
-
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-          {hero.badge}
-        </span>
-        <h1 className="mt-6 max-w-4xl text-5xl leading-[1.05] font-bold tracking-tight md:text-7xl">
-          {hero.tituloParte1}
-          <br />
-          {hero.tituloParte2}
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg text-muted-foreground">{hero.subtitulo}</p>
-        <div className="mt-9 flex flex-wrap items-center justify-start gap-3">
-          <Button asChild size="lg" className="bg-white px-6 text-[0.95rem] text-black hover:bg-white/85">
-            <Link to={hero.ctaPrimaria.href}>
-              {hero.ctaPrimaria.label}
-              <ArrowRight className="size-4" />
-            </Link>
-          </Button>
-          <Button asChild variant="secondary" size="lg" className="px-6 text-[0.95rem]">
-            <Link to={hero.ctaSecundaria.href}>{hero.ctaSecundaria.label}</Link>
-          </Button>
-        </div>
-        <div className="mt-6 flex flex-wrap items-center justify-start gap-x-6 gap-y-2 text-xs text-muted-foreground">
-          {hero.selos.map((t) => (
-            <span key={t} className="inline-flex items-center gap-1.5">
-              <Check size={14} strokeWidth={3} className="text-foreground" /> {t}
-            </span>
-          ))}
+      <div className="relative w-full overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute top-0 left-0 h-[400px] w-full md:h-[540px]">
+          <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
         </div>
 
-        <div className="card relative z-10 mt-14 max-w-4xl overflow-hidden text-left shadow-[0_30px_80px_-30px_rgba(255,255,255,0.15)]">
-          <div className="flex items-center gap-2 border-b border-border px-5 py-3">
-            <span className="h-3 w-3 rounded-full bg-destructive" />
-            <span className="h-3 w-3 rounded-full bg-warning" />
-            <span className="h-3 w-3 rounded-full bg-success" />
-            <span className="ml-3 text-xs text-muted-foreground">{hero.mockup.urlFake}</span>
-          </div>
-          <div className="grid gap-4 p-6 md:grid-cols-3">
-            {hero.mockup.metricas.map((m) => (
-              <div key={m.rotulo} className="card bg-muted p-4">
-                <div className="text-3xl font-extrabold text-foreground">{m.valor}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{m.rotulo}</div>
-              </div>
-            ))}
-          </div>
-          <div className="mx-6 mb-6 rounded-xl border border-border bg-secondary p-4">
-            <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <Sparkles size={14} strokeWidth={2.4} /> {hero.mockup.resumoIA.titulo}
-            </div>
-            <p className="text-sm text-foreground">{hero.mockup.resumoIA.texto}</p>
-          </div>
+        <div className="relative mx-auto flex h-[400px] w-full max-w-[1600px] flex-col justify-center px-8 text-left md:h-[540px] md:px-14">
+          <h1 className="text-[clamp(3.5rem,13vw,13rem)] leading-[0.9] font-bold tracking-tighter">
+            {marcaConteudo.nome}
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg text-white/70 md:text-xl">{hero.subtitulo}</p>
         </div>
 
-        <div className="mt-14">
-          <p className="text-xs tracking-widest text-muted-foreground uppercase">{hero.logosConfianca.rotulo}</p>
-          <div className="mt-5 flex flex-wrap items-center justify-start gap-x-10 gap-y-3 text-sm font-semibold text-muted-foreground">
-            {hero.logosConfianca.nomes.map((n) => (
-              <span key={n}>{n}</span>
-            ))}
-          </div>
-        </div>
-      </Secao>
+      </div>
 
-      <Secao id="recursos" className="py-20">
+      <Bloco id="recursos" className="py-24">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">{recursos.titulo}</h2>
           <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">{recursos.subtitulo}</p>
         </div>
         <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {recursos.itens.map((r) => (
-            <div key={r.titulo} className="card p-6 transition-transform hover:-translate-y-1">
-              <div className="grid h-11 w-11 place-items-center rounded-xl bg-secondary text-foreground">
-                <r.icone size={22} strokeWidth={2.2} />
-              </div>
-              <h3 className="mt-4 text-lg font-bold">{r.titulo}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{r.texto}</p>
-            </div>
+            <RecursoItem key={r.titulo} icone={r.icone} titulo={r.titulo} texto={r.texto} />
           ))}
         </div>
-      </Secao>
+      </Bloco>
 
-      <Secao id="como-funciona" className="py-20">
-        <div className="text-center">
+      <Bloco id="como-funciona" superficie="elevada" className="py-24">
+        <div className="max-w-2xl">
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">{comoFunciona.titulo}</h2>
         </div>
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {comoFunciona.passos.map((p) => (
-            <div key={p.n} className="relative">
-              <div className="text-5xl font-extrabold text-muted-foreground/40">{p.n}</div>
-              <h3 className="mt-2 text-lg font-bold">{p.titulo}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{p.texto}</p>
-            </div>
-          ))}
+        <div className="relative mt-16">
+          <div aria-hidden className="absolute top-6 right-0 left-0 hidden h-px bg-border md:block" />
+          <div className="grid gap-12 md:grid-cols-3 md:gap-8">
+            {comoFunciona.passos.map((p) => (
+              <div key={p.n} className="relative">
+                <div className="grid h-12 w-12 place-items-center rounded-full border border-border bg-background text-sm font-bold text-foreground">
+                  {p.n}
+                </div>
+                <h3 className="mt-5 text-lg font-bold">{p.titulo}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{p.texto}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </Secao>
+      </Bloco>
 
-      <Secao id="ia" className="py-20">
-        <div className="card grid gap-10 p-8 md:grid-cols-2 md:p-12">
-          <div>
-            <span className="text-xs font-semibold text-muted-foreground">{lexoIA.eyebrow}</span>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight">{lexoIA.titulo}</h2>
-            <p className="mt-4 text-muted-foreground">{lexoIA.texto}</p>
-            <ul className="mt-6 space-y-3 text-sm">
+      <Bloco id="ia" superficie="marca" className="py-24 md:py-32">
+        <div className="grid gap-12 md:grid-cols-12 md:gap-16">
+          <div className="md:col-span-7">
+            <span className="text-xs font-semibold tracking-widest text-white/50 uppercase">{lexoIA.eyebrow}</span>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-white md:text-5xl">{lexoIA.titulo}</h2>
+            <p className="mt-5 max-w-xl text-white/70">{lexoIA.texto}</p>
+            <ul className="mt-8 space-y-3 text-sm text-white/90">
               {lexoIA.beneficios.map((i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <Check size={16} strokeWidth={3} className="mt-1 shrink-0 text-foreground" />
+                <li key={i} className="flex items-start gap-2.5">
+                  <Check size={16} strokeWidth={3} className="mt-1 shrink-0 text-white" />
                   <span>{i}</span>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="grid grid-cols-2 gap-4 self-center">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/15 bg-white/15 self-center md:col-span-5">
             {lexoIA.metricas.map((m) => (
-              <div key={m.rotulo} className="card bg-muted p-5 text-center">
-                <div className="text-3xl font-extrabold text-foreground">{m.valor}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{m.rotulo}</div>
+              <div key={m.rotulo} className="bg-[#08293d] p-6 text-center">
+                <div className="text-3xl font-extrabold text-white">{m.valor}</div>
+                <div className="mt-1 text-xs text-white/60">{m.rotulo}</div>
               </div>
             ))}
           </div>
         </div>
-      </Secao>
+      </Bloco>
 
-      <Secao className="py-20">
+      <Bloco className="py-24">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">{depoimentos.titulo}</h2>
         </div>
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {depoimentos.itens.map((d) => (
-            <div key={d.nome} className="card p-6">
+        <div className="mt-12 grid items-start gap-5 md:grid-cols-3">
+          {depoimentos.itens.map((d, i) => (
+            <div key={d.nome} className={`card-fundo p-6 ${i === 1 ? "md:mt-10" : ""}`}>
               <p className="text-sm leading-relaxed">"{d.texto}"</p>
               <div className="mt-5 flex items-center gap-3">
                 <div className="grid h-9 w-9 place-items-center rounded-full bg-secondary text-xs font-bold text-foreground">
@@ -236,18 +242,27 @@ export function Landing() {
             </div>
           ))}
         </div>
-      </Secao>
 
-      <Secao id="precos" className="py-20">
+        <div className="mt-20 border-t border-border pt-12 text-center">
+          <p className="text-xs tracking-widest text-muted-foreground uppercase">{depoimentos.logos.rotulo}</p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm font-semibold text-muted-foreground">
+            {depoimentos.logos.nomes.map((n) => (
+              <span key={n}>{n}</span>
+            ))}
+          </div>
+        </div>
+      </Bloco>
+
+      <Bloco id="precos" superficie="elevada" className="py-24">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">{precos.titulo}</h2>
           <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">{precos.subtitulo}</p>
         </div>
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid items-start gap-6 md:grid-cols-3">
           {precos.planos.map((p) => (
             <div
               key={p.nome}
-              className={`card p-7 ${p.destaque ? "border-foreground/60 shadow-[0_20px_60px_-30px_rgba(255,255,255,0.35)]" : ""}`}
+              className={`card-fundo p-7 ${p.destaque ? "md:-mt-4 md:pb-11 border-foreground/60 shadow-[0_20px_60px_-30px_rgba(255,255,255,0.35)]" : ""}`}
             >
               {p.destaque && (
                 <span className="mb-3 inline-block rounded-full bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">
@@ -277,26 +292,14 @@ export function Landing() {
               <Button
                 asChild
                 variant={p.destaque ? "default" : "secondary"}
-                className={`mt-7 w-full ${p.destaque ? "bg-white text-black hover:bg-white/85" : ""}`}
+                className={`mt-7 w-full ${p.destaque ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
               >
                 <Link to="/login?modo=registro">{p.preco ? "Começar agora" : "Falar com vendas"}</Link>
               </Button>
             </div>
           ))}
         </div>
-      </Secao>
-
-      <Secao className="py-20">
-        <div className="card overflow-hidden bg-secondary p-10 text-center md:p-16">
-          <h2 className="mx-auto max-w-2xl text-3xl font-extrabold tracking-tight md:text-4xl">
-            {ctaFinal.titulo}
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">{ctaFinal.texto}</p>
-          <Button asChild size="lg" className="mt-8 bg-white px-6 text-[0.95rem] text-black hover:bg-white/85">
-            <Link to={ctaFinal.cta.href}>{ctaFinal.cta.label}</Link>
-          </Button>
-        </div>
-      </Secao>
+      </Bloco>
 
       <footer className="border-t border-border">
         <Secao className="flex flex-col items-center justify-between gap-4 py-10 md:flex-row">
@@ -304,11 +307,11 @@ export function Landing() {
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             {rodape.links.map((link) =>
               link.href.startsWith("/") ? (
-                <Link key={link.href} to={link.href} className="hover:text-foreground">
+                <Link key={link.href} to={link.href} className="hover:text-primary">
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.href} href={link.href} className="hover:text-foreground">
+                <a key={link.href} href={link.href} className="hover:text-primary">
                   {link.label}
                 </a>
               ),

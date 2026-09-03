@@ -1,9 +1,3 @@
-/**
- * Conteúdo textual/dados da landing page, extraído da versão atual de
- * src/pages/Landing.tsx antes da reforma visual completa. A estética vai
- * mudar do zero (shadcn/ui + Aceternity UI) — isto é só o que é exibido,
- * pra não se perder na troca.
- */
 import type { LucideIcon } from "lucide-react";
 import { Briefcase, CalendarClock, Sparkles, BarChart3, Wallet, ShieldCheck } from "lucide-react";
 
@@ -19,17 +13,10 @@ export const navegacao = [
 ];
 
 export const hero = {
-  badge: "Gestão jurídica com inteligência artificial",
-  // A segunda parte do título era destacada com um gradiente índigo/violeta —
-  // esse tratamento específico não necessariamente se repete no novo visual.
-  tituloParte1: "O escritório inteiro,",
-  tituloParte2: "unificado e inteligente",
-  subtitulo:
-    "Processos, prazos, financeiro e relacionamento com o cliente numa só plataforma — " +
-    "com a Lexo IA cuidando do trabalho repetitivo para você advogar.",
+  subtitulo: "Gestão jurídica para escritórios de advocacia.",
   ctaPrimaria: { label: "Começar teste de 14 dias", href: "/login?modo=registro" },
   ctaSecundaria: { label: "Área do cliente", href: "/login" },
-  selos: ["Sem cartão de crédito", "Migração assistida", "LGPD & ISO 27001"],
+  selos: ["Sem cartão de crédito", "Autenticação em dois fatores", "Trilha de auditoria completa"],
   mockup: {
     urlFake: "app.lexo.com.br",
     metricas: [
@@ -39,15 +26,10 @@ export const hero = {
     ],
     resumoIA: {
       titulo: "Resumo da Lexo IA",
-      // HTML: "0001-23.2026" e "Andrade vs. Município" apareciam em negrito
       texto:
         "3 processos entram em prazo fatal nesta semana. O caso 0001-23.2026 aguarda contestação " +
         "até sexta. Recomendo priorizar a defesa de Andrade vs. Município.",
     },
-  },
-  logosConfianca: {
-    rotulo: "Escritórios que confiam na Lexo",
-    nomes: ["Andrade Adv.", "Mendonça & Cruz", "Vector Legal", "Bittencourt Adv.", "Núcleo Jurídico"],
   },
 };
 
@@ -56,24 +38,24 @@ export const recursos: {
   subtitulo: string;
   itens: { icone: LucideIcon; titulo: string; texto: string }[];
 } = {
-  titulo: "Tudo que o escritório precisa",
-  subtitulo: "Uma plataforma única no lugar de cinco ferramentas desconexas.",
+  titulo: "Tudo de que o escritório precisa",
+  subtitulo: "Uma plataforma única no lugar de planilhas e ferramentas soltas.",
   itens: [
-    { icone: Briefcase, titulo: "Gestão de processos", texto: "Cada processo com partes, andamentos, documentos e prazos num só lugar — organizado por cliente e área." },
-    { icone: CalendarClock, titulo: "Controle de prazos", texto: "Agenda com alertas automáticos de prazos fatais. Nunca mais perca uma data por falta de aviso." },
-    { icone: Sparkles, titulo: "Lexo IA", texto: "Resumos de casos, sugestão de prazos e petições em segundos, com um assistente treinado para o jurídico." },
-    { icone: BarChart3, titulo: "Jurimetria", texto: "Indicadores do escritório: processos por status, produtividade da equipe e valores em aberto." },
+    { icone: Briefcase, titulo: "Gestão de processos", texto: "Cada processo com andamentos, prazos e responsável num só lugar — organizado por cliente e área." },
+    { icone: CalendarClock, titulo: "Controle de prazos", texto: "Prazos, audiências e reuniões numa só agenda, com aviso automático por e-mail antes do vencimento." },
+    { icone: Sparkles, titulo: "Lexo IA", texto: "Resume um processo inteiro, rascunha petições e responde perguntas sobre os seus casos." },
+    { icone: BarChart3, titulo: "Indicadores", texto: "Processos por status, prazos do período e valores em aberto, consolidados num painel." },
     { icone: Wallet, titulo: "Financeiro", texto: "Honorários, faturas e recebimentos vinculados a cliente e processo, com relatório consolidado." },
-    { icone: ShieldCheck, titulo: "Portal do cliente", texto: "Seu cliente acompanha o andamento com transparência, sem precisar ligar para o escritório." },
+    { icone: ShieldCheck, titulo: "Portal do cliente", texto: "Seu cliente acompanha processos e honorários por um link com acesso controlado e prazo de validade." },
   ],
 };
 
 export const comoFunciona = {
   titulo: "Do caos à clareza em 3 passos",
   passos: [
-    { n: "01", titulo: "Migre seus dados", texto: "Importamos clientes e processos da sua planilha ou sistema atual. Migração assistida, sem retrabalho." },
-    { n: "02", titulo: "Deixe a IA trabalhar", texto: "A Lexo IA resume os casos, sugere prazos e organiza a agenda automaticamente conforme você cadastra." },
-    { n: "03", titulo: "Acompanhe e cresça", texto: "Painéis de jurimetria mostram gargalos e oportunidades para o escritório evoluir com dados." },
+    { n: "01", titulo: "Monte o escritório", texto: "Crie a organização, convide a equipe e defina quem é administrador, advogado ou secretaria." },
+    { n: "02", titulo: "Traga seus casos", texto: "Cadastre clientes e processos, registre andamentos e marque os prazos de cada um." },
+    { n: "03", titulo: "Deixe o sistema avisar", texto: "A agenda notifica os prazos por e-mail e a Lexo IA resume qualquer processo quando você precisar." },
   ],
 };
 
@@ -81,13 +63,13 @@ export const lexoIA = {
   eyebrow: "LEXO IA",
   titulo: "Um assistente jurídico que nunca dorme",
   texto:
-    "A Lexo IA lê seus processos, resume o essencial, sugere os próximos prazos e ainda ajuda a " +
-    "redigir peças. Você revisa e aprova — a máquina cuida do trabalho braçal.",
+    "A Lexo IA lê seus processos, resume o essencial e ajuda a redigir peças. " +
+    "Você revisa e aprova — ela cuida do trabalho repetitivo.",
   beneficios: [
     "Resumo automático de qualquer processo",
-    "Sugestão de prazos a partir dos andamentos",
     "Rascunho de petições e notificações",
-    "Análise de jurimetria em linguagem natural",
+    "Perguntas sobre seus casos em linguagem natural",
+    "Nada é enviado sem a sua revisão",
   ],
   metricas: [
     { valor: "620+", rotulo: "escritórios usando" },
@@ -102,8 +84,12 @@ export const depoimentos = {
   itens: [
     { nome: "Dra. Helena Andrade", firma: "Andrade Advocacia", texto: "Cortamos pela metade o tempo gasto organizando prazos. A IA resume um processo novo melhor que meu estagiário." },
     { nome: "Dr. Rafael Mendonça", firma: "Mendonça & Cruz", texto: "O portal do cliente reduziu drasticamente as ligações de acompanhamento. Os clientes adoram a transparência." },
-    { nome: "Dra. Beatriz Vector", firma: "Vector Legal", texto: "A jurimetria me deu clareza de onde o escritório perdia dinheiro. Hoje decido com dados, não no achismo." },
+    { nome: "Dra. Beatriz Vector", firma: "Vector Legal", texto: "Os indicadores me deram clareza de onde o escritório perdia dinheiro. Hoje decido com dados, não no achismo." },
   ],
+  logos: {
+    rotulo: "Escritórios que confiam na Lexo",
+    nomes: ["Andrade Adv.", "Mendonça & Cruz", "Vector Legal", "Bittencourt Adv.", "Núcleo Jurídico"],
+  },
 };
 
 export const precos = {
@@ -121,22 +107,22 @@ export const precos = {
       nome: "Escritório",
       preco: "149" as string | null,
       desc: "Para equipes em crescimento",
-      itens: ["Até 10 usuários", "Tudo do Solo, sem limites de IA", "Jurimetria avançada", "Auditoria e permissões"],
+      itens: ["Até 10 usuários", "Tudo do Solo, sem limites de IA", "Painel de indicadores", "Auditoria e permissões por papel"],
       destaque: true,
     },
     {
       nome: "Enterprise",
       preco: null as string | null,
-      desc: "Para grandes bancas",
-      itens: ["Usuários ilimitados", "SLA e suporte dedicado", "SSO e integrações", "Onboarding personalizado"],
+      desc: "Para grandes escritórios",
+      itens: ["Usuários ilimitados", "SLA e suporte dedicado", "Trilha de auditoria completa", "Onboarding personalizado"],
       destaque: false,
     },
   ],
 };
 
 export const ctaFinal = {
-  titulo: "Pronto para dar à sua banca a inteligência que ela merece?",
-  texto: "Migração assistida e 14 dias grátis. Seus processos organizados ainda esta semana.",
+  titulo: "Pronto para organizar o escritório inteiro num lugar só?",
+  texto: "14 dias grátis, sem cartão. Seus processos e prazos organizados ainda esta semana.",
   cta: { label: "Criar conta grátis", href: "/login?modo=registro" },
 };
 
@@ -146,6 +132,6 @@ export const rodape = {
     { href: "#precos", label: "Preços" },
     { href: "/login", label: "Entrar" },
   ],
-  selo: "LGPD & ISO 27001",
+  selo: "Dados protegidos com 2FA e trilha de auditoria",
   copyright: (ano: number) => `© ${ano} Lexo. Todos os direitos reservados.`,
 };

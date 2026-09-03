@@ -16,6 +16,79 @@ body,
   height: 100%;
 }
 
+.scrollbar-fina,
+.scrollbar-fina body {
+  background-color: #000000;
+}
+.scrollbar-fina {
+  color-scheme: dark;
+}
+.scrollbar-fina::-webkit-scrollbar {
+  width: 7px;
+}
+.scrollbar-fina::-webkit-scrollbar-track {
+  background: #000000;
+}
+.scrollbar-fina::-webkit-scrollbar-thumb {
+  background-color: #2b2b2b;
+  border: 2px solid #000000;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+.scrollbar-fina::-webkit-scrollbar-thumb:hover {
+  background-color: #454545;
+}
+
+.card-fundo {
+  background-color: var(--color-surface);
+  border: 1px solid #2e2e2e;
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.card-fundo:hover {
+  transform: translateY(-3px);
+  border-color: #454545;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 12px 28px -12px rgba(0, 0, 0, 0.8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-fundo,
+  .card-fundo:hover {
+    transform: none;
+    transition: none;
+  }
+}
+
+.glow-mask::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--glowingeffect-border-width));
+  border-radius: inherit;
+  border: var(--glowingeffect-border-width) solid transparent;
+  background: var(--gradient);
+  background-attachment: fixed;
+  opacity: var(--active);
+  transition: opacity 0.3s ease;
+  mask-clip: padding-box, border-box;
+  mask-composite: intersect;
+  mask-image:
+    linear-gradient(#0000, #0000),
+    conic-gradient(
+      from calc((var(--start) - var(--spread)) * 1deg),
+      #00000000 0deg,
+      #fff,
+      #00000000 calc(var(--spread) * 2deg)
+    );
+}
+
 body {
   margin: 0;
   background-color: var(--color-bg);
@@ -193,12 +266,6 @@ body {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/*
- * Paleta "Índigo refinado" — claro por padrão, `.dark` como alternativa.
- * As variáveis --color-* legadas (usadas em ~15 páginas via var(--color-*) e nas
- * classes .card/.btn/.input abaixo) apontam para estas, para não precisar tocar
- * em cada página nesta leva — a troca para os componentes shadcn é gradual.
- */
 :root {
   --background: #ffffff;
   --foreground: #18181b;
@@ -206,15 +273,15 @@ body {
   --card-foreground: #18181b;
   --popover: #ffffff;
   --popover-foreground: #18181b;
-  --primary: #4f46e5;
+  --primary: #0b4a6f;
   --primary-foreground: #ffffff;
-  --primary-hover: #4338ca;
+  --primary-hover: #0d5a86;
   --secondary: #f4f4f5;
   --secondary-foreground: #18181b;
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
-  --accent: #eef2ff;
-  --accent-foreground: #4338ca;
+  --accent: #e8f2f8;
+  --accent-foreground: #0b4a6f;
   --success: #059669;
   --success-foreground: #ffffff;
   --warning: #d97706;
@@ -223,7 +290,7 @@ body {
   --destructive-foreground: #ffffff;
   --border: #e4e4e7;
   --input: #e4e4e7;
-  --ring: #4f46e5;
+  --ring: #0b4a6f;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -232,12 +299,12 @@ body {
   --radius: 0.75rem;
   --sidebar: #fafafa;
   --sidebar-foreground: #18181b;
-  --sidebar-primary: #4f46e5;
+  --sidebar-primary: #0b4a6f;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eef2ff;
-  --sidebar-accent-foreground: #4338ca;
+  --sidebar-accent: #e8f2f8;
+  --sidebar-accent-foreground: #0b4a6f;
   --sidebar-border: #e4e4e7;
-  --sidebar-ring: #4f46e5;
+  --sidebar-ring: #0b4a6f;
 
   --color-bg: var(--background);
   --color-surface: var(--card);
@@ -260,15 +327,15 @@ body {
   --card-foreground: #fafafa;
   --popover: #0f0f0f;
   --popover-foreground: #fafafa;
-  --primary: #818cf8;
-  --primary-foreground: #000000;
-  --primary-hover: #a5b4fc;
+  --primary: #1a6f9e;
+  --primary-foreground: #ffffff;
+  --primary-hover: #2280b4;
   --secondary: #1a1a1a;
   --secondary-foreground: #fafafa;
   --muted: #171717;
   --muted-foreground: #a3a3a3;
-  --accent: #1e2140;
-  --accent-foreground: #c7d2fe;
+  --accent: #0c2f45;
+  --accent-foreground: #9fd0ea;
   --success: #34d399;
   --success-foreground: #000000;
   --warning: #fbbf24;
@@ -277,7 +344,7 @@ body {
   --destructive-foreground: #000000;
   --border: #262626;
   --input: #262626;
-  --ring: #818cf8;
+  --ring: #1a6f9e;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -285,12 +352,12 @@ body {
   --chart-5: oklch(0.269 0 0);
   --sidebar: #0f0f0f;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #818cf8;
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #1e2140;
-  --sidebar-accent-foreground: #c7d2fe;
+  --sidebar-primary: #1a6f9e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #0c2f45;
+  --sidebar-accent-foreground: #9fd0ea;
   --sidebar-border: #262626;
-  --sidebar-ring: #818cf8;
+  --sidebar-ring: #1a6f9e;
 
   --color-bg: var(--background);
   --color-surface: var(--card);
