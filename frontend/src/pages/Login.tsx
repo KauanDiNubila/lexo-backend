@@ -106,6 +106,12 @@ export function Login() {
                 : "Crie a conta do seu escritório em poucos minutos."}
           </p>
 
+          {params.get("convite") === "aceito" && !emTotp && (
+            <div className="mt-5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-700 dark:text-emerald-400">
+              Acesso ativado. Entre com o email do convite e a senha que você acabou de definir.
+            </div>
+          )}
+
           <form onSubmit={enviar} className="mt-8 flex flex-col gap-4">
             {emTotp ? (
               <>

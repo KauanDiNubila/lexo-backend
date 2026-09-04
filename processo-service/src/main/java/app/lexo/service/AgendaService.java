@@ -23,12 +23,10 @@ public class AgendaService {
 
     private final DeadlineRepository repo;
     private final CaseRepository caseRepo;
-    private final AtividadeService activity;
 
-    public AgendaService(DeadlineRepository repo, CaseRepository caseRepo, AtividadeService activity) {
+    public AgendaService(DeadlineRepository repo, CaseRepository caseRepo) {
         this.repo = repo;
         this.caseRepo = caseRepo;
-        this.activity = activity;
     }
 
     @Transactional(readOnly = true)
@@ -62,9 +60,6 @@ public class AgendaService {
         d.setCaseId(req.caseId());
         preencher(d, req);
         d = repo.save(d);
-
-        activity.registrar(me.organizationId(), d.getCaseId(), me.id(), nomeDe(me),
-                "Prazo \"" + req.title() + "\" criado");
         return DeadlineResponse.from(d);
     }
 
@@ -75,9 +70,6 @@ public class AgendaService {
         d.setCaseId(req.caseId());
         preencher(d, req);
         d = repo.save(d);
-
-        activity.registrar(me.organizationId(), d.getCaseId(), me.id(), nomeDe(me),
-                "Prazo \"" + req.title() + "\" atualizado");
         return DeadlineResponse.from(d);
     }
 
@@ -86,9 +78,6 @@ public class AgendaService {
         Deadline d = carregar(me, id);
         d.setStatus(completed ? DeadlineStatus.CONCLUIDO : DeadlineStatus.PENDENTE);
         d = repo.save(d);
-
-        activity.registrar(me.organizationId(), d.getCaseId(), me.id(), nomeDe(me),
-                "Prazo \"" + d.getTitle() + "\" marcado como " + (completed ? "Concluído" : "Pendente"));
         return DeadlineResponse.from(d);
     }
 
@@ -117,9 +106,5 @@ public class AgendaService {
 
     private String vazioParaNulo(String s) {
         return (s == null || s.isBlank()) ? null : s;
-    }
-
-    private String nomeDe(AuthUser me) {
-        return me.name() != null ? me.name() : "Usuário";
     }
 }

@@ -3,6 +3,7 @@ import { useAuth } from "./lib/auth";
 import { Layout } from "./components/Layout";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
+import { Convite } from "./pages/Convite";
 import { PortalCliente } from "./pages/PortalCliente";
 import { Clientes } from "./pages/Clientes";
 import { Processos } from "./pages/Processos";
@@ -28,6 +29,7 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/portal/:token" element={<PortalCliente />} />
+      <Route path="/convite/:token" element={<Convite />} />
 
       <Route path="/app" element={<Protegida><Dashboard /></Protegida>} />
       <Route path="/app/ia" element={<Protegida><LexoIA /></Protegida>} />

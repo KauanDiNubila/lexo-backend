@@ -27,6 +27,14 @@ type Honorario = {
 type Cliente = { id: string; name: string };
 type Processo = { id: string; number: string };
 
+type Relatorio = {
+  start: string;
+  end: string;
+  totalPago: number;
+  totalPendente: number;
+  totalAtrasado: number;
+};
+
 const STATUS = ["PENDENTE", "PAGO", "ATRASADO", "CANCELADO"];
 
 const corStatus: Record<string, string> = {
@@ -41,6 +49,16 @@ const selectClass =
 
 const moeda = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+function mesAtual() {
+  const hoje = new Date();
+  return {
+    inicio: iso(new Date(hoje.getFullYear(), hoje.getMonth(), 1)),
+    fim: iso(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0)),
+  };
+}
 
 export function Financeiro() {
   const [itens, setItens] = useState<Honorario[]>([]);
@@ -61,6 +79,10 @@ export function Financeiro() {
   const [vencimento, setVencimento] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
+
+  const [periodo, setPeriodo] = useState(mesAtual);
+  const [relatorio, setRelatorio] = useState<Relatorio | null>(null);
+  const [carregandoRelatorio, setCarregandoRelatorio] = useState(true);
 
   async function carregar() {
     setCarregando(true);
@@ -86,6 +108,28 @@ export function Financeiro() {
   useEffect(() => {
     carregar();
   }, [pagina]);
+
+  useEffect(() => {
+    if (!periodo.inicio || !periodo.fim || periodo.inicio > periodo.fim) return;
+    let ativo = true;
+    setCarregandoRelatorio(true);
+    api
+      .get<Relatorio>(
+        `/api/financeiro/relatorio?start=${periodo.inicio}T00:00:00Z&end=${periodo.fim}T23:59:59Z`
+      )
+      .then((r) => {
+        if (ativo) setRelatorio(r);
+      })
+      .catch(() => {
+        if (ativo) setRelatorio(null);
+      })
+      .finally(() => {
+        if (ativo) setCarregandoRelatorio(false);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [periodo]);
 
   const nomeCliente = (id: string) => clientes.find((c) => c.id === id)?.name || "—";
 
@@ -138,6 +182,56 @@ export function Financeiro() {
           + Novo honorário
         </Button>
       </div>
+
+      <Card className="mb-5.5 p-5">
+        <div className="flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <div className="text-[15px] font-semibold">Relatório por período</div>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Honorários com vencimento dentro do intervalo.
+            </p>
+          </div>
+          <div className="flex items-end gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="periodo-inicio" className="text-xs">De</Label>
+              <Input
+                id="periodo-inicio"
+                type="date"
+                value={periodo.inicio}
+                max={periodo.fim}
+                onChange={(e) => setPeriodo((p) => ({ ...p, inicio: e.target.value }))}
+                className="w-40"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="periodo-fim" className="text-xs">Até</Label>
+              <Input
+                id="periodo-fim"
+                type="date"
+                value={periodo.fim}
+                min={periodo.inicio}
+                onChange={(e) => setPeriodo((p) => ({ ...p, fim: e.target.value }))}
+                className="w-40"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          {[
+            { rotulo: "Recebido", valor: relatorio?.totalPago, cor: "text-emerald-700 dark:text-emerald-400" },
+            { rotulo: "A receber", valor: relatorio?.totalPendente, cor: "text-amber-700 dark:text-amber-400" },
+            { rotulo: "Atrasado", valor: relatorio?.totalAtrasado, cor: "text-red-700 dark:text-red-400" },
+          ].map((t) => (
+            <div key={t.rotulo} className="rounded-xl border border-border bg-muted/40 px-4 py-3.5">
+              <div className="text-xs font-semibold text-muted-foreground">{t.rotulo}</div>
+              <div className={cn("mt-1 text-xl font-bold tabular-nums", t.cor)}>
+                {carregandoRelatorio ? "—" : moeda(t.valor ?? 0)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       <Card className="gap-0 overflow-hidden py-0">
         {carregando ? (
