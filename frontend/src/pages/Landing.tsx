@@ -1,10 +1,9 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Check, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { Button } from "@/components/ui/button";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
-import Silk from "@/components/ui/silk";
 import {
   marca as marcaConteudo,
   navegacao,
@@ -16,6 +15,8 @@ import {
   precos,
   rodape,
 } from "@/content/landing";
+
+const Silk = lazy(() => import("@/components/ui/silk"));
 
 function LogoMark({ tamanho }: { tamanho: number }) {
   return (
@@ -152,7 +153,9 @@ export function Landing() {
 
       <div className="relative w-full overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute top-0 left-0 h-[400px] w-full animate-in fade-in duration-500 md:h-[540px]">
-          <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
+          <Suspense fallback={null}>
+            <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
+          </Suspense>
         </div>
 
         <div className="relative mx-auto flex h-[400px] w-full max-w-[1600px] flex-col justify-center px-8 text-left md:h-[540px] md:px-14">

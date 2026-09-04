@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { lazy, Suspense, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -6,7 +6,8 @@ import { ApiError } from "../lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Silk from "@/components/ui/silk";
+
+const Silk = lazy(() => import("@/components/ui/silk"));
 
 export function Login() {
   const { login, registrar } = useAuth();
@@ -71,7 +72,9 @@ export function Login() {
     <div className="grid min-h-screen md:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-[#08293d] md:flex">
         <div aria-hidden className="pointer-events-none absolute inset-0 h-full w-full animate-in fade-in duration-500">
-          <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
+          <Suspense fallback={null}>
+            <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
+          </Suspense>
         </div>
         <div className="relative flex h-full w-full flex-col p-12">
           <Link to="/" className="w-fit text-lg font-bold tracking-tight text-white">
