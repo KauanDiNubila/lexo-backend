@@ -15,8 +15,6 @@ x-infra-env: &infra-env
   LEXO_KAFKA_BOOTSTRAP: kafka:9092
   LEXO_RABBIT_HOST: rabbitmq
   LEXO_RABBIT_PORT: "5672"
-  LEXO_SMTP_HOST: mailpit
-  LEXO_SMTP_PORT: "1025"
   LEXO_CORS_ORIGINS: https://${APP_DOMAIN:?defina APP_DOMAIN no .env.prod}
   SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?defina POSTGRES_USER no .env.prod}
   SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.prod}
@@ -180,11 +178,6 @@ services:
     restart: unless-stopped
     mem_limit: 512m
 
-  mailpit:
-    image: axllent/mailpit:latest
-    restart: unless-stopped
-    mem_limit: 128m
-
   discovery-server:
     build:
       <<: *java-build
@@ -325,6 +318,13 @@ services:
       <<: *infra-env
       LEXO_EUREKA_HOSTNAME: notificacao-service
       BASE_URL: https://${APP_DOMAIN}
+      LEXO_SMTP_HOST: ${SMTP_HOST:?defina SMTP_HOST no .env.prod}
+      LEXO_SMTP_PORT: ${SMTP_PORT:?defina SMTP_PORT no .env.prod}
+      LEXO_SMTP_USER: ${SMTP_USER:?defina SMTP_USER no .env.prod}
+      LEXO_SMTP_PASSWORD: ${SMTP_PASSWORD:?defina SMTP_PASSWORD no .env.prod}
+      LEXO_SMTP_AUTH: "true"
+      LEXO_SMTP_STARTTLS: "true"
+      LEXO_EMAIL_FROM: ${SMTP_FROM:?defina SMTP_FROM no .env.prod}
     mem_limit: 512m
     depends_on:
       discovery-server:

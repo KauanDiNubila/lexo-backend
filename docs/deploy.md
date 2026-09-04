@@ -50,6 +50,12 @@ sem custo). Para respostas reais, gere uma chave gratuita em https://aistudio.go
 preencha essa variável — veja o item de rate limiting em "Pontos em aberto" antes de habilitar em
 produção pública.
 
+`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e `SMTP_FROM` **não são opcionais** — sem eles
+o Compose recusa subir o `notificacao-service`. Convite de equipe e lembrete de prazo dependem de
+e-mail de verdade chegando ao destinatário; não há modo mock para isso. Qualquer provedor com SMTP
+autenticado (Resend, Mailgun, SES) funciona; `SMTP_FROM` precisa ser um endereço do domínio
+verificado no provedor, senão a entrega cai em spam ou é recusada.
+
 ## Subir
 
 ```bash
@@ -90,11 +96,6 @@ Todas devem aparecer como fechadas.
 
 ## Pontos em aberto
 
-- **CSP**: o `nginx.conf` ainda não define `Content-Security-Policy`. Como front e API ficam no
-  mesmo domínio via Caddy, dá para usar uma política restritiva com `connect-src 'self'`. Falta
-  validar que ela não quebra o canvas WebGL da landing nem os estilos inline que sobraram.
-- **E-mail**: o Mailpit captura as mensagens em vez de entregá-las. Para convites chegarem a
-  destinatários reais é preciso apontar `LEXO_SMTP_HOST`/`LEXO_SMTP_PORT` para um SMTP de verdade.
 - **Rate limiting**: os endpoints `/api/ia/**` já têm limite por organização (`LEXO_IA_LIMITE`, 20
   requisições por minuto por padrão, contadas no Redis). O que falta é teto de consumo acumulado —
   o limite por minuto contém rajada, mas não impede um gasto alto ao longo do mês.
