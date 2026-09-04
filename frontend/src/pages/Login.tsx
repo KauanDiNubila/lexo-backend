@@ -70,7 +70,7 @@ export function Login() {
   return (
     <div className="grid min-h-screen md:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-[#08293d] md:flex">
-        <div aria-hidden className="pointer-events-none absolute inset-0 h-full w-full">
+        <div aria-hidden className="pointer-events-none absolute inset-0 h-full w-full animate-in fade-in duration-500">
           <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
         </div>
         <div className="relative flex h-full w-full flex-col p-12">

@@ -151,7 +151,7 @@ export function Landing() {
       </header>
 
       <div className="relative w-full overflow-hidden">
-        <div aria-hidden className="pointer-events-none absolute top-0 left-0 h-[400px] w-full md:h-[540px]">
+        <div aria-hidden className="pointer-events-none absolute top-0 left-0 h-[400px] w-full animate-in fade-in duration-500 md:h-[540px]">
           <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
         </div>
 
