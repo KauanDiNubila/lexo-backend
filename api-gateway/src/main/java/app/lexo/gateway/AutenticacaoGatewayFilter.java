@@ -43,7 +43,8 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
 
     private static final List<String> PUBLICAS_PREFIXO = List.of(
             "/api/convites/info/",
-            "/api/portal/"
+            "/api/portal/",
+            "/docs/"
     );
 
     private final JwtParser parser;

@@ -15,10 +15,6 @@
     <name>financeiro-service</name>
     <description>Servico de honorarios (financeiro)</description>
 
-    <properties>
-        <springdoc.version>2.7.0</springdoc.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>app.lexo</groupId>

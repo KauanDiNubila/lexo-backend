@@ -240,6 +240,7 @@ services:
     environment:
       <<: *infra-env
       LEXO_EUREKA_HOSTNAME: cliente-service
+      BASE_URL: https://${APP_DOMAIN}
       LEXO_CLIENTE_DB_URL: jdbc:postgresql://cliente-db:5432/lexo_cliente
     mem_limit: 640m
     depends_on:
@@ -261,6 +262,7 @@ services:
     environment:
       <<: *infra-env
       LEXO_EUREKA_HOSTNAME: processo-service
+      BASE_URL: https://${APP_DOMAIN}
       LEXO_PROCESSO_DB_URL: jdbc:postgresql://processo-db:5432/lexo_processo
     mem_limit: 640m
     depends_on:
@@ -284,6 +286,7 @@ services:
     environment:
       <<: *infra-env
       LEXO_EUREKA_HOSTNAME: financeiro-service
+      BASE_URL: https://${APP_DOMAIN}
       LEXO_FINANCEIRO_DB_URL: jdbc:postgresql://financeiro-db:5432/lexo_financeiro
     mem_limit: 640m
     depends_on:
@@ -301,6 +304,7 @@ services:
     environment:
       <<: *infra-env
       LEXO_EUREKA_HOSTNAME: auditoria-service
+      BASE_URL: https://${APP_DOMAIN}
       LEXO_AUDITORIA_DB_URL: jdbc:postgresql://auditoria-db:5432/lexo_auditoria
     mem_limit: 640m
     depends_on:
@@ -337,6 +341,7 @@ services:
     environment:
       <<: *infra-env
       LEXO_EUREKA_HOSTNAME: ia-service
+      BASE_URL: https://${APP_DOMAIN}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     mem_limit: 512m
     depends_on:
