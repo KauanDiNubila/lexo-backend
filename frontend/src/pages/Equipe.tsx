@@ -12,14 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Usuario = { id: string; name: string; email: string; role: string; totpEnabled: boolean };
 type Convite = { id: string; name: string; email: string; role: string };
 
 const PAPEIS = ["ADMIN", "ADVOGADO", "SECRETARIA"];
-
-const selectClass =
-  "flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export function Equipe() {
   const { usuario: eu } = useAuth();
@@ -35,8 +33,8 @@ export function Equipe() {
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
 
-  async function carregar() {
-    setCarregando(true);
+  async function carregar(mostrarCarregando = true) {
+    if (mostrarCarregando) setCarregando(true);
     setErro(null);
     try {
       const [us, cs] = await Promise.all([
@@ -66,7 +64,7 @@ export function Equipe() {
       setEmail("");
       setPapel("ADVOGADO");
       setAberto(false);
-      await carregar();
+      await carregar(false);
     } catch (e) {
       setErroForm((e as Error).message);
     } finally {
@@ -77,7 +75,7 @@ export function Equipe() {
   async function mudarPapel(userId: string, role: string) {
     try {
       await api.patch("/api/usuarios/papel", { userId, role });
-      await carregar();
+      await carregar(false);
     } catch (e) {
       alert((e as Error).message);
     }
@@ -86,12 +84,12 @@ export function Equipe() {
   async function remover(id: string) {
     if (!confirm("Remover este usuário?")) return;
     await api.del(`/api/usuarios/${id}`);
-    await carregar();
+    await carregar(false);
   }
 
   async function revogar(id: string) {
     await api.del(`/api/usuarios/convites/${id}`);
-    await carregar();
+    await carregar(false);
   }
 
   return (
@@ -135,15 +133,16 @@ export function Equipe() {
                     {u.id === eu?.id ? (
                       <span className="text-muted-foreground">{u.role}</span>
                     ) : (
-                      <select
-                        value={u.role}
-                        onChange={(e) => mudarPapel(u.id, e.target.value)}
-                        className="h-8 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                      >
-                        {PAPEIS.map((p) => (
-                          <option key={p} value={p}>{p}</option>
-                        ))}
-                      </select>
+                      <Select value={u.role} onValueChange={(value) => mudarPapel(u.id, value)}>
+                        <SelectTrigger size="sm" className="w-36">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PAPEIS.map((p) => (
+                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
                   </td>
                   <td className="px-5 py-3.5">
@@ -207,11 +206,16 @@ export function Equipe() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="papel">Papel</Label>
-              <select id="papel" value={papel} onChange={(e) => setPapel(e.target.value)} className={selectClass}>
-                {PAPEIS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
+              <Select value={papel} onValueChange={setPapel}>
+                <SelectTrigger id="papel">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAPEIS.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {erroForm && <div className="text-[13px] text-destructive">{erroForm}</div>}
             <DialogFooter>

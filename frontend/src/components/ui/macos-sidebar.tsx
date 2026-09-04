@@ -75,7 +75,7 @@ export function MacOSSidebar({
                   {active && (
                     <motion.div
                       layoutId="sidebar-active-bg"
-                      className="absolute inset-0 z-0 rounded-md bg-primary/10"
+                      className="absolute inset-0 z-0 rounded-md bg-muted"
                       transition={{ duration: 0.2, ease: "easeOut" }}
                     />
                   )}
@@ -90,7 +90,7 @@ export function MacOSSidebar({
                     icon={item.icon}
                     className={cn(
                       "relative z-10 size-[18px] shrink-0",
-                      active ? "text-primary" : "text-muted-foreground"
+                      active ? "text-foreground" : "text-muted-foreground"
                     )}
                   />
                   {isOpen && (

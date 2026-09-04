@@ -24,7 +24,6 @@ const navItens: (SidebarNavItem & { apenasAdmin: boolean })[] = [
   { to: "/app/financeiro", label: "Financeiro", icon: Wallet01Icon, apenasAdmin: false },
   { to: "/app/ia", label: "Lexo IA", icon: SparklesIcon, apenasAdmin: false },
   { to: "/app/equipe", label: "Equipe", icon: UserGroupIcon, apenasAdmin: true },
-  { to: "/app/configuracoes", label: "Configurações", icon: Setting07Icon, apenasAdmin: false },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -36,6 +35,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const activeIndex = itensVisiveis.findIndex((item) =>
     item.to === "/app" ? location.pathname === "/app" : location.pathname.startsWith(item.to)
   );
+  const emConfiguracoes = location.pathname.startsWith("/app/configuracoes");
 
   function logout() {
     sair();
@@ -62,29 +62,42 @@ export function Layout({ children }: { children: ReactNode }) {
         ) : null
       }
       footer={(isOpen) => (
-        <div className="flex flex-col gap-1 border-t border-border pt-3">
-          <div className={cn("flex items-center gap-2.5 px-1", !isOpen && "justify-center px-0")}>
-            <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-              {iniciais}
-            </div>
-            {isOpen && (
-              <div className="min-w-0 leading-tight">
-                <div className="truncate text-[13px] font-semibold">{usuario?.name}</div>
-                <div className="truncate text-[11px] text-muted-foreground">{usuario?.role}</div>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={logout}
-            title="Sair"
+        <div className="flex flex-col gap-1">
+          <Link
+            to="/app/configuracoes"
             className={cn(
-              "flex items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
+              "flex items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm",
+              emConfiguracoes ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
               !isOpen && "justify-center px-0"
             )}
           >
-            <HugeiconsIcon icon={Logout03Icon} className="size-[18px] shrink-0" />
-            {isOpen && "Sair"}
-          </button>
+            <HugeiconsIcon icon={Setting07Icon} className="size-[18px] shrink-0" />
+            {isOpen && "Configurações"}
+          </Link>
+          <div className="flex flex-col gap-1 border-t border-border pt-3">
+            <div className={cn("flex items-center gap-2.5 px-1", !isOpen && "justify-center px-0")}>
+              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                {iniciais}
+              </div>
+              {isOpen && (
+                <div className="min-w-0 leading-tight">
+                  <div className="truncate text-[13px] font-semibold">{usuario?.name}</div>
+                  <div className="truncate text-[11px] text-muted-foreground">{usuario?.role}</div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={logout}
+              title="Sair"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
+                !isOpen && "justify-center px-0"
+              )}
+            >
+              <HugeiconsIcon icon={Logout03Icon} className="size-[18px] shrink-0" />
+              {isOpen && "Sair"}
+            </button>
+          </div>
         </div>
       )}
     >
