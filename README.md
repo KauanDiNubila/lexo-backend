@@ -9,6 +9,7 @@
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB)
 ![Gemini](https://img.shields.io/badge/IA-Google%20Gemini-8E75FF)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
+![OpenAPI](https://img.shields.io/badge/OpenAPI-Swagger%20UI-85EA2D)
 
 **SaaS multi-tenant de gestão para escritórios de advocacia**, construído como uma **arquitetura de microserviços** com Java 21, Spring Boot 3.4 e Spring Cloud — com **frontend em React**, **portal do cliente** e recursos de **IA de verdade** (Google Gemini).
 
@@ -25,6 +26,8 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 - **Mensageria**: eventos de domínio (Kafka) para auditoria *event-driven* e fila de e-mails (RabbitMQ) com *retry* + *dead-letter queue*.
 - **Lexo IA (real)**: resumo de processo, assistente jurídico (chat) e rascunho de petição via **Google Gemini**, num microserviço dedicado — com *fallback* heurístico que roda **sem chave e custo zero**.
 - **Portal do cliente**: link público (*magic link*, sem login) onde o cliente acompanha processos, prazos, andamentos e financeiro em tempo real.
+- **Documentação de API navegável**: Swagger UI de cada serviço, agregado num único ponto no gateway — testa endpoints protegidos direto pelo navegador, com o mesmo JWT que a aplicação usa.
+- **Zero duplicação entre serviços**: segurança, contrato de erro, eventos de domínio e filas de e-mail vivem em três bibliotecas compartilhadas (`lexo-common`, `lexo-messaging`, `lexo-signing`), não copiadas em cada microserviço.
 - **Frontend completo** (React + Vite + TypeScript): landing page, app do escritório e portal, no mesmo repositório.
 
 ---
@@ -90,7 +93,7 @@ flowchart TB
 | **api-gateway** | 8090 | — | Porta de entrada única; valida JWT e roteia |
 | **auth-service** | 8082 | `lexo-auth-db` (5434) | Autenticação, usuários, organizações, 2FA, equipe |
 | **cliente-service** | 8083 | `lexo-cliente-db` (5435) | Clientes (CPF/CNPJ) + agregação do portal do cliente |
-| **processo-service** | 8086 | `lexo-processo-db` (5437) | Processos, agenda (prazos), andamentos e atividades |
+| **processo-service** | 8086 | `lexo-processo-db` (5437) | Processos, agenda (prazos) e andamentos |
 | **financeiro-service** | 8081 | `lexo-financeiro-db` (5438) | Honorários |
 | **auditoria-service** | 8084 | `lexo-auditoria-db` (5436) | Log de auditoria (consome eventos do Kafka) |
 | **notificacao-service** | 8085 | — | Envio de e-mails (consome fila do RabbitMQ) |
@@ -125,7 +128,8 @@ compartilhado entre todas as instâncias do auth-service.
 - O **gateway** é o único ponto que valida o **JWT** (HS256, segredo compartilhado).
 - Após validar, injeta a identidade em headers de confiança: `X-User-Id`, `X-Org-Id`, `X-User-Role`, `X-User-Name`, `X-User-Email`.
 - Os serviços **confiam nesses headers** (via `HeaderAuthenticationFilter`) — não revalidam o token.
-- **Anti-spoofing**: o gateway **remove** quaisquer headers `X-User-*` enviados pelo cliente.
+- **Headers assinados**: o gateway assina a identidade com HMAC (`X-Gateway-Sig` + `X-Gateway-Ts`, janela de tempo curta); cada serviço verifica a assinatura antes de confiar nos headers — um header forjado sem a chave do gateway, ou reenviado fora da janela, é recusado.
+- **Anti-spoofing**: o gateway **remove** quaisquer headers `X-User-*` enviados pelo cliente antes de rotear.
 - **Multi-tenancy**: toda query filtra por `organizationId` — um escritório nunca vê dados de outro.
 - **Serviço-a-serviço**: os endpoints `/internal/**` exigem uma chave interna (`X-Internal-Key`).
 - **Seguro por padrão**: o gateway e o auth-service **recusam iniciar** com o segredo default do JWT fora do profile `dev` — em qualquer outro ambiente é obrigatório definir `AUTH_SECRET`.
@@ -147,13 +151,32 @@ Um microserviço dedicado (`ia-service`) que integra o **Google Gemini** (free t
 
 ---
 
+## Documentação da API
+
+Cada um dos 6 serviços de negócio gera sua própria especificação OpenAPI a partir dos controllers
+(springdoc), sem anotação manual em endpoint nenhum. O gateway agrega as seis num Swagger UI só:
+
+**http://localhost:8090/swagger-ui.html**
+
+O seletor no topo troca entre os serviços. O botão **Authorize** aceita o `accessToken` de
+`POST /api/auth/login` — como cada spec declara o gateway como `servers`, testar por ali passa de
+verdade pelo `AutenticacaoGatewayFilter`, então o Bearer descrito na doc é o mesmo que a aplicação usa
+(não uma simulação: o gateway traduz o token para os headers assinados que os serviços entendem).
+Rotas `/internal/**` (serviço-a-serviço, protegidas por `X-Internal-Key`) ficam fora da doc pública,
+já que o gateway nem as roteia.
+
+---
+
 ## Frontend (`/frontend`)
 
-SPA em **React + Vite + TypeScript** que consome o backend via gateway:
+SPA em **React + Vite + TypeScript**, tema escuro, componentes shadcn/ui, que consome o backend via gateway:
 
-- **Landing page** pública e **app do escritório** (dashboard com KPIs reais, clientes, processos, agenda, financeiro, equipe, auditoria, configurações).
-- **Assistente** e **Petições** com IA; respostas renderizadas em markdown.
-- **Portal do cliente**: página pública `/portal/:token` onde o cliente acompanha processos, prazos, **andamentos** e situação financeira — sem login.
+- **Landing page** pública e **app do escritório** — dashboard com KPIs reais, clientes, processos, agenda, financeiro (com relatório por período), equipe e configurações (organização, perfil, 2FA e auditoria).
+- **Lexo IA**: chat jurídico e rascunho de petição na mesma tela, em abas; respostas renderizadas em markdown.
+- **Convite de equipe por e-mail**: quem convida define o papel; o convidado recebe um link (`/convite/:token`) que expira, ativa a conta e cai direto no login.
+- **Portal do cliente**: página pública `/portal/:token` onde o cliente acompanha processos, prazos, andamentos e situação financeira — sem login.
+- Menu lateral recolhível, monocromático (cor reservada para ação primária, não para navegação), com transição suave entre landing e login.
+- Código dividido por rota — quem abre a landing não baixa o bundle do app nem a biblioteca 3D do fundo animado.
 
 ```bash
 cd frontend
@@ -173,7 +196,8 @@ npm run dev          # http://localhost:5180
 | Mensageria | Apache Kafka (KRaft) · RabbitMQ (retry + DLQ) |
 | Segurança | JWT (jjwt) · BCrypt · TOTP (2FA) |
 | IA | Google Gemini (free tier) com fallback heurístico |
-| Frontend | React · Vite · TypeScript · Tailwind CSS · lucide-react |
+| Documentação | springdoc-openapi (Swagger UI agregado no gateway) |
+| Frontend | React · Vite · TypeScript · Tailwind CSS · shadcn/ui · lucide-react |
 | Build / Testes | Maven (multi-módulo) · JUnit 5 · MockMvc · H2 |
 
 ---
@@ -201,6 +225,9 @@ docker compose down -v         # para tudo e apaga os dados dos bancos
 
 > **Lexo IA**: para ligar a IA real, exporte `GEMINI_API_KEY` antes do `up` (senão roda em modo mock):
 > `export GEMINI_API_KEY=sua-chave` (ou coloque num arquivo `.env` na raiz).
+
+> `scripts/dev-up.sh` faz o mesmo `docker compose up -d`, espera o gateway responder em
+> `/actuator/health` e mostra o status de cada container — útil pra não ficar checando na mão.
 
 ### Opção 2 — Local sem containers (Windows)
 
@@ -232,7 +259,7 @@ Defina o profile `dev` antes (o gateway e o auth-service recusam iniciar com o s
 
 ```bash
 java -jar discovery-server/target/discovery-server-0.1.0.jar       # 8761 (primeiro!)
-java -jar api-gateway/target/api-gateway-0.1.0.jar                 # 8080
+java -jar api-gateway/target/api-gateway-0.1.0.jar                 # 8090
 java -jar auth-service/target/auth-service-0.1.0.jar               # 8082
 java -jar cliente-service/target/cliente-service-0.1.0.jar         # 8083
 java -jar processo-service/target/processo-service-0.1.0.jar       # 8086
@@ -268,6 +295,15 @@ Painéis úteis: **Eureka** (8761) · **Zipkin** (9411) · **Mailpit** (8025) ·
 
 ---
 
+## Deploy
+
+Stack de produção separada (`docker-compose.prod.yml`), só com o Caddy publicando porta —
+TLS automático via Let's Encrypt, segredos obrigatórios (o Compose recusa subir sem eles) e
+os serviços recusando iniciar com a chave de assinatura default fora do profile `dev`.
+Passo a passo completo em [`docs/deploy.md`](docs/deploy.md).
+
+---
+
 ## Portas
 
 | Porta | O quê |
@@ -287,7 +323,10 @@ Painéis úteis: **Eureka** (8761) · **Zipkin** (9411) · **Mailpit** (8025) ·
 mvn test
 ```
 
-Testes unitários (validação CPF/CNPJ, risco de prazo, JWT) e de integração (CRUD, multi-tenancy) rodam sobre **H2 em memória** — sem Docker.
+Testes unitários (validação CPF/CNPJ, risco de prazo, JWT, assinatura HMAC do gateway) e de integração
+(CRUD, multi-tenancy, hierarquia de papéis, identidade assinada) rodam sobre **H2 em memória** —
+sem Docker. O `api-gateway`, que valida token e assina os headers de identidade, tem cobertura
+dedicada usando `MockServerWebExchange`, sem precisar subir o contexto Spring inteiro.
 
 ---
 
@@ -297,7 +336,10 @@ Testes unitários (validação CPF/CNPJ, risco de prazo, JWT) e de integração 
 lexo-backend/
 ├── pom.xml                 # POM pai (multi-módulo + BOM Spring Cloud)
 ├── docker-compose.yml      # infraestrutura
-├── scripts/                # start-all / stop-all (Windows)
+├── scripts/                # dev-up / start-all / stop-all
+├── lexo-signing/           # assinatura HMAC dos headers (sem Spring, JDK puro)
+├── lexo-messaging/         # contratos de evento + topologia das filas de e-mail
+├── lexo-common/            # segurança, contrato de erro, OpenAPI — compartilhado
 ├── discovery-server/       # Eureka
 ├── api-gateway/            # Spring Cloud Gateway + validação de JWT
 ├── auth-service/           # autenticação, usuários, 2FA
@@ -314,6 +356,7 @@ lexo-backend/
 
 ## Roadmap
 
-- Config Server centralizado e biblioteca compartilhada para o código de segurança comum.
+- Config Server centralizado.
+- SMTP real em produção — hoje os e-mails (convite de equipe, lembrete de prazo) só chegam ao Mailpit.
 - Captura de publicações (DJe) → geração automática de prazos.
 - Jurimetria (relatórios/BI) e integração de cobrança (PIX/boleto).
