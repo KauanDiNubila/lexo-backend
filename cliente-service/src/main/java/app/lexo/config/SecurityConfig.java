@@ -5,7 +5,6 @@ import app.lexo.common.security.InternalKeyFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -50,13 +49,11 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/convites/aceitar",
                                 "/api/convites/info/**",
-                                "/api/health",
 
                                 "/api/portal/**"
                         ).permitAll()
 
                         .requestMatchers("/internal/**").hasRole(InternalKeyFilter.ROLE_INTERNAL)
-                        .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

@@ -38,8 +38,7 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
             "/api/auth/register",
             "/api/auth/refresh",
             "/api/auth/logout",
-            "/api/convites/aceitar",
-            "/api/health"
+            "/api/convites/aceitar"
     );
 
     private static final List<String> PUBLICAS_PREFIXO = List.of(

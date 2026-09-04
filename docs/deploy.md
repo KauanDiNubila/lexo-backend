@@ -45,6 +45,11 @@ python3 -c "import secrets; print('LEXO_INTERNAL_KEY=' + secrets.token_urlsafe(3
 Preencha também `APP_DOMAIN` (sem `https://`) e `ACME_EMAIL` (usado pelo Let's Encrypt para
 avisar sobre renovação). `.env.prod` está no `.gitignore` e não deve ser commitado.
 
+`GEMINI_API_KEY` é opcional: sem ela, a Lexo IA sobe normalmente e responde em modo mock (heurístico,
+sem custo). Para respostas reais, gere uma chave gratuita em https://aistudio.google.com/apikey e
+preencha essa variável — veja o item de rate limiting em "Pontos em aberto" antes de habilitar em
+produção pública.
+
 ## Subir
 
 ```bash
@@ -90,6 +95,7 @@ Todas devem aparecer como fechadas.
   validar que ela não quebra o canvas WebGL da landing nem os estilos inline que sobraram.
 - **E-mail**: o Mailpit captura as mensagens em vez de entregá-las. Para convites chegarem a
   destinatários reais é preciso apontar `LEXO_SMTP_HOST`/`LEXO_SMTP_PORT` para um SMTP de verdade.
-- **Rate limiting**: os endpoints `/api/ia/**` chamam a API do Gemini e não têm limite por usuário.
-  Com a chave configurada, isso é um vetor de custo.
+- **Rate limiting**: os endpoints `/api/ia/**` já têm limite por organização (`LEXO_IA_LIMITE`, 20
+  requisições por minuto por padrão, contadas no Redis). O que falta é teto de consumo acumulado —
+  o limite por minuto contém rajada, mas não impede um gasto alto ao longo do mês.
 - **Backup**: os volumes Postgres não têm rotina de backup.
