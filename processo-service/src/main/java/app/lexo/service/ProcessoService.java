@@ -11,8 +11,7 @@ import app.lexo.dto.CaseDtos.CaseOpcao;
 import app.lexo.dto.CaseDtos.CaseRequest;
 import app.lexo.dto.CaseDtos.CaseResponse;
 import app.lexo.dto.CaseDtos.ResumoProcessos;
-import app.lexo.evento.PublicadorEventos;
-import app.lexo.repository.ActivityLogRepository;
+import app.lexo.common.kafka.PublicadorEventos;
 import app.lexo.repository.AndamentoRepository;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.CaseSpecs;
@@ -34,21 +33,16 @@ public class ProcessoService {
     private final CaseRepository repo;
     private final DeadlineRepository prazos;
     private final AndamentoRepository andamentos;
-    private final ActivityLogRepository atividades;
     private final ReferenciaGateway referencias;
-    private final AtividadeService activity;
     private final PublicadorEventos eventos;
 
     public ProcessoService(CaseRepository repo, DeadlineRepository prazos,
-                       AndamentoRepository andamentos, ActivityLogRepository atividades,
-                       ReferenciaGateway referencias,
-                       AtividadeService activity, PublicadorEventos eventos) {
+                       AndamentoRepository andamentos, ReferenciaGateway referencias,
+                       PublicadorEventos eventos) {
         this.repo = repo;
         this.prazos = prazos;
         this.andamentos = andamentos;
-        this.atividades = atividades;
         this.referencias = referencias;
-        this.activity = activity;
         this.eventos = eventos;
     }
 
@@ -94,7 +88,6 @@ public class ProcessoService {
         preencher(c, req);
         c = repo.save(c);
 
-        activity.registrar(me.organizationId(), c.getId(), me.id(), nomeDe(me), "Processo criado");
         eventos.publicar(EventoDominio.de("PROCESSO_CRIADO", me.organizationId(), "PROCESSO",
                 c.getId(), "Processo criado: " + c.getNumber(), me.id(), nomeDe(me)));
         return CaseResponse.from(c);
@@ -108,8 +101,6 @@ public class ProcessoService {
         preencher(c, req);
         c = repo.save(c);
 
-        activity.registrar(me.organizationId(), c.getId(), me.id(), nomeDe(me),
-                "Processo atualizado — status: " + req.status());
         eventos.publicar(EventoDominio.de("PROCESSO_ATUALIZADO", me.organizationId(), "PROCESSO",
                 c.getId(), "Processo atualizado: " + c.getNumber(), me.id(), nomeDe(me)));
         return CaseResponse.from(c);
@@ -136,7 +127,6 @@ public class ProcessoService {
     private void apagarComFilhos(Case c) {
         prazos.deleteByCaseIdAndOrganizationId(c.getId(), c.getOrganizationId());
         andamentos.deleteByCaseIdAndOrganizationId(c.getId(), c.getOrganizationId());
-        atividades.deleteByCaseIdAndOrganizationId(c.getId(), c.getOrganizationId());
         repo.delete(c);
     }
 

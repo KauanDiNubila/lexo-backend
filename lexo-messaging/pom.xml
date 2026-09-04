@@ -13,9 +13,15 @@
 
     <artifactId>lexo-messaging</artifactId>
     <name>lexo-messaging</name>
-    <description>Contratos que atravessam Kafka e RabbitMQ — so JDK, sem dependencia de framework</description>
+    <description>Contratos que atravessam Kafka e RabbitMQ, mais a topologia das filas de e-mail</description>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

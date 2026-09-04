@@ -1,12 +1,14 @@
-package app.lexo.evento;
+package app.lexo.common.kafka;
 
 import app.lexo.common.evento.EventoDominio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@ConditionalOnClass(KafkaTemplate.class)
 public class PublicadorEventos {
 
     public static final String TOPICO = "lexo.eventos";

@@ -9,7 +9,7 @@ import app.lexo.domain.Client;
 import app.lexo.dto.ClientDtos.ClientRequest;
 import app.lexo.dto.ClientDtos.ClientResponse;
 import app.lexo.dto.ClientDtos;
-import app.lexo.evento.PublicadorEventos;
+import app.lexo.common.kafka.PublicadorEventos;
 import app.lexo.repository.ClientRepository;
 import java.util.List;
 import java.util.Optional;

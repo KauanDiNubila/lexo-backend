@@ -1,5 +1,7 @@
 package app.lexo.domain;
 
+import app.lexo.common.domain.BaseEntity;
+
 import app.lexo.domain.enums.DeadlineStatus;
 import app.lexo.domain.enums.DeadlineType;
 import jakarta.persistence.Column;

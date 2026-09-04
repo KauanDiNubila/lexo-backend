@@ -1,13 +1,13 @@
-package app.lexo.email;
+package app.lexo.common.email;
 
-import app.lexo.common.email.TarefaEmail;
-import app.lexo.config.RabbitConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Service;
 
 @Service
+@ConditionalOnClass(RabbitTemplate.class)
 public class EnfileiradorEmail {
 
     private static final Logger log = LoggerFactory.getLogger(EnfileiradorEmail.class);

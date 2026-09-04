@@ -21,6 +21,11 @@
             <artifactId>lexo-signing</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>app.lexo</groupId>
+            <artifactId>lexo-messaging</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -45,6 +50,11 @@
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
             <scope>provided</scope>
         </dependency>
 

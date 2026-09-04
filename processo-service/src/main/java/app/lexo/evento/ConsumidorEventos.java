@@ -1,6 +1,7 @@
 package app.lexo.evento;
 
 import app.lexo.common.evento.EventoDominio;
+import app.lexo.common.kafka.PublicadorEventos;
 import app.lexo.service.ProcessoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

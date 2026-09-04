@@ -5,7 +5,7 @@ import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
 import app.lexo.domain.User;
 import app.lexo.dto.TotpDtos.InitiateResponse;
-import app.lexo.evento.PublicadorEventos;
+import app.lexo.common.kafka.PublicadorEventos;
 import app.lexo.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

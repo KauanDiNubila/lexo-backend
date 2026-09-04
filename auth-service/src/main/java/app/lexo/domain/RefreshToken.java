@@ -1,5 +1,7 @@
 package app.lexo.domain;
 
+import app.lexo.common.domain.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;

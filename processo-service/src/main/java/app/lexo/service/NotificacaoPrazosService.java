@@ -6,7 +6,7 @@ import app.lexo.common.usuario.UsuarioInterno;
 import app.lexo.domain.Case;
 import app.lexo.domain.Deadline;
 import app.lexo.domain.enums.DeadlineStatus;
-import app.lexo.email.EnfileiradorEmail;
+import app.lexo.common.email.EnfileiradorEmail;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.DeadlineRepository;
 import org.slf4j.Logger;
