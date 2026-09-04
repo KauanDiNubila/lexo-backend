@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -36,9 +37,6 @@ const corRisco: Record<string, string> = {
   MEDIO: "text-blue-600 dark:text-blue-400",
   BAIXO: "text-emerald-600 dark:text-emerald-400",
 };
-
-const selectClass =
-  "flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export function Agenda() {
   const [prazos, setPrazos] = useState<Prazo[]>([]);
@@ -84,6 +82,10 @@ export function Agenda() {
 
   async function criar(e: FormEvent) {
     e.preventDefault();
+    if (!caseId) {
+      setErroForm("Selecione um processo.");
+      return;
+    }
     setErroForm(null);
     setSalvando(true);
     try {
@@ -193,12 +195,16 @@ export function Agenda() {
           <form onSubmit={criar} className="flex flex-col gap-3.5">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="processo">Processo *</Label>
-              <select id="processo" value={caseId} onChange={(e) => setCaseId(e.target.value)} required className={selectClass}>
-                <option value="">Selecione...</option>
-                {processos.map((p) => (
-                  <option key={p.id} value={p.id}>{p.number}</option>
-                ))}
-              </select>
+              <Select value={caseId} onValueChange={setCaseId}>
+                <SelectTrigger id="processo">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {processos.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.number}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="titulo">Título *</Label>
@@ -206,11 +212,16 @@ export function Agenda() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="tipo">Tipo</Label>
-              <select id="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)} className={selectClass}>
-                {TIPOS.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+              <Select value={tipo} onValueChange={setTipo}>
+                <SelectTrigger id="tipo">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="data">Data *</Label>

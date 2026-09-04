@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -44,8 +45,7 @@ const corStatus: Record<string, string> = {
   CANCELADO: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
 };
 
-const selectClass =
-  "flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+const SEM_PROCESSO = "__sem_processo__";
 
 const moeda = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -135,6 +135,10 @@ export function Financeiro() {
 
   async function criar(e: FormEvent) {
     e.preventDefault();
+    if (!clientId) {
+      setErroForm("Selecione um cliente.");
+      return;
+    }
     if (valorCentavos <= 0) {
       setErroForm("Informe um valor maior que zero.");
       return;
@@ -282,21 +286,33 @@ export function Financeiro() {
           <form onSubmit={criar} className="flex flex-col gap-3.5">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="cliente">Cliente *</Label>
-              <select id="cliente" value={clientId} onChange={(e) => setClientId(e.target.value)} required className={selectClass}>
-                <option value="">Selecione...</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <Select value={clientId} onValueChange={setClientId}>
+                <SelectTrigger id="cliente">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="processo">Processo (opcional)</Label>
-              <select id="processo" value={caseId} onChange={(e) => setCaseId(e.target.value)} className={selectClass}>
-                <option value="">Nenhum</option>
-                {processos.map((p) => (
-                  <option key={p.id} value={p.id}>{p.number}</option>
-                ))}
-              </select>
+              <Select
+                value={caseId || SEM_PROCESSO}
+                onValueChange={(v) => setCaseId(v === SEM_PROCESSO ? "" : v)}
+              >
+                <SelectTrigger id="processo">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SEM_PROCESSO}>Nenhum</SelectItem>
+                  {processos.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.number}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="descricao">Descrição *</Label>
@@ -324,11 +340,16 @@ export function Financeiro() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="status">Status</Label>
-              <select id="status" value={status} onChange={(e) => setStatus(e.target.value)} className={selectClass}>
-                {STATUS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger id="status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {erroForm && <div className="text-[13px] text-destructive">{erroForm}</div>}
             <DialogFooter>

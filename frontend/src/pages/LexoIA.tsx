@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 type Msg = { papel: "user" | "assistant"; texto: string };
@@ -24,6 +25,8 @@ const EXEMPLOS = [
   "Notificação extrajudicial de rescisão contratual",
   "Contestação em ação de cobrança",
 ];
+
+const SEM_PROCESSO = "__sem_processo__";
 
 const ABAS = [
   { id: "chat" as const, rotulo: "Conversar", icone: MessageSquare },
@@ -204,17 +207,20 @@ function AbaPeticao() {
 
           <div className="mt-3.5 flex flex-col gap-1.5">
             <Label htmlFor="processo">Vincular a um processo (opcional — dá contexto à IA)</Label>
-            <select
-              id="processo"
-              value={processoId}
-              onChange={(e) => setProcessoId(e.target.value)}
-              className="flex h-9 w-full max-w-sm rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            <Select
+              value={processoId || SEM_PROCESSO}
+              onValueChange={(v) => setProcessoId(v === SEM_PROCESSO ? "" : v)}
             >
-              <option value="">Nenhum</option>
-              {processos.map((p) => (
-                <option key={p.id} value={p.id}>{p.number} — {nomeCliente(p.clientId)}</option>
-              ))}
-            </select>
+              <SelectTrigger id="processo" className="max-w-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SEM_PROCESSO}>Nenhum</SelectItem>
+                {processos.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.number} — {nomeCliente(p.clientId)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <Button type="submit" size="lg" className="mt-5 w-fit" disabled={gerando || !pedido.trim()}>

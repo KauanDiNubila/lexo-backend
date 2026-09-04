@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -41,8 +42,7 @@ const corStatus: Record<string, string> = {
 
 const FORM_VAZIO = { clientId: "", numero: "", area: "", status: "ATIVO" };
 
-const selectClass =
-  "flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+const TODOS_STATUS = "__todos__";
 
 function AcaoLinha({ tom = "muted", ...props }: React.ComponentProps<"button"> & { tom?: "muted" | "primary" | "destructive" }) {
   const tons = {
@@ -132,6 +132,10 @@ export function Processos() {
 
   async function salvar(e: FormEvent) {
     e.preventDefault();
+    if (!form.clientId) {
+      setErroForm("Selecione um cliente.");
+      return;
+    }
     setErroForm(null);
     setSalvando(true);
     const corpo = { clientId: form.clientId, number: form.numero, area: form.area || null, status: form.status };
@@ -250,16 +254,20 @@ export function Processos() {
           placeholder="Buscar por número, cliente ou área..."
           className="max-w-[360px]"
         />
-        <select
-          value={filtroStatus}
-          onChange={(e) => setFiltroStatus(e.target.value)}
-          className={cn(selectClass, "max-w-[180px]")}
+        <Select
+          value={filtroStatus || TODOS_STATUS}
+          onValueChange={(v) => setFiltroStatus(v === TODOS_STATUS ? "" : v)}
         >
-          <option value="">Todos os status</option>
-          {STATUS.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+          <SelectTrigger className="max-w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODOS_STATUS}>Todos os status</SelectItem>
+            {STATUS.map((s) => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Card className="gap-0 overflow-hidden py-0">
@@ -328,18 +336,19 @@ export function Processos() {
           <form onSubmit={salvar} className="flex flex-col gap-3.5">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="cliente">Cliente *</Label>
-              <select
-                id="cliente"
+              <Select
                 value={form.clientId}
-                onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-                required
-                className={selectClass}
+                onValueChange={(v) => setForm({ ...form, clientId: v })}
               >
-                <option value="">Selecione...</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                <SelectTrigger id="cliente">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="numero">Número do processo *</Label>
@@ -351,16 +360,19 @@ export function Processos() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="status">Status</Label>
-              <select
-                id="status"
+              <Select
                 value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className={selectClass}
+                onValueChange={(v) => setForm({ ...form, status: v })}
               >
-                {STATUS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                <SelectTrigger id="status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {erroForm && <div className="text-[13px] text-destructive">{erroForm}</div>}
             <DialogFooter>
