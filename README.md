@@ -357,6 +357,5 @@ lexo-backend/
 ## Roadmap
 
 - Config Server centralizado.
-- SMTP real em produção — hoje os e-mails (convite de equipe, lembrete de prazo) só chegam ao Mailpit.
 - Captura de publicações (DJe) → geração automática de prazos.
 - Jurimetria (relatórios/BI) e integração de cobrança (PIX/boleto).
