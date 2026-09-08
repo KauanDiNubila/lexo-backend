@@ -152,7 +152,7 @@ services:
       - lexo_kafkadata:/var/lib/kafka/data
     mem_limit: 1g
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
