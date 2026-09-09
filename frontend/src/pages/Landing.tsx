@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Check, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -114,11 +114,64 @@ function RecursoItem({
 
 export function Landing() {
   const { usuario } = useAuth();
+  const animacaoRef = useRef<number | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.add("scrollbar-fina");
-    return () => document.documentElement.classList.remove("scrollbar-fina");
+
+    function interromper() {
+      if (animacaoRef.current !== null) {
+        cancelAnimationFrame(animacaoRef.current);
+        animacaoRef.current = null;
+      }
+    }
+    window.addEventListener("wheel", interromper, { passive: true });
+    window.addEventListener("touchstart", interromper, { passive: true });
+
+    return () => {
+      document.documentElement.classList.remove("scrollbar-fina");
+      window.removeEventListener("wheel", interromper);
+      window.removeEventListener("touchstart", interromper);
+      interromper();
+    };
   }, []);
+
+  const rolarParaSecao = useCallback(
+    (href: string) => (evento: React.MouseEvent<HTMLAnchorElement>) => {
+      const alvo = document.getElementById(href.slice(1));
+      if (!alvo) return;
+      evento.preventDefault();
+
+      if (animacaoRef.current !== null) {
+        cancelAnimationFrame(animacaoRef.current);
+        animacaoRef.current = null;
+      }
+
+      history.pushState(null, "", href);
+
+      const origem = window.scrollY;
+      const destino = alvo.getBoundingClientRect().top + origem;
+      const distancia = destino - origem;
+
+      if (distancia === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        window.scrollTo(0, destino);
+        return;
+      }
+
+      const duracao = Math.min(1400, Math.max(450, Math.abs(distancia) * 0.35));
+      const inicio = performance.now();
+
+      function passo(agora: number) {
+        const t = Math.min((agora - inicio) / duracao, 1);
+        const suave = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        window.scrollTo(0, origem + distancia * suave);
+        animacaoRef.current = t < 1 ? requestAnimationFrame(passo) : null;
+      }
+
+      animacaoRef.current = requestAnimationFrame(passo);
+    },
+    [],
+  );
 
   return (
     <div className="dark min-h-screen" style={{ backgroundColor: "var(--color-bg)", color: "var(--color-text)" }}>
@@ -127,7 +180,12 @@ export function Landing() {
           <Marca />
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
             {navegacao.map((item) => (
-              <a key={item.href} href={item.href} className="hover:text-primary">
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={rolarParaSecao(item.href)}
+                className="hover:text-primary"
+              >
                 {item.label}
               </a>
             ))}
@@ -230,8 +288,8 @@ export function Landing() {
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">{depoimentos.titulo}</h2>
         </div>
         <div className="mt-12 grid items-start gap-5 md:grid-cols-3">
-          {depoimentos.itens.map((d, i) => (
-            <div key={d.nome} className={`card-fundo p-6 ${i === 1 ? "md:mt-10" : ""}`}>
+          {depoimentos.itens.map((d) => (
+            <div key={d.nome} className="card-fundo p-6">
               <p className="text-sm leading-relaxed">"{d.texto}"</p>
               <div className="mt-5 flex items-center gap-3">
                 <div className="grid h-9 w-9 place-items-center rounded-full bg-secondary text-xs font-bold text-foreground">
@@ -314,7 +372,12 @@ export function Landing() {
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.href} href={link.href} className="hover:text-primary">
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={rolarParaSecao(link.href)}
+                  className="hover:text-primary"
+                >
                   {link.label}
                 </a>
               ),
