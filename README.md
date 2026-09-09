@@ -75,6 +75,7 @@ flowchart TB
     RABBIT --> NOT["notificacao :8085"]
     CLI -. cache .-> REDIS[["Redis"]]
     PROC -. cache .-> REDIS
+    GW -. rate limit .-> REDIS
     IA --> GEMINI["Google Gemini"]
 ```
 
@@ -108,7 +109,7 @@ flowchart TB
 | **Síncrono** | OpenFeign + Resilience4j (circuit breaker) | processo → cliente/auth; financeiro → cliente/processo; cliente → processo/financeiro (portal) |
 | **Eventos de domínio** | Apache Kafka | cliente e processo **publicam** (`CLIENTE_CRIADO`, `PROCESSO_CRIADO`); auditoria **consome** |
 | **Filas de tarefas** | RabbitMQ (retry + dead-letter queue) | auth e processo **enfileiram** e-mails; notificacao **consome** |
-| **Cache** | Redis | cache de leitura (chave por tenant) + rate limiting de login |
+| **Cache** | Redis | cache de leitura (chave por tenant) + rate limiting (geral no gateway + login/IA) |
 | **Autenticação interna** | Header `X-Internal-Key` | protege os endpoints `/internal/**` (serviço-a-serviço) |
 
 ### Cache (Redis)
@@ -118,8 +119,9 @@ na primeira leitura o resultado é gravado no cache com **chave por organizaçã
 (`organizationId`) e **TTL** configurável; nas escritas (criar/atualizar/excluir) o
 cache daquela organização é **invalidado** (`@CacheEvict`), evitando servir dado
 desatualizado. Como a chave inclui o *tenant*, um escritório nunca lê o cache de
-outro. O Redis também mantém o **rate limiting de login** (contador com expiração),
-compartilhado entre todas as instâncias do auth-service.
+outro. O Redis também mantém o **rate limiting**: geral no gateway (token bucket por IP,
+à frente de toda rota) e específico de login/IA (contador por e-mail/organização) —
+compartilhado entre todas as instâncias de cada serviço.
 
 ---
 
@@ -133,6 +135,7 @@ compartilhado entre todas as instâncias do auth-service.
 - **Multi-tenancy**: toda query filtra por `organizationId` — um escritório nunca vê dados de outro.
 - **Serviço-a-serviço**: os endpoints `/internal/**` exigem uma chave interna (`X-Internal-Key`).
 - **Seguro por padrão**: o gateway e o auth-service **recusam iniciar** com o segredo default do JWT fora do profile `dev` — em qualquer outro ambiente é obrigatório definir `AUTH_SECRET`.
+- **Rate limiting geral no gateway**: *token bucket* (Redis) por IP, à frente de toda rota — barra flood e scraping antes mesmo da autenticação, cobrindo os endpoints que não têm um limite próprio.
 - **Proteção da IA**: as rotas `/api/ia/**` exigem passagem pelo gateway autenticado (header `X-Org-Id`) e têm **rate limit por organização** — evita abuso e estouro de cota do provedor de IA.
 
 ---
