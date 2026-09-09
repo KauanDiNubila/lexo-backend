@@ -201,6 +201,8 @@ services:
     depends_on:
       discovery-server:
         condition: service_started
+      redis:
+        condition: service_healthy
 
   auth-service:
     build:
