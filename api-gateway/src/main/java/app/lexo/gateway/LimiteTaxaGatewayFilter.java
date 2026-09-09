@@ -1,5 +1,6 @@
 package app.lexo.gateway;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
@@ -20,9 +21,16 @@ public class LimiteTaxaGatewayFilter implements GlobalFilter, Ordered {
 
     private final RedisRateLimiter limitador;
 
-    public LimiteTaxaGatewayFilter(RedisRateLimiter limitador) {
+    public LimiteTaxaGatewayFilter(RedisRateLimiter limitador,
+                                    @Value("${lexo.rate-limit.replenish-rate}") int replenishRate,
+                                    @Value("${lexo.rate-limit.burst-capacity}") int burstCapacity,
+                                    @Value("${lexo.rate-limit.requested-tokens}") int requestedTokens) {
         this.limitador = limitador;
-        limitador.getConfig().put(ROTA_GLOBAL, limitador.newConfig());
+        limitador.getConfig().put(ROTA_GLOBAL,
+                new RedisRateLimiter.Config()
+                        .setReplenishRate(replenishRate)
+                        .setBurstCapacity(burstCapacity)
+                        .setRequestedTokens(requestedTokens));
     }
 
     @Override

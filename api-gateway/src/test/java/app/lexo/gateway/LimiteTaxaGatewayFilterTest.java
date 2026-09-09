@@ -54,8 +54,7 @@ class LimiteTaxaGatewayFilterTest {
     @BeforeEach
     void setUp() {
         when(limitador.getConfig()).thenReturn(new HashMap<>());
-        when(limitador.newConfig()).thenReturn(new RedisRateLimiter.Config());
-        filter = new LimiteTaxaGatewayFilter(limitador);
+        filter = new LimiteTaxaGatewayFilter(limitador, 30, 60, 1);
         clearInvocations(limitador);
     }
 
