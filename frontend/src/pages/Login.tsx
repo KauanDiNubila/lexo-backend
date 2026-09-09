@@ -17,6 +17,7 @@ export function Login() {
     params.get("modo") === "registro" ? "registro" : "login"
   );
   const [passo, setPasso] = useState<"credenciais" | "totp">("credenciais");
+  const [silkPronto, setSilkPronto] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -71,9 +72,19 @@ export function Login() {
   return (
     <div className="grid min-h-screen md:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-[#08293d] md:flex">
-        <div aria-hidden className="pointer-events-none absolute inset-0 h-full w-full animate-in fade-in duration-500">
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 h-full w-full ${silkPronto ? "animate-in fade-in duration-500" : ""}`}
+        >
           <Suspense fallback={null}>
-            <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
+            <Silk
+              color="#0b3450"
+              speed={5}
+              scale={1.3}
+              noiseIntensity={1.1}
+              rotation={0.15}
+              onReady={() => setSilkPronto(true)}
+            />
           </Suspense>
         </div>
         <div className="relative flex h-full w-full flex-col p-12">

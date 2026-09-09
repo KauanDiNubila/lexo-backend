@@ -138,6 +138,7 @@ export interface SilkProps {
   noiseIntensity?: number;
   rotation?: number;
   lightMode?: boolean;
+  onReady?: () => void;
 }
 
 const Silk: React.FC<SilkProps> = ({
@@ -147,6 +148,7 @@ const Silk: React.FC<SilkProps> = ({
   noiseIntensity = 1.5,
   rotation = 0,
   lightMode = false,
+  onReady,
 }) => {
   const meshRef = useRef<Mesh>(null);
 
@@ -173,7 +175,7 @@ const Silk: React.FC<SilkProps> = ({
   }, [speed, scale, noiseIntensity, color, rotation, lightMode, uniforms]);
 
   return (
-    <Canvas dpr={[1, 2]} frameloop="always">
+    <Canvas dpr={[1, 2]} frameloop="always" onCreated={() => onReady?.()}>
       <SilkPlane ref={meshRef} uniforms={uniforms} />
     </Canvas>
   );

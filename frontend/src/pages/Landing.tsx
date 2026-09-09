@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -96,6 +96,7 @@ function RecursoItem({
 export function Landing() {
   const { usuario } = useAuth();
   const animacaoRef = useRef<number | null>(null);
+  const [silkPronto, setSilkPronto] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.add("scrollbar-fina");
@@ -191,9 +192,19 @@ export function Landing() {
       </header>
 
       <div className="relative w-full overflow-hidden">
-        <div aria-hidden className="pointer-events-none absolute top-0 left-0 h-[400px] w-full animate-in fade-in duration-500 md:h-[540px]">
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute top-0 left-0 h-[400px] w-full md:h-[540px] ${silkPronto ? "animate-in fade-in duration-500" : ""}`}
+        >
           <Suspense fallback={null}>
-            <Silk color="#0b3450" speed={5} scale={1.3} noiseIntensity={1.1} rotation={0.15} />
+            <Silk
+              color="#0b3450"
+              speed={5}
+              scale={1.3}
+              noiseIntensity={1.1}
+              rotation={0.15}
+              onReady={() => setSilkPronto(true)}
+            />
           </Suspense>
         </div>
 
