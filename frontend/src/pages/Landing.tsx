@@ -18,29 +18,10 @@ import {
 
 const Silk = lazy(() => import("@/components/ui/silk"));
 
-function LogoMark({ tamanho }: { tamanho: number }) {
-  return (
-    <svg viewBox="0 0 24 24" width={tamanho} height={tamanho} fill="none" aria-hidden>
-      <path
-        d="M7 4V17C7 18.66 8.34 20 10 20H18"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function Marca({ tamanho = 34 }: { tamanho?: number }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div
-        className="grid place-items-center rounded-[27%] bg-white text-[#0b1220]"
-        style={{ width: tamanho, height: tamanho }}
-      >
-        <LogoMark tamanho={tamanho * 0.58} />
-      </div>
+      <img src="/logo-mark-white.png" alt="" width={tamanho} height={tamanho} />
       <span className="font-bold tracking-tight" style={{ fontSize: tamanho * 0.55 }}>
         {marcaConteudo.nome}
       </span>
