@@ -22,6 +22,7 @@ public class LimiteTaxaGatewayFilter implements GlobalFilter, Ordered {
 
     public LimiteTaxaGatewayFilter(RedisRateLimiter limitador) {
         this.limitador = limitador;
+        limitador.getConfig().put(ROTA_GLOBAL, limitador.newConfig());
     }
 
     @Override

@@ -16,12 +16,14 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -51,7 +53,10 @@ class LimiteTaxaGatewayFilterTest {
 
     @BeforeEach
     void setUp() {
+        when(limitador.getConfig()).thenReturn(new HashMap<>());
+        when(limitador.newConfig()).thenReturn(new RedisRateLimiter.Config());
         filter = new LimiteTaxaGatewayFilter(limitador);
+        clearInvocations(limitador);
     }
 
     private MockServerWebExchange requisicaoDe(String ip) {
