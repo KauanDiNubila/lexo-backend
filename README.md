@@ -11,7 +11,7 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-Swagger%20UI-85EA2D)
 
-**SaaS multi-tenant de gestão para escritórios de advocacia**, construído como uma **arquitetura de microserviços** com Java 21, Spring Boot 3.4 e Spring Cloud — com **frontend em React**, **portal do cliente** e recursos de **IA de verdade** (Google Gemini).
+**SaaS de gestão para escritórios de advocacia**, construído como uma **arquitetura de microserviços** com Java 21, Spring Boot 3.4 e Spring Cloud — com **frontend em React**, **portal do cliente** e recursos de **IA de verdade** (Google Gemini).
 
 O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e foi **decomposto incrementalmente** (estratégia *strangler*) até **zerar o monólito**: hoje cada domínio é um serviço independente, com seu próprio banco, comunicando-se de forma síncrona (Feign) e assíncrona (Kafka e RabbitMQ).
 
