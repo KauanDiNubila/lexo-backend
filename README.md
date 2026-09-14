@@ -32,14 +32,6 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ---
 
-## Demo
-
-![Demo do Lexo](docs/demo.gif)
-
-> Landing → criar conta → dashboard → portal do cliente, direto na demo em produção.
-
----
-
 ## Arquitetura
 
 ```mermaid
