@@ -36,7 +36,7 @@ O projeto nasceu como um monólito (porte de um backend Next.js/TypeScript) e fo
 
 ![Demo do Lexo](docs/demo.gif)
 
-> Landing → criar conta → dashboard → assistente de IA → portal do cliente, tudo rodando via `docker compose up`.
+> Landing → criar conta → dashboard → portal do cliente, direto na demo em produção.
 
 ---
 
