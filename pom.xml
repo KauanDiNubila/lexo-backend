@@ -23,6 +23,7 @@
         <spring-cloud.version>2024.0.0</spring-cloud.version>
         <jjwt.version>0.12.6</jjwt.version>
         <springdoc.version>2.7.0</springdoc.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
 
     <modules>
