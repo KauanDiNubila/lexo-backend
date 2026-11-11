@@ -25,7 +25,7 @@ domain/       modelo em Java puro
 **Regras de dependência**, verificadas pelo `ArquiteturaTest` de cada serviço:
 
 - `domain` não importa Spring, JPA, `application` nem `adapter`.
-- `application` importa só `domain` e as próprias portas. Nenhum tipo de web ou de segurança, como `AuthUser`.
+- `application` importa só `domain`, as próprias portas e as anotações de estereótipo e de transação do Spring. Nenhum tipo de web, de persistência ou de segurança, como `AuthUser`.
 - `adapter.in` chama só `application.port.in`. `adapter.out` só implementa `application.port.out`.
 - `adapter.in` e `adapter.out` não se importam entre si, e não há ciclo entre pacotes.
 - `@Transactional` só em `application.service`.
