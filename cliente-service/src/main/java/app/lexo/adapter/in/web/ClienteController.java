@@ -71,7 +71,7 @@ class ClienteController {
 
     @GetMapping("/opcoes")
     List<ClienteOpcao> opcoes(@AuthenticationPrincipal AuthUser me) {
-        return listarOpcoes.listar(Identidade.escritorio(me));
+        return listarOpcoes.listarOpcoes(Identidade.escritorio(me));
     }
 
     @GetMapping("/resumo")

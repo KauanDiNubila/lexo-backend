@@ -76,7 +76,7 @@ class ClienteQueryServiceTest {
                 (escritorio, id) -> id.valor().equals("c1"),
                 relogio);
 
-        assertThat(servico.listar(ESCRITORIO)).containsExactly(new ClienteOpcao("c1", "Ana"));
+        assertThat(servico.listarOpcoes(ESCRITORIO)).containsExactly(new ClienteOpcao("c1", "Ana"));
         assertThat(servico.resumir(ESCRITORIO)).isEqualTo(new ResumoClientes(7));
         assertThat(servico.existe(ESCRITORIO, new ClienteId("c1"))).isTrue();
         assertThat(servico.existe(ESCRITORIO, new ClienteId("c2"))).isFalse();

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Adaptador de persistencia do cliente (integracao, Postgres)")
 class ClientePersistenceAdapterIntegrationTest extends IntegracaoBase {
@@ -172,6 +173,20 @@ class ClientePersistenceAdapterIntegrationTest extends IntegracaoBase {
 
         assertThat(lista).containsExactly(
                 new ClienteOpcao(ana.id().valor(), "Ana Paula"), new ClienteOpcao(zeca.id().valor(), "Zeca Alves"));
+    }
+
+    @Test
+    @DisplayName("excluir e salvar so alcancam clientes do proprio escritorio")
+    void escopoDoEscritorio() {
+        EscritorioId dono = novoEscritorio();
+        EscritorioId invasor = novoEscritorio();
+        Cliente cliente = salvarCliente(dono, "Carlos Dias", null, null);
+        Cliente comoInvasor = Cliente.reconstituir(cliente.id(), invasor, cliente.dados(), null, cliente.criadoEm());
+
+        excluir.excluir(comoInvasor);
+
+        assertThat(carregar.porId(dono, cliente.id())).isPresent();
+        assertThatThrownBy(() -> salvar.salvar(comoInvasor)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

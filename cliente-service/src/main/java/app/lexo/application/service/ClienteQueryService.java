@@ -65,7 +65,7 @@ class ClienteQueryService implements BuscarClienteQuery, ListarClientesQuery, Li
     }
 
     @Override
-    public List<ClienteOpcao> listar(EscritorioId escritorioId) {
+    public List<ClienteOpcao> listarOpcoes(EscritorioId escritorioId) {
         return listarOpcoesPort.opcoes(escritorioId);
     }
 

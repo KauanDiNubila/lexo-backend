@@ -41,7 +41,7 @@ class ClientePersistenceAdapter implements SalvarClientePort, CarregarClientePor
     public Cliente salvar(Cliente cliente) {
         ClienteJpaEntity entidade = cliente.id() == null
                 ? new ClienteJpaEntity()
-                : repositorio.findById(cliente.id().valor()).orElseThrow(
+                : repositorio.findByIdAndOrganizationId(cliente.id().valor(), cliente.escritorioId().valor()).orElseThrow(
                         () -> new IllegalStateException("Cliente " + cliente.id().valor() + " nao existe para atualizar"));
         ClienteMapper.copiar(cliente, entidade);
         return ClienteMapper.paraDominio(repositorio.save(entidade));
@@ -61,7 +61,8 @@ class ClientePersistenceAdapter implements SalvarClientePort, CarregarClientePor
     @Override
     @CacheEvict(value = CACHE_OPCOES, key = "#cliente.escritorioId().valor()")
     public void excluir(Cliente cliente) {
-        repositorio.deleteById(cliente.id().valor());
+        repositorio.findByIdAndOrganizationId(cliente.id().valor(), cliente.escritorioId().valor())
+                .ifPresent(repositorio::delete);
     }
 
     @Override
