@@ -7,8 +7,8 @@ import app.lexo.application.port.out.LoadClientPort;
 import app.lexo.application.port.out.LoadClientFeesPort;
 import app.lexo.application.port.out.LoadClientCasesPort;
 import app.lexo.common.error.ResourceNotFoundException;
-import app.lexo.common.portal.PortalDtos.HonorarioPortal;
-import app.lexo.common.portal.PortalDtos.ProcessoPortal;
+import app.lexo.common.portal.PortalDtos.PortalFee;
+import app.lexo.common.portal.PortalDtos.PortalCase;
 import app.lexo.domain.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,14 +50,14 @@ class GetPortalService implements GetPortalQuery {
                 .filter(c -> c.portalActiveAt(now))
                 .orElseThrow(() -> new ResourceNotFoundException("Link inválido ou expirado"));
 
-        List<ProcessoPortal> cases = orEmpty(
+        List<PortalCase> cases = orEmpty(
                 () -> loadCasesPort.load(client.organizationId(), client.id()), "cases");
-        List<HonorarioPortal> fees = orEmpty(
+        List<PortalFee> fees = orEmpty(
                 () -> loadFeesPort.load(client.organizationId(), client.id()), "fees");
 
         BigDecimal outstanding = fees.stream()
                 .filter(h -> OUTSTANDING_STATUSES.contains(h.status()))
-                .map(HonorarioPortal::amount)
+                .map(PortalFee::amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new PortalResponse(client.name(), cases, fees,

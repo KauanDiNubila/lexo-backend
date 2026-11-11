@@ -1,7 +1,7 @@
 package app.lexo.controller;
 
 import app.lexo.IntegrationTestBase;
-import app.lexo.common.referencia.ExisteResponse;
+import app.lexo.common.reference.ExistsResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -77,7 +77,7 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
         Identity id = Identity.create();
         String clientId = newId();
         when(clientService.clientExists(eq(clientId), anyString()))
-                .thenReturn(new ExisteResponse(false));
+                .thenReturn(new ExistsResponse(false));
 
         postAs(id, "/api/financeiro", invoiceData(clientId, "Consulta", "10.00", "PENDENTE", in30Days))
                 .andExpect(status().isNotFound())
@@ -85,7 +85,7 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
 
         String caseId = newId();
         when(caseService.caseExists(eq(caseId), anyString()))
-                .thenReturn(new ExisteResponse(false));
+                .thenReturn(new ExistsResponse(false));
         Map<String, Object> body = invoiceData(newId(), "Consulta", "10.00", "PENDENTE", in30Days);
         body.put("caseId", caseId);
         postAs(id, "/api/financeiro", body)
@@ -106,7 +106,7 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.error")
                         .value("Serviço de clientes temporariamente indisponível. Tente novamente em instantes."));
 
-        doReturn(new ExisteResponse(true)).when(clientService).clientExists(anyString(), anyString());
+        doReturn(new ExistsResponse(true)).when(clientService).clientExists(anyString(), anyString());
         when(caseService.caseExists(anyString(), anyString())).thenThrow(new RuntimeException("down"));
         Map<String, Object> body = invoiceData(newId(), "Consulta", "10.00", "PENDENTE", in30Days);
         body.put("caseId", newId());

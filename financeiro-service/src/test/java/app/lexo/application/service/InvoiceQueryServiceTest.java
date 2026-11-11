@@ -4,7 +4,7 @@ import app.lexo.application.port.in.FinancialReport;
 import app.lexo.application.port.in.FinancialSummary;
 import app.lexo.application.port.in.InvoiceResponse;
 import app.lexo.common.web.PageParams;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.Invoice;
 import app.lexo.domain.InvoiceData;
@@ -38,9 +38,9 @@ class InvoiceQueryServiceTest {
     void list() {
         Invoice invoice = invoice("10.00", InvoiceStatus.PENDING, "a");
         InvoiceQueryService service = new InvoiceQueryService(
-                (organization, params) -> new Pagina<>(List.of(invoice), 0, 20, 1, 1), null, null, null);
+                (organization, params) -> new PageResult<>(List.of(invoice), 0, 20, 1, 1), null, null, null);
 
-        Pagina<InvoiceResponse> page = service.list(ORGANIZATION, new PageParams(0, 20, List.of()));
+        PageResult<InvoiceResponse> page = service.list(ORGANIZATION, new PageParams(0, 20, List.of()));
 
         assertThat(page.content()).extracting(InvoiceResponse::description).containsExactly("a");
         assertThat(page.totalElements()).isEqualTo(1);

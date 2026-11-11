@@ -11,7 +11,7 @@ import app.lexo.application.port.out.LoadInvoicesDuePort;
 import app.lexo.application.port.out.SaveInvoicePort;
 import app.lexo.application.port.out.SumInvoicesPort;
 import app.lexo.common.web.PageParams;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.common.web.SortOrder;
 import app.lexo.domain.CaseId;
 import app.lexo.domain.ClientId;
@@ -142,8 +142,8 @@ class InvoicePersistenceAdapterIntegrationTest extends IntegrationTestBase {
         saveInvoice(organization, new ClientId("c"), null, "2.00", InvoiceStatus.PENDING, base.plusSeconds(20));
         saveInvoice(newOrganization(), new ClientId("c"), null, "9.00", InvoiceStatus.PENDING, base);
 
-        Pagina<Invoice> byDueDate = list.list(organization, new PageParams(0, 20, List.of(new SortOrder("dueDate", true))));
-        Pagina<Invoice> secondPage = list.list(organization, new PageParams(1, 2, List.of(new SortOrder("dueDate", true))));
+        PageResult<Invoice> byDueDate = list.list(organization, new PageParams(0, 20, List.of(new SortOrder("dueDate", true))));
+        PageResult<Invoice> secondPage = list.list(organization, new PageParams(1, 2, List.of(new SortOrder("dueDate", true))));
 
         assertThat(byDueDate.totalElements()).isEqualTo(3);
         assertThat(byDueDate.content()).extracting(i -> i.data().amount().intValue()).containsExactly(1, 2, 3);

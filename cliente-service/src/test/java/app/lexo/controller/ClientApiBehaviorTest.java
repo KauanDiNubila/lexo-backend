@@ -1,8 +1,8 @@
 package app.lexo.controller;
 
 import app.lexo.IntegrationTestBase;
-import app.lexo.common.portal.PortalDtos.HonorarioPortal;
-import app.lexo.common.portal.PortalDtos.ProcessoPortal;
+import app.lexo.common.portal.PortalDtos.PortalFee;
+import app.lexo.common.portal.PortalDtos.PortalCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -53,11 +53,11 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.portalExpiraEm").value(nullValue()))
                 .andExpect(jsonPath("$.createdAt").exists()));
 
-        verify(events).publicar(argThat(e -> "CLIENTE_CRIADO".equals(e.tipo())
+        verify(events).publish(argThat(e -> "CLIENTE_CRIADO".equals(e.type())
                 && id.orgId().equals(e.organizationId())
                 && "CLIENTE".equals(e.entityType())
                 && clientId.equals(e.entityId())
-                && "Cliente criado: Maria Souza".equals(e.descricao())
+                && "Cliente criado: Maria Souza".equals(e.description())
                 && id.userId().equals(e.userId())
                 && "Ana Advogada".equals(e.userName())));
     }
@@ -101,7 +101,7 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
         getAs(id, "/api/clientes/" + clientId)
                 .andExpect(jsonPath("$.email").value("novo@escritorio.com"))
                 .andExpect(jsonPath("$.phone").value("11888880000"));
-        verify(events, times(1)).publicar(any());
+        verify(events, times(1)).publish(any());
 
         putAs(other, "/api/clientes/" + clientId, data("Invasor", null, null, null))
                 .andExpect(status().isNotFound())
@@ -128,9 +128,9 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
 
         deleteAs(id, "/api/clientes/" + clientId).andExpect(status().isNoContent());
 
-        verify(events).publicar(argThat(e -> "CLIENTE_EXCLUIDO".equals(e.tipo())
+        verify(events).publish(argThat(e -> "CLIENTE_EXCLUIDO".equals(e.type())
                 && clientId.equals(e.entityId())
-                && "Cliente excluído: Carlos Dias".equals(e.descricao())));
+                && "Cliente excluído: Carlos Dias".equals(e.description())));
         deleteAs(id, "/api/clientes/" + clientId).andExpect(status().isNotFound());
     }
 
@@ -192,11 +192,11 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
         Identity id = Identity.create();
         String clientId = createClient(id, "Helena Prado");
         when(caseClient.casesOfClient(eq(clientId), eq(id.orgId()))).thenReturn(List.of(
-                new ProcessoPortal("P-1", "Civel", "ATIVO", Instant.now(), List.of(), List.of())));
+                new PortalCase("P-1", "Civel", "ATIVO", Instant.now(), List.of(), List.of())));
         when(financeClient.feesOfClient(eq(clientId), eq(id.orgId()))).thenReturn(List.of(
-                new HonorarioPortal("Consulta", new BigDecimal("100.00"), "PENDENTE", Instant.now()),
-                new HonorarioPortal("Audiencia", new BigDecimal("50.50"), "ATRASADO", Instant.now()),
-                new HonorarioPortal("Peticao", new BigDecimal("200.00"), "PAGO", Instant.now())));
+                new PortalFee("Consulta", new BigDecimal("100.00"), "PENDENTE", Instant.now()),
+                new PortalFee("Audiencia", new BigDecimal("50.50"), "ATRASADO", Instant.now()),
+                new PortalFee("Peticao", new BigDecimal("200.00"), "PAGO", Instant.now())));
 
         String first = bodyOf(postAs(id, "/api/clientes/" + clientId + "/portal", Map.of()).andExpect(status().isOk()))
                 .get("token").asText();
@@ -270,7 +270,7 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
         String token = bodyOf(postAs(id, "/api/clientes/" + clientId + "/portal", Map.of())).get("token").asText();
         when(caseClient.casesOfClient(anyString(), anyString())).thenThrow(new RuntimeException("fora do ar"));
         when(financeClient.feesOfClient(anyString(), anyString())).thenReturn(List.of(
-                new HonorarioPortal("Consulta", new BigDecimal("80.00"), "PENDENTE", Instant.now())));
+                new PortalFee("Consulta", new BigDecimal("80.00"), "PENDENTE", Instant.now())));
 
         mvc.perform(get("/api/portal/{token}", token))
                 .andExpect(status().isOk())

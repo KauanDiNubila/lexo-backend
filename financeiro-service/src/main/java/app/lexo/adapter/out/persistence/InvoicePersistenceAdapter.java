@@ -11,7 +11,7 @@ import app.lexo.application.port.out.SaveInvoicePort;
 import app.lexo.application.port.out.SumInvoicesPort;
 import app.lexo.common.web.PageParams;
 import app.lexo.common.web.PageParamsMapper;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.CaseId;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.Invoice;
@@ -60,8 +60,8 @@ class InvoicePersistenceAdapter implements SaveInvoicePort, LoadInvoicePort, Del
     }
 
     @Override
-    public Pagina<Invoice> list(OrganizationId organizationId, PageParams pageParams) {
-        return Pagina.de(repository.findByOrganizationId(organizationId.value(),
+    public PageResult<Invoice> list(OrganizationId organizationId, PageParams pageParams) {
+        return PageResult.of(repository.findByOrganizationId(organizationId.value(),
                 PageParamsMapper.toPageRequest(pageParams)), InvoiceMapper::toDomain);
     }
 

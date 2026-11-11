@@ -2,7 +2,7 @@ package app.lexo.service;
 
 import app.lexo.client.ReferenciaGateway;
 import app.lexo.common.email.TarefaEmail;
-import app.lexo.common.usuario.UsuarioInterno;
+import app.lexo.common.user.InternalUser;
 import app.lexo.domain.Case;
 import app.lexo.domain.Deadline;
 import app.lexo.domain.enums.DeadlineStatus;
@@ -98,7 +98,7 @@ public class NotificacaoPrazosService {
             return false;
         }
 
-        UsuarioInterno responsavel = referencias.buscarUsuario(c.getResponsavelId(), d.getOrganizationId())
+        InternalUser responsavel = referencias.buscarUsuario(c.getResponsavelId(), d.getOrganizationId())
                 .orElse(null);
         if (responsavel == null || responsavel.email() == null || responsavel.email().isBlank()) {
             log.warn("[cron] responsavel {} do prazo \"{}\" nao encontrado ou sem e-mail — pulando",

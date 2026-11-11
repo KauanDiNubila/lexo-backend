@@ -23,7 +23,7 @@ class CaseExistsAdapter implements CaseExistsPort {
     @Override
     @CircuitBreaker(name = "processo-service", fallbackMethod = "existsFallback")
     public boolean exists(OrganizationId organizationId, CaseId caseId) {
-        return client.caseExists(caseId.value(), organizationId.value()).existe();
+        return client.caseExists(caseId.value(), organizationId.value()).exists();
     }
 
     @SuppressWarnings("unused")

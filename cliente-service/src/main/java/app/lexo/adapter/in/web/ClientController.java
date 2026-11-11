@@ -15,7 +15,7 @@ import app.lexo.application.port.in.ClientSummary;
 import app.lexo.application.port.in.ClientSummaryQuery;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.PageParamsMapper;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.ClientId;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -63,7 +63,7 @@ class ClientController {
     }
 
     @GetMapping
-    Pagina<ClientResponse> list(
+    PageResult<ClientResponse> list(
             @AuthenticationPrincipal AuthUser me,
             @RequestParam(required = false) String q,
             @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {

@@ -1,6 +1,6 @@
 package app.lexo.client;
 
-import app.lexo.common.usuario.UsuarioInterno;
+import app.lexo.common.user.InternalUser;
 import app.lexo.common.web.ApiException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
@@ -24,7 +24,7 @@ public class ReferenciaGateway {
 
     @CircuitBreaker(name = "cliente-service", fallbackMethod = "clienteExisteFallback")
     public boolean clienteExiste(String id, String orgId) {
-        return clienteClient.clienteExiste(id, orgId).existe();
+        return clienteClient.clienteExiste(id, orgId).exists();
     }
 
     @SuppressWarnings("unused")
@@ -36,7 +36,7 @@ public class ReferenciaGateway {
 
     @CircuitBreaker(name = "auth-service", fallbackMethod = "usuarioExisteFallback")
     public boolean usuarioExiste(String id, String orgId) {
-        return authClient.usuarioExiste(id, orgId).existe();
+        return authClient.usuarioExiste(id, orgId).exists();
     }
 
     @SuppressWarnings("unused")
@@ -47,12 +47,12 @@ public class ReferenciaGateway {
     }
 
     @CircuitBreaker(name = "auth-service", fallbackMethod = "buscarUsuarioFallback")
-    public Optional<UsuarioInterno> buscarUsuario(String id, String orgId) {
+    public Optional<InternalUser> buscarUsuario(String id, String orgId) {
         return Optional.ofNullable(authClient.buscarUsuario(id, orgId));
     }
 
     @SuppressWarnings("unused")
-    private Optional<UsuarioInterno> buscarUsuarioFallback(String id, String orgId, Throwable causa) {
+    private Optional<InternalUser> buscarUsuarioFallback(String id, String orgId, Throwable causa) {
         log.warn("auth-service indisponivel (circuit breaker) ao buscar usuario {}: {}", id, causa.toString());
         return Optional.empty();
     }

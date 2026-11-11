@@ -1,6 +1,6 @@
 package app.lexo.client;
 
-import app.lexo.common.referencia.ExisteResponse;
+import app.lexo.common.reference.ExistsResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,5 +10,5 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface ClienteServiceClient {
 
     @GetMapping("/internal/clientes/{id}/existe")
-    ExisteResponse clienteExiste(@PathVariable("id") String id, @RequestParam("orgId") String orgId);
+    ExistsResponse clienteExiste(@PathVariable("id") String id, @RequestParam("orgId") String orgId);
 }

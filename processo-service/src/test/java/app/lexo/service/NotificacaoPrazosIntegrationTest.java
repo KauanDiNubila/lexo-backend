@@ -2,7 +2,7 @@ package app.lexo.service;
 
 import app.lexo.IntegracaoBase;
 import app.lexo.common.email.TarefaEmail;
-import app.lexo.common.usuario.UsuarioInterno;
+import app.lexo.common.user.InternalUser;
 import app.lexo.repository.DeadlineRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -57,7 +57,7 @@ class NotificacaoPrazosIntegrationTest extends IntegracaoBase {
 
     private void responsavelComEmail(String responsavelId, String email) {
         when(authClient.buscarUsuario(eq(responsavelId), anyString()))
-                .thenReturn(new UsuarioInterno(responsavelId, "Ana Advogada", email));
+                .thenReturn(new InternalUser(responsavelId, "Ana Advogada", email));
     }
 
     private void verificarEnvios(String email, int vezes) {

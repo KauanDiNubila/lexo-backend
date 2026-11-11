@@ -1,6 +1,6 @@
 package app.lexo.controller;
 
-import app.lexo.common.referencia.ExisteResponse;
+import app.lexo.common.reference.ExistsResponse;
 import app.lexo.repository.CaseRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,7 +17,7 @@ public class InternalCaseController {
     }
 
     @GetMapping("/internal/processos/{id}/existe")
-    public ExisteResponse existe(@PathVariable String id, @RequestParam String orgId) {
-        return new ExisteResponse(repo.existsByIdAndOrganizationId(id, orgId));
+    public ExistsResponse existe(@PathVariable String id, @RequestParam String orgId) {
+        return new ExistsResponse(repo.existsByIdAndOrganizationId(id, orgId));
     }
 }

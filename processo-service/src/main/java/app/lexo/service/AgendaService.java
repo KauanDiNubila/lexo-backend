@@ -9,7 +9,7 @@ import app.lexo.repository.CaseRepository;
 import app.lexo.repository.DeadlineRepository;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,11 +30,11 @@ public class AgendaService {
     }
 
     @Transactional(readOnly = true)
-    public Pagina<DeadlineResponse> listar(AuthUser me, String caseId, Pageable pageable) {
+    public PageResult<DeadlineResponse> listar(AuthUser me, String caseId, Pageable pageable) {
         var pagina = (caseId == null || caseId.isBlank())
                 ? repo.findByOrganizationId(me.organizationId(), pageable)
                 : repo.findByOrganizationIdAndCaseId(me.organizationId(), caseId, pageable);
-        return Pagina.de(pagina, DeadlineResponse::from);
+        return PageResult.of(pagina, DeadlineResponse::from);
     }
 
     @Transactional(readOnly = true)

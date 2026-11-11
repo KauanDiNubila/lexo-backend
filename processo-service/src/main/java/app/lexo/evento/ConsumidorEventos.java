@@ -1,7 +1,8 @@
 package app.lexo.evento;
 
-import app.lexo.common.evento.EventoDominio;
-import app.lexo.common.kafka.PublicadorEventos;
+import app.lexo.common.event.DomainEvent;
+import app.lexo.common.event.EventType;
+import app.lexo.common.kafka.EventPublisher;
 import app.lexo.service.ProcessoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +20,9 @@ public class ConsumidorEventos {
         this.processos = processos;
     }
 
-    @KafkaListener(topics = PublicadorEventos.TOPICO, groupId = "lexo-processo")
-    public void consumir(EventoDominio evento) {
-        if (!"CLIENTE_EXCLUIDO".equals(evento.tipo())) {
+    @KafkaListener(topics = EventPublisher.TOPIC, groupId = "lexo-processo")
+    public void consumir(DomainEvent evento) {
+        if (!evento.is(EventType.CLIENT_DELETED)) {
             return;
         }
         int apagados = processos.excluirPorCliente(evento.organizationId(), evento.entityId());
