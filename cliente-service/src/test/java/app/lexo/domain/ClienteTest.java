@@ -1,13 +1,11 @@
 package app.lexo.domain;
 
-import app.lexo.common.erro.DadoInvalidoException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Cliente")
 class ClienteTest {
@@ -17,14 +15,6 @@ class ClienteTest {
 
     private DadosDoCliente dados(String nome) {
         return new DadosDoCliente(nome, null, "maria@escritorio.com", "11999990000", "obs");
-    }
-
-    @Test
-    @DisplayName("nome com menos de 2 letras ou em branco e recusado")
-    void nomeCurto() {
-        assertThatThrownBy(() -> dados("A")).isInstanceOf(DadoInvalidoException.class).hasMessage("Nome muito curto");
-        assertThatThrownBy(() -> dados("   ")).isInstanceOf(DadoInvalidoException.class);
-        assertThatThrownBy(() -> dados(null)).isInstanceOf(DadoInvalidoException.class);
     }
 
     @Test

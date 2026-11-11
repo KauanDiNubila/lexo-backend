@@ -13,8 +13,8 @@ class CpfCnpjTest {
     @Test
     @DisplayName("aceita CPF valido, com ou sem mascara, e guarda o texto como veio")
     void cpfValido() {
-        assertThat(new CpfCnpj("52998224725").texto()).isEqualTo("52998224725");
-        assertThat(new CpfCnpj("390.533.447-05").texto()).isEqualTo("390.533.447-05");
+        assertThat(CpfCnpj.de("52998224725").texto()).isEqualTo("52998224725");
+        assertThat(CpfCnpj.de("390.533.447-05").texto()).isEqualTo("390.533.447-05");
     }
 
     @Test
@@ -28,7 +28,7 @@ class CpfCnpjTest {
     @Test
     @DisplayName("aceita CNPJ valido")
     void cnpjValido() {
-        assertThat(new CpfCnpj("11.222.333/0001-81").texto()).isEqualTo("11.222.333/0001-81");
+        assertThat(CpfCnpj.de("11.222.333/0001-81").texto()).isEqualTo("11.222.333/0001-81");
         assertThat(CpfCnpj.valido("11222333000181")).isTrue();
     }
 
@@ -48,9 +48,9 @@ class CpfCnpjTest {
     }
 
     @Test
-    @DisplayName("construir com documento invalido lanca DadoInvalidoException com a mensagem de hoje")
-    void construirInvalido() {
-        assertThatThrownBy(() -> new CpfCnpj("11111111111"))
+    @DisplayName("criar com documento invalido lanca DadoInvalidoException com a mensagem de hoje")
+    void criarInvalido() {
+        assertThatThrownBy(() -> CpfCnpj.de("11111111111"))
                 .isInstanceOf(DadoInvalidoException.class)
                 .hasMessage("CPF ou CNPJ inválido");
     }
@@ -62,5 +62,18 @@ class CpfCnpjTest {
         assertThat(CpfCnpj.opcional("")).isNull();
         assertThat(CpfCnpj.opcional("   ")).isNull();
         assertThat(CpfCnpj.opcional("52998224725")).isNotNull();
+    }
+
+    @Test
+    @DisplayName("armazenado aceita o que ja esta salvo sem validar de novo")
+    void armazenado() {
+        assertThat(CpfCnpj.armazenado("documento antigo").texto()).isEqualTo("documento antigo");
+        assertThat(CpfCnpj.armazenado(null)).isNull();
+    }
+
+    @Test
+    @DisplayName("dois documentos com o mesmo texto sao iguais")
+    void igualdade() {
+        assertThat(CpfCnpj.de("52998224725")).isEqualTo(CpfCnpj.de("52998224725"));
     }
 }
