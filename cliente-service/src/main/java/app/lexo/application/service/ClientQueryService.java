@@ -6,7 +6,7 @@ import app.lexo.application.port.in.ClientResponse;
 import app.lexo.application.port.in.ClientExistsQuery;
 import app.lexo.application.port.in.ListClientsQuery;
 import app.lexo.application.port.in.ListClientOptionsQuery;
-import app.lexo.application.port.in.PageParams;
+import app.lexo.common.web.PageParams;
 import app.lexo.application.port.in.ClientSummary;
 import app.lexo.application.port.in.ClientSummaryQuery;
 import app.lexo.application.port.out.LoadClientPort;

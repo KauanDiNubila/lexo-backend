@@ -1,4 +1,4 @@
-package app.lexo.application.port.in;
+package app.lexo.common.web;
 
 import java.util.List;
 

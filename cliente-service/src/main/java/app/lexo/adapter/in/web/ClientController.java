@@ -14,6 +14,7 @@ import app.lexo.application.port.in.ListClientOptionsQuery;
 import app.lexo.application.port.in.ClientSummary;
 import app.lexo.application.port.in.ClientSummaryQuery;
 import app.lexo.common.security.AuthUser;
+import app.lexo.common.web.PageParamsMapper;
 import app.lexo.common.web.Pagina;
 import app.lexo.domain.ClientId;
 import jakarta.validation.Valid;
@@ -66,7 +67,7 @@ class ClientController {
             @AuthenticationPrincipal AuthUser me,
             @RequestParam(required = false) String q,
             @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-        return listClients.list(Identity.organization(me), q, Identity.pageParams(pageable));
+        return listClients.list(Identity.organization(me), q, PageParamsMapper.from(pageable));
     }
 
     @GetMapping("/opcoes")
