@@ -1,6 +1,7 @@
 package app.lexo.common.web;
 
 import app.lexo.common.error.InvalidDataException;
+import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.common.error.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -34,6 +35,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidDataException.class)
     public ResponseEntity<ErrorResponse> handleInvalidData(InvalidDataException ex, HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, ErrorCode.paraStatus(HttpStatus.BAD_REQUEST), ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleServiceUnavailable(ServiceUnavailableException ex,
+                                                                   HttpServletRequest req) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.paraStatus(HttpStatus.SERVICE_UNAVAILABLE),
+                ex.getMessage(), req);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

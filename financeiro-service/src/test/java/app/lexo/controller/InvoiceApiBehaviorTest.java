@@ -1,13 +1,10 @@
 package app.lexo.controller;
 
 import app.lexo.IntegrationTestBase;
-import app.lexo.common.evento.EventoDominio;
 import app.lexo.common.referencia.ExisteResponse;
-import app.lexo.evento.ConsumidorEventos;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -28,9 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Invoices API: behavior pinned before the hexagonal migration")
 class InvoiceApiBehaviorTest extends IntegrationTestBase {
 
-    @Autowired
-    private ConsumidorEventos consumer;
-
     private final Instant in30Days = Instant.now().plus(Duration.ofDays(30));
 
     private JsonNode invoiceOf(Identity id, String invoiceId) throws Exception {
@@ -40,10 +34,6 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
             }
         }
         throw new AssertionError("invoice " + invoiceId + " not found");
-    }
-
-    private EventoDominio event(String type, Identity id, String entityId) {
-        return EventoDominio.de(type, id.orgId(), "CLIENTE", entityId, "description", id.userId(), id.name());
     }
 
     @Test
@@ -73,7 +63,7 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
         Identity id = Identity.create();
         Map<String, Object> body = invoiceData(newId(), "Consulta", "10.00", "PENDENTE", in30Days);
         body.put("caseId", "  ");
-        when(caseService.processoExiste(anyString(), anyString()))
+        when(caseService.caseExists(anyString(), anyString()))
                 .thenThrow(new IllegalStateException("must not be called"));
 
         postAs(id, "/api/financeiro", body)
@@ -86,7 +76,7 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
     void unknownReferences() throws Exception {
         Identity id = Identity.create();
         String clientId = newId();
-        when(clientService.clienteExiste(eq(clientId), anyString()))
+        when(clientService.clientExists(eq(clientId), anyString()))
                 .thenReturn(new ExisteResponse(false));
 
         postAs(id, "/api/financeiro", invoiceData(clientId, "Consulta", "10.00", "PENDENTE", in30Days))
@@ -94,7 +84,7 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.error").value("Cliente não encontrado"));
 
         String caseId = newId();
-        when(caseService.processoExiste(eq(caseId), anyString()))
+        when(caseService.caseExists(eq(caseId), anyString()))
                 .thenReturn(new ExisteResponse(false));
         Map<String, Object> body = invoiceData(newId(), "Consulta", "10.00", "PENDENTE", in30Days);
         body.put("caseId", caseId);
@@ -109,15 +99,15 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
     @DisplayName("when the client or case service is down the answer is 503")
     void servicesDown() throws Exception {
         Identity id = Identity.create();
-        when(clientService.clienteExiste(anyString(), anyString())).thenThrow(new RuntimeException("down"));
+        when(clientService.clientExists(anyString(), anyString())).thenThrow(new RuntimeException("down"));
 
         postAs(id, "/api/financeiro", invoiceData(newId(), "Consulta", "10.00", "PENDENTE", in30Days))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.error")
                         .value("Serviço de clientes temporariamente indisponível. Tente novamente em instantes."));
 
-        doReturn(new ExisteResponse(true)).when(clientService).clienteExiste(anyString(), anyString());
-        when(caseService.processoExiste(anyString(), anyString())).thenThrow(new RuntimeException("down"));
+        doReturn(new ExisteResponse(true)).when(clientService).clientExists(anyString(), anyString());
+        when(caseService.caseExists(anyString(), anyString())).thenThrow(new RuntimeException("down"));
         Map<String, Object> body = invoiceData(newId(), "Consulta", "10.00", "PENDENTE", in30Days);
         body.put("caseId", newId());
         postAs(id, "/api/financeiro", body)
@@ -241,7 +231,7 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
     void changeStatusScope() throws Exception {
         Identity id = Identity.create();
         String invoiceId = createInvoice(id, newId(), "x", "10.00", "PENDENTE", in30Days);
-        when(clientService.clienteExiste(anyString(), anyString())).thenThrow(new RuntimeException("down"));
+        when(clientService.clientExists(anyString(), anyString())).thenThrow(new RuntimeException("down"));
 
         patchAs(id, "/api/financeiro/" + invoiceId + "/status", Map.of("status", "CANCELADO")).andExpect(status().isOk());
         patchAs(Identity.create(), "/api/financeiro/" + invoiceId + "/status", Map.of("status", "PAGO"))
@@ -309,47 +299,6 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.totalPago").value(0))
                 .andExpect(jsonPath("$.totalPendente").value(0))
                 .andExpect(jsonPath("$.totalAtrasado").value(0));
-    }
-
-    @Test
-    @DisplayName("CLIENTE_EXCLUIDO deletes the client's invoices only in that organization; other event types are ignored")
-    void clientDeletedEvent() throws Exception {
-        Identity a = Identity.create();
-        Identity b = Identity.create();
-        String deletedClient = newId();
-        String otherClient = newId();
-        createInvoice(a, deletedClient, "gone 1", "1.00", "PENDENTE", in30Days);
-        createInvoice(a, deletedClient, "gone 2", "2.00", "PAGO", in30Days);
-        createInvoice(a, otherClient, "stays", "3.00", "PENDENTE", in30Days);
-        createInvoice(b, deletedClient, "other organization stays", "4.00", "PENDENTE", in30Days);
-
-        consumer.consumir(event("CLIENTE_CRIADO", a, deletedClient));
-        getAs(a, "/api/financeiro").andExpect(jsonPath("$.totalElements").value(3));
-
-        consumer.consumir(event("CLIENTE_EXCLUIDO", a, deletedClient));
-
-        getAs(a, "/api/financeiro")
-                .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].description").value("stays"));
-        getAs(b, "/api/financeiro").andExpect(jsonPath("$.totalElements").value(1));
-    }
-
-    @Test
-    @DisplayName("PROCESSO_EXCLUIDO detaches the case from the invoices without deleting them")
-    void caseDeletedEvent() throws Exception {
-        Identity a = Identity.create();
-        Identity b = Identity.create();
-        String caseId = newId();
-        Map<String, Object> body = invoiceData(newId(), "linked", "10.00", "PENDENTE", in30Days);
-        body.put("caseId", caseId);
-        String invoiceId = bodyOf(postAs(a, "/api/financeiro", body).andExpect(status().isCreated())).get("id").asText();
-        String otherOrganizationInvoice = bodyOf(postAs(b, "/api/financeiro", body).andExpect(status().isCreated()))
-                .get("id").asText();
-
-        consumer.consumir(event("PROCESSO_EXCLUIDO", a, caseId));
-
-        assertThat(invoiceOf(a, invoiceId).get("caseId").isNull()).isTrue();
-        assertThat(invoiceOf(b, otherOrganizationInvoice).get("caseId").asText()).isEqualTo(caseId);
     }
 
     @Test

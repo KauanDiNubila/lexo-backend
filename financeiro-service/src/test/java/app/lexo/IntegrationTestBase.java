@@ -1,7 +1,7 @@
 package app.lexo;
 
-import app.lexo.client.ClienteServiceClient;
-import app.lexo.client.ProcessoServiceClient;
+import app.lexo.adapter.out.cases.CaseServiceClient;
+import app.lexo.adapter.out.client.ClientServiceClient;
 import app.lexo.common.referencia.ExisteResponse;
 import app.lexo.common.signing.GatewaySignature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -67,10 +67,10 @@ public abstract class IntegrationTestBase {
     protected JdbcTemplate jdbc;
 
     @MockitoBean
-    protected ClienteServiceClient clientService;
+    protected ClientServiceClient clientService;
 
     @MockitoBean
-    protected ProcessoServiceClient caseService;
+    protected CaseServiceClient caseService;
 
     protected record Identity(String userId, String orgId, String role, String name) {
 
@@ -89,22 +89,30 @@ public abstract class IntegrationTestBase {
 
     @BeforeEach
     void referencesExist() {
-        when(clientService.clienteExiste(anyString(), anyString())).thenReturn(new ExisteResponse(true));
-        when(caseService.processoExiste(anyString(), anyString())).thenReturn(new ExisteResponse(true));
+        when(clientService.clientExists(anyString(), anyString())).thenReturn(new ExisteResponse(true));
+        when(caseService.caseExists(anyString(), anyString())).thenReturn(new ExisteResponse(true));
     }
 
     protected HttpHeaders asGateway(Identity id) {
-        long timestamp = Instant.now().getEpochSecond();
+        return signedWith(id, SIGNING_KEY, Instant.now().getEpochSecond());
+    }
+
+    protected HttpHeaders signedWith(Identity id, String key, long timestamp) {
+        HttpHeaders headers = unsigned(id);
         String name = URLEncoder.encode(id.name(), StandardCharsets.UTF_8);
         String payload = GatewaySignature.payload(id.userId(), id.orgId(), id.role(), name, "", timestamp);
+        headers.add(GatewaySignature.H_TIMESTAMP, Long.toString(timestamp));
+        headers.add(GatewaySignature.H_ASSINATURA, GatewaySignature.sign(key, payload));
+        return headers;
+    }
+
+    protected HttpHeaders unsigned(Identity id) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-User-Id", id.userId());
         headers.add("X-Org-Id", id.orgId());
         headers.add("X-User-Role", id.role());
-        headers.add("X-User-Name", name);
+        headers.add("X-User-Name", URLEncoder.encode(id.name(), StandardCharsets.UTF_8));
         headers.add("X-User-Email", "");
-        headers.add(GatewaySignature.H_TIMESTAMP, Long.toString(timestamp));
-        headers.add(GatewaySignature.H_ASSINATURA, GatewaySignature.sign(SIGNING_KEY, payload));
         return headers;
     }
 
