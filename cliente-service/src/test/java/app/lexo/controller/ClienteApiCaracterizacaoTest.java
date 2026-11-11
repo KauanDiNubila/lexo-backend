@@ -281,6 +281,29 @@ class ClienteApiCaracterizacaoTest extends IntegracaoBase {
     }
 
     @Test
+    @DisplayName("ordenar por uma propriedade que nao existe devolve 500, como antes")
+    void ordenacaoPorPropriedadeInexistente() throws Exception {
+        Identidade id = Identidade.nova();
+        criarCliente(id, "Maria Souza");
+
+        buscar(id, "/api/clientes?sort=inexistente,asc")
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("ERRO_INTERNO"));
+    }
+
+    @Test
+    @DisplayName("/internal/clientes/{id}/existe com orgId em branco responde falso")
+    void existeInternoComEscritorioEmBranco() throws Exception {
+        Identidade id = Identidade.nova();
+        String clienteId = criarCliente(id, "Helena Prado");
+
+        mvc.perform(get("/internal/clientes/{id}/existe", clienteId).param("orgId", "")
+                        .header("X-Internal-Key", CHAVE_INTERNA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.existe").value(false));
+    }
+
+    @Test
     @DisplayName("/internal/clientes/{id}/existe responde por escritorio")
     void existeInterno() throws Exception {
         Identidade id = Identidade.nova();
