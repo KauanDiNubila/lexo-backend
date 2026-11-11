@@ -1,103 +1,72 @@
 package app.lexo.domain;
 
-import app.lexo.common.domain.BaseEntity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
-@Entity
-@Table(name = "clients", indexes = @Index(name = "idx_client_org", columnList = "organizationId"))
-public class Client extends BaseEntity {
+public class Client {
 
-    @Column(nullable = false)
-    private String organizationId;
+    private final ClientId id;
+    private final OrganizationId organizationId;
+    private final Instant createdAt;
+    private ClientData data;
+    private PortalLink portalLink;
 
-    @Column(nullable = false)
-    private String name;
+    private Client(ClientId id, OrganizationId organizationId, ClientData data, PortalLink portalLink,
+                    Instant createdAt) {
+        this.id = id;
+        this.organizationId = organizationId;
+        this.data = data;
+        this.portalLink = portalLink;
+        this.createdAt = createdAt;
+    }
 
-    private String document;
-    private String email;
-    private String phone;
+    public static Client register(OrganizationId organizationId, ClientData data) {
+        return new Client(null, organizationId, data, null, null);
+    }
 
-    @Column(columnDefinition = "text")
-    private String notes;
+    public static Client restore(ClientId id, OrganizationId organizationId, ClientData data,
+                                       PortalLink portalLink, Instant createdAt) {
+        return new Client(id, organizationId, data, portalLink, createdAt);
+    }
 
-    @Column(unique = true)
-    private String portalToken;
+    public void update(ClientData newData) {
+        this.data = newData;
+    }
 
-    private Instant portalTokenExpiresAt;
+    public PortalLink generatePortalLink(String token, Instant now, long validityDays) {
+        this.portalLink = new PortalLink(token, now.plus(validityDays, ChronoUnit.DAYS));
+        return portalLink;
+    }
 
-    public String getOrganizationId() {
+    public void revokePortalLink() {
+        this.portalLink = null;
+    }
+
+    public boolean portalActiveAt(Instant now) {
+        return portalLink != null && portalLink.activeAt(now);
+    }
+
+    public ClientId id() {
+        return id;
+    }
+
+    public OrganizationId organizationId() {
         return organizationId;
     }
 
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
+    public ClientData data() {
+        return data;
     }
 
-    public String getName() {
-        return name;
+    public String name() {
+        return data.name();
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public PortalLink portalLink() {
+        return portalLink;
     }
 
-    public String getDocument() {
-        return document;
-    }
-
-    public void setDocument(String document) {
-        this.document = document;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public String getPortalToken() {
-        return portalToken;
-    }
-
-    public void setPortalToken(String portalToken) {
-        this.portalToken = portalToken;
-    }
-
-    public Instant getPortalTokenExpiresAt() {
-        return portalTokenExpiresAt;
-    }
-
-    public void setPortalTokenExpiresAt(Instant portalTokenExpiresAt) {
-        this.portalTokenExpiresAt = portalTokenExpiresAt;
-    }
-
-    public boolean portalAtivo() {
-        return portalToken != null
-                && portalTokenExpiresAt != null
-                && portalTokenExpiresAt.isAfter(Instant.now());
+    public Instant createdAt() {
+        return createdAt;
     }
 }
