@@ -1,7 +1,7 @@
 package app.lexo.common.web;
 
-import app.lexo.common.erro.DadoInvalidoException;
-import app.lexo.common.erro.RecursoNaoEncontradoException;
+import app.lexo.common.error.InvalidDataException;
+import app.lexo.common.error.ResourceNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
@@ -9,42 +9,42 @@ import org.springframework.mock.web.MockHttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("GlobalExceptionHandler (excecoes puras)")
+@DisplayName("GlobalExceptionHandler (pure exceptions)")
 class GlobalExceptionHandlerTest {
 
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
-    private final MockHttpServletRequest requisicao = new MockHttpServletRequest("GET", "/api/clientes/1");
+    private final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/clientes/1");
 
     @Test
-    @DisplayName("recurso nao encontrado vira 404 com o codigo NAO_ENCONTRADO e a mesma mensagem")
-    void naoEncontrado() {
-        ResponseEntity<ErrorResponse> resposta =
-                handler.handleNaoEncontrado(new RecursoNaoEncontradoException("Cliente não encontrado"), requisicao);
+    @DisplayName("resource not found becomes 404 with code NAO_ENCONTRADO and the same message")
+    void notFound() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleNotFound(new ResourceNotFoundException("Cliente não encontrado"), request);
 
-        assertThat(resposta.getStatusCode().value()).isEqualTo(404);
-        assertThat(resposta.getBody().code()).isEqualTo(ErrorCode.NAO_ENCONTRADO);
-        assertThat(resposta.getBody().error()).isEqualTo("Cliente não encontrado");
-        assertThat(resposta.getBody().path()).isEqualTo("/api/clientes/1");
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.NAO_ENCONTRADO);
+        assertThat(response.getBody().error()).isEqualTo("Cliente não encontrado");
+        assertThat(response.getBody().path()).isEqualTo("/api/clientes/1");
     }
 
     @Test
-    @DisplayName("dado invalido vira 400 com o codigo REQUISICAO_INVALIDA e a mesma mensagem")
-    void dadoInvalido() {
-        ResponseEntity<ErrorResponse> resposta =
-                handler.handleDadoInvalido(new DadoInvalidoException("CPF ou CNPJ inválido"), requisicao);
+    @DisplayName("invalid data becomes 400 with code REQUISICAO_INVALIDA and the same message")
+    void invalidData() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleInvalidData(new InvalidDataException("CPF ou CNPJ inválido"), request);
 
-        assertThat(resposta.getStatusCode().value()).isEqualTo(400);
-        assertThat(resposta.getBody().code()).isEqualTo(ErrorCode.REQUISICAO_INVALIDA);
-        assertThat(resposta.getBody().error()).isEqualTo("CPF ou CNPJ inválido");
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.REQUISICAO_INVALIDA);
+        assertThat(response.getBody().error()).isEqualTo("CPF ou CNPJ inválido");
     }
 
     @Test
-    @DisplayName("ApiException continua com o comportamento de antes")
-    void apiExceptionInalterada() {
-        ResponseEntity<ErrorResponse> resposta =
-                handler.handleApi(ApiException.notFound("Processo não encontrado"), requisicao);
+    @DisplayName("ApiException keeps the previous behavior")
+    void apiExceptionUnchanged() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleApi(ApiException.notFound("Processo não encontrado"), request);
 
-        assertThat(resposta.getStatusCode().value()).isEqualTo(404);
-        assertThat(resposta.getBody().code()).isEqualTo(ErrorCode.NAO_ENCONTRADO);
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.NAO_ENCONTRADO);
     }
 }
