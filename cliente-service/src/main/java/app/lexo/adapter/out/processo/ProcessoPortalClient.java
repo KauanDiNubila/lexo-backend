@@ -1,4 +1,4 @@
-package app.lexo.client;
+package app.lexo.adapter.out.processo;
 
 import app.lexo.common.portal.PortalDtos.ProcessoPortal;
 import java.util.List;

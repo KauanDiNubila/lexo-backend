@@ -1,7 +1,6 @@
 package app.lexo.adapter.out.financeiro;
 
 import app.lexo.application.port.out.CarregarHonorariosDoClientePort;
-import app.lexo.client.FinanceiroPortalClient;
 import app.lexo.common.portal.PortalDtos.HonorarioPortal;
 import app.lexo.domain.ClienteId;
 import app.lexo.domain.EscritorioId;

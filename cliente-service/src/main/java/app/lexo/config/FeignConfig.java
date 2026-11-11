@@ -1,4 +1,4 @@
-package app.lexo.client;
+package app.lexo.config;
 
 import feign.RequestInterceptor;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,7 +1,7 @@
 package app.lexo;
 
-import app.lexo.client.FinanceiroPortalClient;
-import app.lexo.client.ProcessoPortalClient;
+import app.lexo.adapter.out.financeiro.FinanceiroPortalClient;
+import app.lexo.adapter.out.processo.ProcessoPortalClient;
 import app.lexo.common.kafka.PublicadorEventos;
 import app.lexo.common.signing.GatewaySignature;
 import com.fasterxml.jackson.databind.JsonNode;

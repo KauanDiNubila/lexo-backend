@@ -1,4 +1,4 @@
-package app.lexo.client;
+package app.lexo.adapter.out.financeiro;
 
 import app.lexo.common.portal.PortalDtos.HonorarioPortal;
 import java.util.List;

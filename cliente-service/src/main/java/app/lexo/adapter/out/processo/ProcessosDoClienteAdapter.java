@@ -1,7 +1,6 @@
 package app.lexo.adapter.out.processo;
 
 import app.lexo.application.port.out.CarregarProcessosDoClientePort;
-import app.lexo.client.ProcessoPortalClient;
 import app.lexo.common.portal.PortalDtos.ProcessoPortal;
 import app.lexo.domain.ClienteId;
 import app.lexo.domain.EscritorioId;
