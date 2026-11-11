@@ -5,7 +5,7 @@ import app.lexo.common.security.AuthUser;
 import app.lexo.common.security.Role;
 import app.lexo.common.web.ApiException;
 import app.lexo.common.web.Pagina;
-import app.lexo.domain.Invoice;
+import app.lexo.domain.LegacyInvoice;
 import app.lexo.domain.enums.InvoiceStatus;
 import app.lexo.dto.InvoiceDtos.FinancialReport;
 import app.lexo.dto.InvoiceDtos.InvoiceRequest;
@@ -61,8 +61,8 @@ class FinanceiroServiceTest {
         return new AuthUser("user-1", org, "Ana Advogada", "ana@escritorio.com", Role.ADMIN);
     }
 
-    private Invoice honorario(String id, String org, BigDecimal valor, InvoiceStatus status) {
-        Invoice i = new Invoice();
+    private LegacyInvoice honorario(String id, String org, BigDecimal valor, InvoiceStatus status) {
+        LegacyInvoice i = new LegacyInvoice();
         i.setId(id);
         i.setOrganizationId(org);
         i.setClientId(CLIENTE);
@@ -121,8 +121,8 @@ class FinanceiroServiceTest {
     @DisplayName("criar carimba a organizacao do usuario no honorario")
     void criarCarimbaOrganizacao() {
         referenciasValidas();
-        when(repo.save(any(Invoice.class))).thenAnswer(inv -> {
-            Invoice i = inv.getArgument(0);
+        when(repo.save(any(LegacyInvoice.class))).thenAnswer(inv -> {
+            LegacyInvoice i = inv.getArgument(0);
             i.setId("novo-id");
             return i;
         });
@@ -132,7 +132,7 @@ class FinanceiroServiceTest {
 
         assertThat(resposta.id()).isEqualTo("novo-id");
 
-        ArgumentCaptor<Invoice> salvo = ArgumentCaptor.forClass(Invoice.class);
+        ArgumentCaptor<LegacyInvoice> salvo = ArgumentCaptor.forClass(LegacyInvoice.class);
         verify(repo).save(salvo.capture());
         assertThat(salvo.getValue().getOrganizationId()).isEqualTo(ORG);
         assertThat(salvo.getValue().getAmount()).isEqualByComparingTo("2500.00");
@@ -142,7 +142,7 @@ class FinanceiroServiceTest {
     @DisplayName("criar como PAGO ja marca a data de pagamento")
     void criarPagoMarcaPaidAt() {
         referenciasValidas();
-        when(repo.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repo.save(any(LegacyInvoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
         InvoiceResponse resposta = service.criar(usuario(ORG),
                 requisicao(new BigDecimal("300.00"), InvoiceStatus.PAGO));
@@ -154,7 +154,7 @@ class FinanceiroServiceTest {
     @DisplayName("criar como PENDENTE nao marca data de pagamento")
     void criarPendenteNaoMarcaPaidAt() {
         referenciasValidas();
-        when(repo.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repo.save(any(LegacyInvoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
         InvoiceResponse resposta = service.criar(usuario(ORG),
                 requisicao(new BigDecimal("300.00"), InvoiceStatus.PENDENTE));
@@ -193,7 +193,7 @@ class FinanceiroServiceTest {
     @DisplayName("criar sem processo nao consulta o processo-service")
     void criarSemProcessoNaoValidaProcesso() {
         when(referencias.clienteExiste(CLIENTE, ORG)).thenReturn(true);
-        when(repo.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repo.save(any(LegacyInvoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.criar(usuario(ORG), requisicao(new BigDecimal("100.00"), InvoiceStatus.PENDENTE));
 
@@ -204,9 +204,9 @@ class FinanceiroServiceTest {
     @DisplayName("atualizar altera os campos quando o honorario existe na organizacao")
     void atualizarQuandoExiste() {
         referenciasValidas();
-        Invoice existente = honorario("i1", ORG, new BigDecimal("100.00"), InvoiceStatus.PENDENTE);
+        LegacyInvoice existente = honorario("i1", ORG, new BigDecimal("100.00"), InvoiceStatus.PENDENTE);
         when(repo.findByIdAndOrganizationId("i1", ORG)).thenReturn(Optional.of(existente));
-        when(repo.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repo.save(any(LegacyInvoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
         InvoiceResponse resposta = service.atualizar(usuario(ORG), "i1",
                 requisicao(new BigDecimal("999.00"), InvoiceStatus.PENDENTE));
@@ -219,10 +219,10 @@ class FinanceiroServiceTest {
     @DisplayName("atualizar de PAGO para PENDENTE limpa a data de pagamento")
     void atualizarDePagoParaPendenteLimpaPaidAt() {
         referenciasValidas();
-        Invoice existente = honorario("i1", ORG, new BigDecimal("100.00"), InvoiceStatus.PAGO);
+        LegacyInvoice existente = honorario("i1", ORG, new BigDecimal("100.00"), InvoiceStatus.PAGO);
         existente.setPaidAt(Instant.now());
         when(repo.findByIdAndOrganizationId("i1", ORG)).thenReturn(Optional.of(existente));
-        when(repo.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repo.save(any(LegacyInvoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
         InvoiceResponse resposta = service.atualizar(usuario(ORG), "i1",
                 requisicao(new BigDecimal("100.00"), InvoiceStatus.PENDENTE));
@@ -245,9 +245,9 @@ class FinanceiroServiceTest {
     @Test
     @DisplayName("atualizarStatus para PAGO marca a data de pagamento")
     void atualizarStatusParaPagoMarcaPaidAt() {
-        Invoice existente = honorario("i1", ORG, new BigDecimal("100.00"), InvoiceStatus.PENDENTE);
+        LegacyInvoice existente = honorario("i1", ORG, new BigDecimal("100.00"), InvoiceStatus.PENDENTE);
         when(repo.findByIdAndOrganizationId("i1", ORG)).thenReturn(Optional.of(existente));
-        when(repo.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repo.save(any(LegacyInvoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
         InvoiceResponse resposta = service.atualizarStatus(usuario(ORG), "i1", InvoiceStatus.PAGO);
 
@@ -260,7 +260,7 @@ class FinanceiroServiceTest {
     void atualizarStatusNaoValidaReferencias() {
         when(repo.findByIdAndOrganizationId("i1", ORG))
                 .thenReturn(Optional.of(honorario("i1", ORG, new BigDecimal("100.00"), InvoiceStatus.PENDENTE)));
-        when(repo.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repo.save(any(LegacyInvoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.atualizarStatus(usuario(ORG), "i1", InvoiceStatus.CANCELADO);
 
@@ -277,7 +277,7 @@ class FinanceiroServiceTest {
                 .isInstanceOf(ApiException.class)
                 .satisfies(e -> assertThat(((ApiException) e).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
 
-        verify(repo, never()).delete(any(Invoice.class));
+        verify(repo, never()).delete(any(LegacyInvoice.class));
     }
 
     @Test
@@ -349,6 +349,6 @@ class FinanceiroServiceTest {
 
         assertThat(afetados).isEqualTo(2);
         verify(repo).desvincularProcesso(PROCESSO, ORG);
-        verify(repo, never()).delete(any(Invoice.class));
+        verify(repo, never()).delete(any(LegacyInvoice.class));
     }
 }

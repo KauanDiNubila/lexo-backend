@@ -1,6 +1,6 @@
 package app.lexo.dto;
 
-import app.lexo.domain.Invoice;
+import app.lexo.domain.LegacyInvoice;
 import app.lexo.domain.enums.InvoiceStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -40,7 +40,7 @@ public final class InvoiceDtos {
             Instant dueDate,
             Instant paidAt
     ) {
-        public static InvoiceResponse from(Invoice i) {
+        public static InvoiceResponse from(LegacyInvoice i) {
             return new InvoiceResponse(
                     i.getId(), i.getClientId(), i.getCaseId(), i.getDescription(),
                     i.getAmount(), i.getStatus(), i.getDueDate(), i.getPaidAt());

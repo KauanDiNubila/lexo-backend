@@ -23,7 +23,7 @@ import java.time.Instant;
                 @Index(name = "idx_invoice_status", columnList = "status")
         }
 )
-public class Invoice extends BaseEntity {
+public class LegacyInvoice extends BaseEntity {
 
     @Column(nullable = false)
     private String organizationId;

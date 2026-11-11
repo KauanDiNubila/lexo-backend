@@ -1,7 +1,7 @@
 package app.lexo.service;
 
 import app.lexo.client.ReferenciaGateway;
-import app.lexo.domain.Invoice;
+import app.lexo.domain.LegacyInvoice;
 import app.lexo.domain.enums.InvoiceStatus;
 import app.lexo.dto.InvoiceDtos.FinancialReport;
 import app.lexo.dto.InvoiceDtos.InvoiceRequest;
@@ -47,7 +47,7 @@ public class FinanceiroService {
     @Transactional
     public InvoiceResponse criar(AuthUser me, InvoiceRequest req) {
         validarReferencias(me, req);
-        Invoice i = new Invoice();
+        LegacyInvoice i = new LegacyInvoice();
         i.setOrganizationId(me.organizationId());
         preencher(i, req);
         if (req.status() == InvoiceStatus.PAGO) {
@@ -59,7 +59,7 @@ public class FinanceiroService {
     @Transactional
     public InvoiceResponse atualizar(AuthUser me, String id, InvoiceRequest req) {
         validarReferencias(me, req);
-        Invoice i = carregar(me, id);
+        LegacyInvoice i = carregar(me, id);
         preencher(i, req);
         i.setPaidAt(req.status() == InvoiceStatus.PAGO ? Instant.now() : null);
         return InvoiceResponse.from(repo.save(i));
@@ -67,7 +67,7 @@ public class FinanceiroService {
 
     @Transactional
     public InvoiceResponse atualizarStatus(AuthUser me, String id, InvoiceStatus status) {
-        Invoice i = carregar(me, id);
+        LegacyInvoice i = carregar(me, id);
         i.setStatus(status);
         if (status == InvoiceStatus.PAGO) {
             i.setPaidAt(Instant.now());
@@ -77,7 +77,7 @@ public class FinanceiroService {
 
     @Transactional
     public void excluir(AuthUser me, String id) {
-        Invoice i = carregar(me, id);
+        LegacyInvoice i = carregar(me, id);
         repo.delete(i);
     }
 
@@ -93,7 +93,7 @@ public class FinanceiroService {
 
     @Transactional(readOnly = true)
     public FinancialReport relatorio(AuthUser me, Instant start, Instant end) {
-        List<Invoice> invoices = repo
+        List<LegacyInvoice> invoices = repo
                 .findByOrganizationIdAndDueDateBetweenOrderByDueDateAsc(me.organizationId(), start, end);
 
         BigDecimal pago = somarPorStatus(invoices, InvoiceStatus.PAGO);
@@ -103,14 +103,14 @@ public class FinanceiroService {
         return new FinancialReport(start, end, pago, pendente, atrasado);
     }
 
-    private BigDecimal somarPorStatus(List<Invoice> invoices, InvoiceStatus status) {
+    private BigDecimal somarPorStatus(List<LegacyInvoice> invoices, InvoiceStatus status) {
         return invoices.stream()
                 .filter(i -> i.getStatus() == status)
-                .map(Invoice::getAmount)
+                .map(LegacyInvoice::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private Invoice carregar(AuthUser me, String id) {
+    private LegacyInvoice carregar(AuthUser me, String id) {
         return repo.findByIdAndOrganizationId(id, me.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Honorário não encontrado"));
     }
@@ -127,7 +127,7 @@ public class FinanceiroService {
         }
     }
 
-    private void preencher(Invoice i, InvoiceRequest req) {
+    private void preencher(LegacyInvoice i, InvoiceRequest req) {
         i.setClientId(req.clientId());
         i.setCaseId((req.caseId() == null || req.caseId().isBlank()) ? null : req.caseId());
         i.setDescription(req.description());

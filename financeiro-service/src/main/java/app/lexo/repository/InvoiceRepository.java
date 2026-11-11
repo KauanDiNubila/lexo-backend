@@ -1,6 +1,6 @@
 package app.lexo.repository;
 
-import app.lexo.domain.Invoice;
+import app.lexo.domain.LegacyInvoice;
 import app.lexo.domain.enums.InvoiceStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,31 +13,31 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-public interface InvoiceRepository extends JpaRepository<Invoice, String> {
+public interface InvoiceRepository extends JpaRepository<LegacyInvoice, String> {
 
-    List<Invoice> findByOrganizationIdOrderByDueDateAsc(String organizationId);
+    List<LegacyInvoice> findByOrganizationIdOrderByDueDateAsc(String organizationId);
 
-    Page<Invoice> findByOrganizationId(String organizationId, Pageable pageable);
+    Page<LegacyInvoice> findByOrganizationId(String organizationId, Pageable pageable);
 
-    @Query("select coalesce(sum(i.amount), 0) from Invoice i "
+    @Query("select coalesce(sum(i.amount), 0) from LegacyInvoice i "
             + "where i.organizationId = :organizationId and i.status in :status")
     java.math.BigDecimal somarPorStatus(
             @Param("organizationId") String organizationId,
             @Param("status") java.util.Collection<InvoiceStatus> status);
 
-    List<Invoice> findByClientIdAndOrganizationIdOrderByDueDateAsc(String clientId, String organizationId);
+    List<LegacyInvoice> findByClientIdAndOrganizationIdOrderByDueDateAsc(String clientId, String organizationId);
 
-    Optional<Invoice> findByIdAndOrganizationId(String id, String organizationId);
+    Optional<LegacyInvoice> findByIdAndOrganizationId(String id, String organizationId);
 
     long deleteByIdAndOrganizationId(String id, String organizationId);
 
-    List<Invoice> findByOrganizationIdAndDueDateBetweenOrderByDueDateAsc(
+    List<LegacyInvoice> findByOrganizationIdAndDueDateBetweenOrderByDueDateAsc(
             String organizationId, Instant start, Instant end);
 
     long deleteByClientIdAndOrganizationId(String clientId, String organizationId);
 
     @Modifying
-    @Query("update Invoice i set i.caseId = null "
+    @Query("update LegacyInvoice i set i.caseId = null "
             + "where i.caseId = :caseId and i.organizationId = :organizationId")
     int desvincularProcesso(@Param("caseId") String caseId,
                             @Param("organizationId") String organizationId);
