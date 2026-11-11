@@ -2,8 +2,8 @@ package app.lexo.adapter.out.persistence;
 
 import app.lexo.IntegrationTestBase;
 import app.lexo.application.port.in.ClientOption;
-import app.lexo.application.port.in.SortOrder;
-import app.lexo.application.port.in.PageParams;
+import app.lexo.common.web.SortOrder;
+import app.lexo.common.web.PageParams;
 import app.lexo.application.port.out.LoadClientPort;
 import app.lexo.application.port.out.CountClientsPort;
 import app.lexo.application.port.out.DeleteClientPort;

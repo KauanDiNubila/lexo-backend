@@ -1,6 +1,7 @@
 package app.lexo.common.web;
 
 import app.lexo.common.error.InvalidDataException;
+import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.common.error.ResourceNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,17 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(response.getBody().code()).isEqualTo(ErrorCode.REQUISICAO_INVALIDA);
         assertThat(response.getBody().error()).isEqualTo("CPF ou CNPJ inválido");
+    }
+
+    @Test
+    @DisplayName("service unavailable becomes 503 with the code SERVICO_INDISPONIVEL and the same message")
+    void serviceUnavailable() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleServiceUnavailable(new ServiceUnavailableException("try again"), request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(503);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.SERVICO_INDISPONIVEL);
+        assertThat(response.getBody().error()).isEqualTo("try again");
     }
 
     @Test

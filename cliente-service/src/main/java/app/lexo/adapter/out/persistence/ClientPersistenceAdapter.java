@@ -1,8 +1,6 @@
 package app.lexo.adapter.out.persistence;
 
 import app.lexo.application.port.in.ClientOption;
-import app.lexo.application.port.in.SortOrder;
-import app.lexo.application.port.in.PageParams;
 import app.lexo.application.port.out.LoadClientPort;
 import app.lexo.application.port.out.CountClientsPort;
 import app.lexo.application.port.out.DeleteClientPort;
@@ -10,14 +8,14 @@ import app.lexo.application.port.out.ClientExistsPort;
 import app.lexo.application.port.out.ListClientsPort;
 import app.lexo.application.port.out.ListClientOptionsPort;
 import app.lexo.application.port.out.SaveClientPort;
+import app.lexo.common.web.PageParams;
+import app.lexo.common.web.PageParamsMapper;
 import app.lexo.common.web.Pagina;
 import app.lexo.domain.Client;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.OrganizationId;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -69,7 +67,7 @@ class ClientPersistenceAdapter implements SaveClientPort, LoadClientPort, Delete
     public Pagina<Client> list(OrganizationId organizationId, String search, PageParams pageParams) {
         Specification<ClientJpaEntity> filter =
                 ClientSpecs.ofOrganization(organizationId.value()).and(ClientSpecs.search(search));
-        return Pagina.de(repository.findAll(filter, toPageRequest(pageParams)), ClientMapper::toDomain);
+        return Pagina.de(repository.findAll(filter, PageParamsMapper.toPageRequest(pageParams)), ClientMapper::toDomain);
     }
 
     @Override
@@ -88,14 +86,5 @@ class ClientPersistenceAdapter implements SaveClientPort, LoadClientPort, Delete
     @Override
     public boolean exists(OrganizationId organizationId, ClientId clientId) {
         return repository.existsByIdAndOrganizationId(clientId.value(), organizationId.value());
-    }
-
-    private PageRequest toPageRequest(PageParams pageParams) {
-        List<Sort.Order> orders = pageParams.orders().stream().map(this::toOrder).toList();
-        return PageRequest.of(pageParams.page(), pageParams.size(), Sort.by(orders));
-    }
-
-    private Sort.Order toOrder(SortOrder order) {
-        return order.ascending() ? Sort.Order.asc(order.property()) : Sort.Order.desc(order.property());
     }
 }

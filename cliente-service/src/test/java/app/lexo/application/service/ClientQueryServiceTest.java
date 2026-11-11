@@ -2,8 +2,8 @@ package app.lexo.application.service;
 
 import app.lexo.application.port.in.ClientOption;
 import app.lexo.application.port.in.ClientResponse;
-import app.lexo.application.port.in.SortOrder;
-import app.lexo.application.port.in.PageParams;
+import app.lexo.common.web.SortOrder;
+import app.lexo.common.web.PageParams;
 import app.lexo.application.port.in.ClientSummary;
 import app.lexo.common.web.Pagina;
 import app.lexo.domain.Client;
