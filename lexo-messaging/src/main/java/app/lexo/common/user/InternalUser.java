@@ -1,6 +1,6 @@
-package app.lexo.common.usuario;
+package app.lexo.common.user;
 
-public record UsuarioInterno(
+public record InternalUser(
         String id,
         String name,
         String email

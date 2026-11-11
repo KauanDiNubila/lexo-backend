@@ -1,6 +1,6 @@
 package app.lexo.adapter.out.finance;
 
-import app.lexo.common.portal.PortalDtos.HonorarioPortal;
+import app.lexo.common.portal.PortalDtos.PortalFee;
 import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +10,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface FinancePortalClient {
 
     @GetMapping("/internal/portal/honorarios")
-    List<HonorarioPortal> feesOfClient(@RequestParam("clientId") String clientId,
+    List<PortalFee> feesOfClient(@RequestParam("clientId") String clientId,
                                               @RequestParam("orgId") String orgId);
 }

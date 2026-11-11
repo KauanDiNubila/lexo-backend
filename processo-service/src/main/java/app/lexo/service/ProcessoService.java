@@ -1,17 +1,18 @@
 package app.lexo.service;
 
 import app.lexo.client.ReferenciaGateway;
-import app.lexo.common.evento.EventoDominio;
+import app.lexo.common.event.DomainEvent;
+import app.lexo.common.event.EventType;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.Case;
 import app.lexo.domain.enums.CaseStatus;
 import app.lexo.dto.CaseDtos.CaseOpcao;
 import app.lexo.dto.CaseDtos.CaseRequest;
 import app.lexo.dto.CaseDtos.CaseResponse;
 import app.lexo.dto.CaseDtos.ResumoProcessos;
-import app.lexo.common.kafka.PublicadorEventos;
+import app.lexo.common.kafka.EventPublisher;
 import app.lexo.repository.AndamentoRepository;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.CaseSpecs;
@@ -34,11 +35,11 @@ public class ProcessoService {
     private final DeadlineRepository prazos;
     private final AndamentoRepository andamentos;
     private final ReferenciaGateway referencias;
-    private final PublicadorEventos eventos;
+    private final EventPublisher eventos;
 
     public ProcessoService(CaseRepository repo, DeadlineRepository prazos,
                        AndamentoRepository andamentos, ReferenciaGateway referencias,
-                       PublicadorEventos eventos) {
+                       EventPublisher eventos) {
         this.repo = repo;
         this.prazos = prazos;
         this.andamentos = andamentos;
@@ -47,11 +48,11 @@ public class ProcessoService {
     }
 
     @Transactional(readOnly = true)
-    public Pagina<CaseResponse> listar(AuthUser me, String busca, CaseStatus status, Pageable pageable) {
+    public PageResult<CaseResponse> listar(AuthUser me, String busca, CaseStatus status, Pageable pageable) {
         var filtro = CaseSpecs.daOrganizacao(me.organizationId())
                 .and(CaseSpecs.comStatus(status))
                 .and(CaseSpecs.busca(busca));
-        return Pagina.de(repo.findAll(filtro, pageable), CaseResponse::from);
+        return PageResult.of(repo.findAll(filtro, pageable), CaseResponse::from);
     }
 
     @Cacheable(value = CACHE_OPCOES, key = "#me.organizationId()")
@@ -88,7 +89,7 @@ public class ProcessoService {
         preencher(c, req);
         c = repo.save(c);
 
-        eventos.publicar(EventoDominio.de("PROCESSO_CRIADO", me.organizationId(), "PROCESSO",
+        eventos.publish(DomainEvent.of(EventType.CASE_CREATED.code(), me.organizationId(), "PROCESSO",
                 c.getId(), "Processo criado: " + c.getNumber(), me.id(), nomeDe(me)));
         return CaseResponse.from(c);
     }
@@ -101,7 +102,7 @@ public class ProcessoService {
         preencher(c, req);
         c = repo.save(c);
 
-        eventos.publicar(EventoDominio.de("PROCESSO_ATUALIZADO", me.organizationId(), "PROCESSO",
+        eventos.publish(DomainEvent.of(EventType.CASE_UPDATED.code(), me.organizationId(), "PROCESSO",
                 c.getId(), "Processo atualizado: " + c.getNumber(), me.id(), nomeDe(me)));
         return CaseResponse.from(c);
     }
@@ -112,7 +113,7 @@ public class ProcessoService {
         Case c = carregar(me, id);
         apagarComFilhos(c);
 
-        eventos.publicar(EventoDominio.de("PROCESSO_EXCLUIDO", me.organizationId(), "PROCESSO",
+        eventos.publish(DomainEvent.of(EventType.CASE_DELETED.code(), me.organizationId(), "PROCESSO",
                 c.getId(), "Processo excluído: " + c.getNumber(), me.id(), nomeDe(me)));
     }
 

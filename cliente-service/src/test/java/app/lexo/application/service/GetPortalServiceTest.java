@@ -4,8 +4,8 @@ import app.lexo.application.port.in.PortalResponse;
 import app.lexo.application.port.out.LoadClientFeesPort;
 import app.lexo.application.port.out.LoadClientCasesPort;
 import app.lexo.common.error.ResourceNotFoundException;
-import app.lexo.common.portal.PortalDtos.HonorarioPortal;
-import app.lexo.common.portal.PortalDtos.ProcessoPortal;
+import app.lexo.common.portal.PortalDtos.PortalFee;
+import app.lexo.common.portal.PortalDtos.PortalCase;
 import app.lexo.domain.Client;
 import app.lexo.domain.ClientData;
 import app.lexo.domain.OrganizationId;
@@ -30,12 +30,12 @@ class GetPortalServiceTest {
     private final InMemoryClients clients = new InMemoryClients();
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
 
-    private final List<ProcessoPortal> cases =
-            List.of(new ProcessoPortal("P-1", "Civel", "ATIVO", Instant.now(), List.of(), List.of()));
-    private final List<HonorarioPortal> fees = List.of(
-            new HonorarioPortal("Consulta", new BigDecimal("100.00"), "PENDENTE", Instant.now()),
-            new HonorarioPortal("Audiencia", new BigDecimal("50.50"), "ATRASADO", Instant.now()),
-            new HonorarioPortal("Peticao", new BigDecimal("200.00"), "PAGO", Instant.now()));
+    private final List<PortalCase> cases =
+            List.of(new PortalCase("P-1", "Civel", "ATIVO", Instant.now(), List.of(), List.of()));
+    private final List<PortalFee> fees = List.of(
+            new PortalFee("Consulta", new BigDecimal("100.00"), "PENDENTE", Instant.now()),
+            new PortalFee("Audiencia", new BigDecimal("50.50"), "ATRASADO", Instant.now()),
+            new PortalFee("Peticao", new BigDecimal("200.00"), "PAGO", Instant.now()));
 
     private String clientWithLink(long validityDays) {
         Client client = clients.save(Client.register(ORGANIZATION,

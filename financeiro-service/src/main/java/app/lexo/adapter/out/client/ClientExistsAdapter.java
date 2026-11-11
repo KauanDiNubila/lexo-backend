@@ -23,7 +23,7 @@ class ClientExistsAdapter implements ClientExistsPort {
     @Override
     @CircuitBreaker(name = "cliente-service", fallbackMethod = "existsFallback")
     public boolean exists(OrganizationId organizationId, ClientId clientId) {
-        return client.clientExists(clientId.value(), organizationId.value()).existe();
+        return client.clientExists(clientId.value(), organizationId.value()).exists();
     }
 
     @SuppressWarnings("unused")

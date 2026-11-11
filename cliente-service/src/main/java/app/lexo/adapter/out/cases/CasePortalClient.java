@@ -1,6 +1,6 @@
 package app.lexo.adapter.out.cases;
 
-import app.lexo.common.portal.PortalDtos.ProcessoPortal;
+import app.lexo.common.portal.PortalDtos.PortalCase;
 import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +10,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface CasePortalClient {
 
     @GetMapping("/internal/portal/processos")
-    List<ProcessoPortal> casesOfClient(@RequestParam("clientId") String clientId,
+    List<PortalCase> casesOfClient(@RequestParam("clientId") String clientId,
                                             @RequestParam("orgId") String orgId);
 }

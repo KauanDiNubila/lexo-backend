@@ -2,7 +2,7 @@ package app.lexo;
 
 import app.lexo.adapter.out.cases.CaseServiceClient;
 import app.lexo.adapter.out.client.ClientServiceClient;
-import app.lexo.common.referencia.ExisteResponse;
+import app.lexo.common.reference.ExistsResponse;
 import app.lexo.common.signing.GatewaySignature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,8 +89,8 @@ public abstract class IntegrationTestBase {
 
     @BeforeEach
     void referencesExist() {
-        when(clientService.clientExists(anyString(), anyString())).thenReturn(new ExisteResponse(true));
-        when(caseService.caseExists(anyString(), anyString())).thenReturn(new ExisteResponse(true));
+        when(clientService.clientExists(anyString(), anyString())).thenReturn(new ExistsResponse(true));
+        when(caseService.caseExists(anyString(), anyString())).thenReturn(new ExistsResponse(true));
     }
 
     protected HttpHeaders asGateway(Identity id) {

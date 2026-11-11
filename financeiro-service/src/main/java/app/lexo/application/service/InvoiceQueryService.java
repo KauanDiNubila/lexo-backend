@@ -12,7 +12,7 @@ import app.lexo.application.port.out.LoadClientInvoicesPort;
 import app.lexo.application.port.out.LoadInvoicesDuePort;
 import app.lexo.application.port.out.SumInvoicesPort;
 import app.lexo.common.web.PageParams;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.Invoice;
 import app.lexo.domain.InvoiceStatus;
@@ -47,10 +47,10 @@ class InvoiceQueryService implements ListInvoicesQuery, GetFinancialSummaryQuery
     }
 
     @Override
-    public Pagina<InvoiceResponse> list(OrganizationId organizationId, PageParams pageParams) {
-        Pagina<Invoice> page = listInvoicesPort.list(organizationId, pageParams);
+    public PageResult<InvoiceResponse> list(OrganizationId organizationId, PageParams pageParams) {
+        PageResult<Invoice> page = listInvoicesPort.list(organizationId, pageParams);
         List<InvoiceResponse> content = page.content().stream().map(InvoiceResponse::of).toList();
-        return new Pagina<>(content, page.page(), page.size(), page.totalElements(), page.totalPages());
+        return new PageResult<>(content, page.page(), page.size(), page.totalElements(), page.totalPages());
     }
 
     @Override

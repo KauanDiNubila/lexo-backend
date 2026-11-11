@@ -2,7 +2,7 @@ package app.lexo.service;
 
 import app.lexo.common.email.TarefaEmail;
 import app.lexo.common.security.AuthUser;
-import app.lexo.common.evento.EventoDominio;
+import app.lexo.common.event.DomainEvent;
 import app.lexo.common.web.ApiException;
 import app.lexo.domain.User;
 import app.lexo.domain.UserInvite;
@@ -13,7 +13,7 @@ import app.lexo.dto.TeamDtos.InviteResponse;
 import app.lexo.dto.TeamDtos.UpdateRoleRequest;
 import app.lexo.dto.TeamDtos.UserResponse;
 import app.lexo.common.email.EnfileiradorEmail;
-import app.lexo.common.kafka.PublicadorEventos;
+import app.lexo.common.kafka.EventPublisher;
 import app.lexo.repository.OrganizationRepository;
 import app.lexo.repository.UserInviteRepository;
 import app.lexo.repository.UserRepository;
@@ -33,13 +33,13 @@ public class EquipeService {
     private final OrganizationRepository orgRepo;
     private final PasswordEncoder passwordEncoder;
     private final EnfileiradorEmail enfileiradorEmail;
-    private final PublicadorEventos eventos;
+    private final EventPublisher eventos;
     private final RefreshTokenService refreshTokens;
     private final String baseUrl;
 
     public EquipeService(UserRepository userRepo, UserInviteRepository inviteRepo,
                        OrganizationRepository orgRepo, PasswordEncoder passwordEncoder,
-                       EnfileiradorEmail enfileiradorEmail, PublicadorEventos eventos,
+                       EnfileiradorEmail enfileiradorEmail, EventPublisher eventos,
                        RefreshTokenService refreshTokens,
                        @Value("${lexo.base-url}") String baseUrl) {
         this.userRepo = userRepo;
@@ -94,7 +94,7 @@ public class EquipeService {
                 "Convite para " + orgName + " no Lexo",
                 "Olá " + req.name() + ", você foi convidado para " + orgName + ". Acesse: " + acceptUrl));
 
-        eventos.publicar(EventoDominio.de("CONVIDOU_USUARIO", me.organizationId(), "USUARIO", null,
+        eventos.publish(DomainEvent.of("CONVIDOU_USUARIO", me.organizationId(), "USUARIO", null,
                 "Convidou " + req.name() + " (" + email + ") como " + req.role(), me.id(), nomeDe(me)));
 
         return InviteResponse.from(invite);
@@ -106,7 +106,7 @@ public class EquipeService {
                 .orElse(null);
         inviteRepo.deleteByIdAndOrganizationId(inviteId, me.organizationId());
         if (invite != null) {
-            eventos.publicar(EventoDominio.de("REVOGOU_CONVITE", me.organizationId(), "USUARIO", null,
+            eventos.publish(DomainEvent.of("REVOGOU_CONVITE", me.organizationId(), "USUARIO", null,
                     "Revogou convite de " + invite.getEmail(), me.id(), nomeDe(me)));
         }
     }
@@ -122,7 +122,7 @@ public class EquipeService {
         userRepo.save(user);
         refreshTokens.revogarSessoesDoUsuario(req.userId());
 
-        eventos.publicar(EventoDominio.de("ALTEROU_PAPEL", me.organizationId(), "USUARIO", req.userId(),
+        eventos.publish(DomainEvent.of("ALTEROU_PAPEL", me.organizationId(), "USUARIO", req.userId(),
                 "Alterou papel do usuário para " + req.role(), me.id(), nomeDe(me)));
     }
 
@@ -136,7 +136,7 @@ public class EquipeService {
         refreshTokens.revogarSessoesDoUsuario(userId);
         userRepo.delete(target);
 
-        eventos.publicar(EventoDominio.de("REMOVEU_USUARIO", me.organizationId(), "USUARIO", userId,
+        eventos.publish(DomainEvent.of("REMOVEU_USUARIO", me.organizationId(), "USUARIO", userId,
                 "Removeu " + target.getName() + " (" + target.getEmail() + ")", me.id(), nomeDe(me)));
     }
 

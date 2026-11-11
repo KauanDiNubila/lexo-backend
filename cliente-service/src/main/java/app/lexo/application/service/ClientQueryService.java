@@ -14,7 +14,7 @@ import app.lexo.application.port.out.CountClientsPort;
 import app.lexo.application.port.out.ClientExistsPort;
 import app.lexo.application.port.out.ListClientsPort;
 import app.lexo.application.port.out.ListClientOptionsPort;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.Client;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.ClientNotFoundException;
@@ -57,11 +57,11 @@ class ClientQueryService implements GetClientQuery, ListClientsQuery, ListClient
     }
 
     @Override
-    public Pagina<ClientResponse> list(OrganizationId organizationId, String search, PageParams pageParams) {
-        Pagina<Client> page = listClientsPort.list(organizationId, search, pageParams);
+    public PageResult<ClientResponse> list(OrganizationId organizationId, String search, PageParams pageParams) {
+        PageResult<Client> page = listClientsPort.list(organizationId, search, pageParams);
         Instant now = clock.instant();
         List<ClientResponse> content = page.content().stream().map(c -> ClientResponse.of(c, now)).toList();
-        return new Pagina<>(content, page.page(), page.size(), page.totalElements(), page.totalPages());
+        return new PageResult<>(content, page.page(), page.size(), page.totalElements(), page.totalPages());
     }
 
     @Override
