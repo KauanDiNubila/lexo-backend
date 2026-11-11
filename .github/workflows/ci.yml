@@ -20,6 +20,13 @@ jobs:
           cache: maven
       - name: Build e testes
         run: mvn -B -ntp verify
+      - name: Publica relatorio de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-jacoco
+          path: "**/target/site/jacoco"
+          if-no-files-found: ignore
 
   frontend:
     name: Frontend (build)
