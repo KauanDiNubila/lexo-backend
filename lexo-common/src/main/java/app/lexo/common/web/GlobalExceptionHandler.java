@@ -1,5 +1,7 @@
 package app.lexo.common.web;
 
+import app.lexo.common.erro.DadoInvalidoException;
+import app.lexo.common.erro.RecursoNaoEncontradoException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApi(ApiException ex, HttpServletRequest req) {
         return build(ex.getStatus(), ex.getCode(), ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(RecursoNaoEncontradoException.class)
+    public ResponseEntity<ErrorResponse> handleNaoEncontrado(RecursoNaoEncontradoException ex,
+                                                              HttpServletRequest req) {
+        return build(HttpStatus.NOT_FOUND, ErrorCode.paraStatus(HttpStatus.NOT_FOUND), ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(DadoInvalidoException.class)
+    public ResponseEntity<ErrorResponse> handleDadoInvalido(DadoInvalidoException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.paraStatus(HttpStatus.BAD_REQUEST), ex.getMessage(), req);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
