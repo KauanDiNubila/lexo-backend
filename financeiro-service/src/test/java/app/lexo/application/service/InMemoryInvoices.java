@@ -35,8 +35,8 @@ class InMemoryInvoices implements SaveInvoicePort, LoadInvoicePort, DeleteInvoic
     }
 
     @Override
-    public void delete(Invoice invoice) {
-        invoices.remove(invoice.id().value());
+    public boolean delete(OrganizationId organizationId, InvoiceId invoiceId) {
+        return byId(organizationId, invoiceId).map(invoice -> invoices.remove(invoiceId.value()) != null).orElse(false);
     }
 
     List<Invoice> all() {

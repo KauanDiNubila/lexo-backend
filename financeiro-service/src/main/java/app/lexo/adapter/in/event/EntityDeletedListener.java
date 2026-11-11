@@ -28,7 +28,7 @@ class EntityDeletedListener {
     }
 
     @KafkaListener(topics = TOPIC, groupId = "lexo-financeiro")
-    public void onEvent(EventoDominio event) {
+    void onEvent(EventoDominio event) {
         switch (event.tipo()) {
             case "CLIENTE_EXCLUIDO" -> {
                 int deleted = deleteClientInvoices.deleteOfClient(new DeleteClientInvoicesCommand(

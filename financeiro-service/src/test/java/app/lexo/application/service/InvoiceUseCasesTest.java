@@ -48,7 +48,7 @@ class InvoiceUseCasesTest {
     private final CreateInvoiceService create = new CreateInvoiceService(references, invoices, clock);
     private final UpdateInvoiceService update = new UpdateInvoiceService(references, invoices, invoices, clock);
     private final ChangeInvoiceStatusService changeStatus = new ChangeInvoiceStatusService(invoices, invoices, clock);
-    private final DeleteInvoiceService delete = new DeleteInvoiceService(invoices, invoices);
+    private final DeleteInvoiceService delete = new DeleteInvoiceService(invoices);
 
     private InvoiceData data(ClientId client, CaseId caseId, InvoiceStatus status) {
         return new InvoiceData(client, caseId, "Consultation", new BigDecimal("100.00"), status,

@@ -1,8 +1,9 @@
 package app.lexo.application.port.out;
 
-import app.lexo.domain.Invoice;
+import app.lexo.domain.InvoiceId;
+import app.lexo.domain.OrganizationId;
 
 public interface DeleteInvoicePort {
 
-    void delete(Invoice invoice);
+    boolean delete(OrganizationId organizationId, InvoiceId invoiceId);
 }

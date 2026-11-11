@@ -11,7 +11,6 @@ import app.lexo.application.port.out.ListInvoicesPort;
 import app.lexo.application.port.out.LoadClientInvoicesPort;
 import app.lexo.application.port.out.LoadInvoicesDuePort;
 import app.lexo.application.port.out.SumInvoicesPort;
-import app.lexo.common.portal.PortalDtos.HonorarioPortal;
 import app.lexo.common.web.PageParams;
 import app.lexo.common.web.Pagina;
 import app.lexo.domain.ClientId;
@@ -68,10 +67,7 @@ class InvoiceQueryService implements ListInvoicesQuery, GetFinancialSummaryQuery
     }
 
     @Override
-    public List<HonorarioPortal> list(OrganizationId organizationId, ClientId clientId) {
-        return loadClientInvoicesPort.ofClient(organizationId, clientId).stream()
-                .map(invoice -> new HonorarioPortal(invoice.data().description(), invoice.data().amount(),
-                        invoice.data().status().code(), invoice.data().dueDate()))
-                .toList();
+    public List<InvoiceResponse> list(OrganizationId organizationId, ClientId clientId) {
+        return loadClientInvoicesPort.ofClient(organizationId, clientId).stream().map(InvoiceResponse::of).toList();
     }
 }

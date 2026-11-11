@@ -117,6 +117,7 @@ class InvoicePersistenceAdapterIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @Transactional
     @DisplayName("load, delete and save only reach invoices of the invoice's own organization")
     void organizationScope() {
         OrganizationId owner = newOrganization();
@@ -125,8 +126,8 @@ class InvoicePersistenceAdapterIntegrationTest extends IntegrationTestBase {
         Invoice asIntruder = Invoice.restore(invoice.id(), intruder, invoice.data(), null);
 
         assertThat(load.byId(intruder, invoice.id())).isEmpty();
-        delete.delete(asIntruder);
 
+        assertThat(delete.delete(intruder, invoice.id())).isFalse();
         assertThat(load.byId(owner, invoice.id())).isPresent();
         assertThatThrownBy(() -> save.save(asIntruder)).isInstanceOf(IllegalStateException.class);
     }

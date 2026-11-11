@@ -24,6 +24,8 @@ class InternalPortalController {
         if (clientId.isBlank() || orgId.isBlank()) {
             return List.of();
         }
-        return listClientFees.list(new OrganizationId(orgId), new ClientId(clientId));
+        return listClientFees.list(new OrganizationId(orgId), new ClientId(clientId)).stream()
+                .map(fee -> new HonorarioPortal(fee.description(), fee.amount(), fee.status().code(), fee.dueDate()))
+                .toList();
     }
 }

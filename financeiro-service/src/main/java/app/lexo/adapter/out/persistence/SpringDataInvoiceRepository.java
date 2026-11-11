@@ -30,6 +30,8 @@ interface SpringDataInvoiceRepository extends JpaRepository<InvoiceJpaEntity, St
     List<InvoiceJpaEntity> findByOrganizationIdAndDueDateBetweenOrderByDueDateAsc(
             String organizationId, Instant start, Instant end);
 
+    long deleteByIdAndOrganizationId(String id, String organizationId);
+
     long deleteByClientIdAndOrganizationId(String clientId, String organizationId);
 
     @Modifying

@@ -55,9 +55,8 @@ class InvoicePersistenceAdapter implements SaveInvoicePort, LoadInvoicePort, Del
     }
 
     @Override
-    public void delete(Invoice invoice) {
-        repository.findByIdAndOrganizationId(invoice.id().value(), invoice.organizationId().value())
-                .ifPresent(repository::delete);
+    public boolean delete(OrganizationId organizationId, InvoiceId invoiceId) {
+        return repository.deleteByIdAndOrganizationId(invoiceId.value(), organizationId.value()) > 0;
     }
 
     @Override

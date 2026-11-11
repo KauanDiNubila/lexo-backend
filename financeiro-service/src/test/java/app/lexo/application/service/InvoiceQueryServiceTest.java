@@ -3,7 +3,6 @@ package app.lexo.application.service;
 import app.lexo.application.port.in.FinancialReport;
 import app.lexo.application.port.in.FinancialSummary;
 import app.lexo.application.port.in.InvoiceResponse;
-import app.lexo.common.portal.PortalDtos.HonorarioPortal;
 import app.lexo.common.web.PageParams;
 import app.lexo.common.web.Pagina;
 import app.lexo.domain.ClientId;
@@ -80,16 +79,16 @@ class InvoiceQueryServiceTest {
     }
 
     @Test
-    @DisplayName("client fees keep the status code stored in the database")
+    @DisplayName("client fees list the client's invoices with their domain status")
     void clientFees() {
         InvoiceQueryService service = new InvoiceQueryService(null, null, null,
                 (organization, client) -> List.of(invoice("10.00", InvoiceStatus.OVERDUE, "late")));
 
-        List<HonorarioPortal> fees = service.list(ORGANIZATION, new ClientId("client-1"));
+        List<InvoiceResponse> fees = service.list(ORGANIZATION, new ClientId("client-1"));
 
         assertThat(fees).singleElement().satisfies(fee -> {
             assertThat(fee.description()).isEqualTo("late");
-            assertThat(fee.status()).isEqualTo("ATRASADO");
+            assertThat(fee.status()).isEqualTo(InvoiceStatus.OVERDUE);
             assertThat(fee.amount()).isEqualByComparingTo("10.00");
         });
     }
