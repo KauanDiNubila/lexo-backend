@@ -11,7 +11,7 @@ import app.lexo.application.port.out.ClientExistsPort;
 import app.lexo.application.port.out.ListClientsPort;
 import app.lexo.application.port.out.ListClientOptionsPort;
 import app.lexo.application.port.out.SaveClientPort;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.Client;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.TaxId;
@@ -146,14 +146,14 @@ class ClientPersistenceAdapterIntegrationTest extends IntegrationTestBase {
         saveClient(organization, "Bruno Reis", null, null);
         saveClient(newOrganization(), "Outro Escritorio", null, null);
 
-        Pagina<Client> all = list.list(organization, null, new PageParams(0, 20, List.of(new SortOrder("name", true))));
+        PageResult<Client> all = list.list(organization, null, new PageParams(0, 20, List.of(new SortOrder("name", true))));
         assertThat(all.totalElements()).isEqualTo(3);
         assertThat(all.content()).extracting(Client::name).containsExactly("Ana Paula", "Bruno Reis", "Carla Mendes");
 
-        Pagina<Client> descending = list.list(organization, "  ", new PageParams(0, 20, List.of(new SortOrder("name", false))));
+        PageResult<Client> descending = list.list(organization, "  ", new PageParams(0, 20, List.of(new SortOrder("name", false))));
         assertThat(descending.content().get(0).name()).isEqualTo("Carla Mendes");
 
-        Pagina<Client> second = list.list(organization, null, new PageParams(1, 2, List.of(new SortOrder("name", true))));
+        PageResult<Client> second = list.list(organization, null, new PageParams(1, 2, List.of(new SortOrder("name", true))));
         assertThat(second.content()).hasSize(1);
         assertThat(second.totalPages()).isEqualTo(2);
 

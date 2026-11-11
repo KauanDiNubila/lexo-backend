@@ -1,7 +1,7 @@
 package app.lexo.controller;
 
-import app.lexo.common.referencia.ExisteResponse;
-import app.lexo.common.usuario.UsuarioInterno;
+import app.lexo.common.reference.ExistsResponse;
+import app.lexo.common.user.InternalUser;
 import app.lexo.common.web.ApiException;
 import app.lexo.domain.User;
 import app.lexo.repository.UserRepository;
@@ -20,14 +20,14 @@ public class InternalUserController {
     }
 
     @GetMapping("/internal/usuarios/{id}/existe")
-    public ExisteResponse existe(@PathVariable String id, @RequestParam String orgId) {
-        return new ExisteResponse(userRepo.existsByIdAndOrganizationId(id, orgId));
+    public ExistsResponse existe(@PathVariable String id, @RequestParam String orgId) {
+        return new ExistsResponse(userRepo.existsByIdAndOrganizationId(id, orgId));
     }
 
     @GetMapping("/internal/usuarios/{id}")
-    public UsuarioInterno buscar(@PathVariable String id, @RequestParam String orgId) {
+    public InternalUser buscar(@PathVariable String id, @RequestParam String orgId) {
         User u = userRepo.findByIdAndOrganizationId(id, orgId)
                 .orElseThrow(() -> ApiException.notFound("Usuário não encontrado"));
-        return new UsuarioInterno(u.getId(), u.getName(), u.getEmail());
+        return new InternalUser(u.getId(), u.getName(), u.getEmail());
     }
 }

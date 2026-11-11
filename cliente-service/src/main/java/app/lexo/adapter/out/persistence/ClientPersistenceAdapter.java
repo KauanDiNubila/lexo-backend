@@ -10,7 +10,7 @@ import app.lexo.application.port.out.ListClientOptionsPort;
 import app.lexo.application.port.out.SaveClientPort;
 import app.lexo.common.web.PageParams;
 import app.lexo.common.web.PageParamsMapper;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.Client;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.OrganizationId;
@@ -64,10 +64,10 @@ class ClientPersistenceAdapter implements SaveClientPort, LoadClientPort, Delete
     }
 
     @Override
-    public Pagina<Client> list(OrganizationId organizationId, String search, PageParams pageParams) {
+    public PageResult<Client> list(OrganizationId organizationId, String search, PageParams pageParams) {
         Specification<ClientJpaEntity> filter =
                 ClientSpecs.ofOrganization(organizationId.value()).and(ClientSpecs.search(search));
-        return Pagina.de(repository.findAll(filter, PageParamsMapper.toPageRequest(pageParams)), ClientMapper::toDomain);
+        return PageResult.of(repository.findAll(filter, PageParamsMapper.toPageRequest(pageParams)), ClientMapper::toDomain);
     }
 
     @Override

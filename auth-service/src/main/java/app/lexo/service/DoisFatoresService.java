@@ -1,11 +1,11 @@
 package app.lexo.service;
 
-import app.lexo.common.evento.EventoDominio;
+import app.lexo.common.event.DomainEvent;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
 import app.lexo.domain.User;
 import app.lexo.dto.TotpDtos.InitiateResponse;
-import app.lexo.common.kafka.PublicadorEventos;
+import app.lexo.common.kafka.EventPublisher;
 import app.lexo.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +16,10 @@ public class DoisFatoresService {
     private final UserRepository userRepo;
     private final TotpProvider totp;
     private final CriptografiaService crypto;
-    private final PublicadorEventos eventos;
+    private final EventPublisher eventos;
 
     public DoisFatoresService(UserRepository userRepo, TotpProvider totp,
-                       CriptografiaService crypto, PublicadorEventos eventos) {
+                       CriptografiaService crypto, EventPublisher eventos) {
         this.userRepo = userRepo;
         this.totp = totp;
         this.crypto = crypto;
@@ -52,7 +52,7 @@ public class DoisFatoresService {
         user.setTotpPendingSecret(null);
         userRepo.save(user);
 
-        eventos.publicar(EventoDominio.de("ATIVOU_2FA", me.organizationId(), null, null,
+        eventos.publish(DomainEvent.of("ATIVOU_2FA", me.organizationId(), null, null,
                 "Ativou verificação em dois fatores", me.id(), nomeDe(me)));
     }
 
@@ -70,7 +70,7 @@ public class DoisFatoresService {
         user.setTotpPendingSecret(null);
         userRepo.save(user);
 
-        eventos.publicar(EventoDominio.de("DESATIVOU_2FA", me.organizationId(), null, null,
+        eventos.publish(DomainEvent.of("DESATIVOU_2FA", me.organizationId(), null, null,
                 "Desativou verificação em dois fatores", me.id(), nomeDe(me)));
     }
 

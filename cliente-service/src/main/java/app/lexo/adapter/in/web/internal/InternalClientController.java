@@ -1,7 +1,7 @@
 package app.lexo.adapter.in.web.internal;
 
 import app.lexo.application.port.in.ClientExistsQuery;
-import app.lexo.common.referencia.ExisteResponse;
+import app.lexo.common.reference.ExistsResponse;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.OrganizationId;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,10 +19,10 @@ class InternalClientController {
     }
 
     @GetMapping("/internal/clientes/{id}/existe")
-    ExisteResponse exists(@PathVariable String id, @RequestParam String orgId) {
+    ExistsResponse exists(@PathVariable String id, @RequestParam String orgId) {
         if (orgId.isBlank()) {
-            return new ExisteResponse(false);
+            return new ExistsResponse(false);
         }
-        return new ExisteResponse(clientExists.exists(new OrganizationId(orgId), new ClientId(id)));
+        return new ExistsResponse(clientExists.exists(new OrganizationId(orgId), new ClientId(id)));
     }
 }

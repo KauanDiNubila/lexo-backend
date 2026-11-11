@@ -1,7 +1,7 @@
 package app.lexo.controller;
 
 import app.lexo.IntegracaoBase;
-import app.lexo.common.referencia.ExisteResponse;
+import app.lexo.common.reference.ExistsResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +40,7 @@ class ProcessoApiIntegrationTest extends IntegracaoBase {
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
-        verify(eventos).publicar(argThat(e -> "PROCESSO_CRIADO".equals(e.tipo())
+        verify(eventos).publish(argThat(e -> "PROCESSO_CRIADO".equals(e.type())
                 && id.orgId().equals(e.organizationId())
                 && "PROCESSO".equals(e.entityType())));
     }
@@ -50,7 +50,7 @@ class ProcessoApiIntegrationTest extends IntegracaoBase {
     void clienteInexistente() throws Exception {
         Identidade id = Identidade.nova();
         String clienteId = novoId();
-        when(clienteClient.clienteExiste(eq(clienteId), anyString())).thenReturn(new ExisteResponse(false));
+        when(clienteClient.clienteExiste(eq(clienteId), anyString())).thenReturn(new ExistsResponse(false));
 
         postar(id, "/api/processos", dadosDoProcesso(clienteId, "0002-A"))
                 .andExpect(status().isNotFound())
@@ -65,7 +65,7 @@ class ProcessoApiIntegrationTest extends IntegracaoBase {
     void responsavelInexistente() throws Exception {
         Identidade id = Identidade.nova();
         String responsavelId = novoId();
-        when(authClient.usuarioExiste(eq(responsavelId), anyString())).thenReturn(new ExisteResponse(false));
+        when(authClient.usuarioExiste(eq(responsavelId), anyString())).thenReturn(new ExistsResponse(false));
         Map<String, Object> dados = new HashMap<>(dadosDoProcesso(novoId(), "0003-A"));
         dados.put("responsavelId", responsavelId);
 
@@ -135,7 +135,7 @@ class ProcessoApiIntegrationTest extends IntegracaoBase {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Processo não encontrado"));
 
-        verify(eventos).publicar(argThat(e -> "PROCESSO_ATUALIZADO".equals(e.tipo())
+        verify(eventos).publish(argThat(e -> "PROCESSO_ATUALIZADO".equals(e.type())
                 && processoId.equals(e.entityId())));
     }
 
@@ -168,7 +168,7 @@ class ProcessoApiIntegrationTest extends IntegracaoBase {
 
         buscar(id, "/api/agenda?caseId=" + processoId).andExpect(jsonPath("$.totalElements").value(0));
         buscar(id, "/api/processos/" + processoId + "/andamentos").andExpect(status().isNotFound());
-        verify(eventos).publicar(argThat(e -> "PROCESSO_EXCLUIDO".equals(e.tipo())
+        verify(eventos).publish(argThat(e -> "PROCESSO_EXCLUIDO".equals(e.type())
                 && processoId.equals(e.entityId())));
     }
 

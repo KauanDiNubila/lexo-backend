@@ -2,7 +2,7 @@ package app.lexo;
 
 import app.lexo.adapter.out.finance.FinancePortalClient;
 import app.lexo.adapter.out.cases.CasePortalClient;
-import app.lexo.common.kafka.PublicadorEventos;
+import app.lexo.common.kafka.EventPublisher;
 import app.lexo.common.signing.GatewaySignature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -67,7 +67,7 @@ public abstract class IntegrationTestBase {
     protected FinancePortalClient financeClient;
 
     @MockitoBean
-    protected PublicadorEventos events;
+    protected EventPublisher events;
 
     protected record Identity(String userId, String orgId, String role, String name) {
 

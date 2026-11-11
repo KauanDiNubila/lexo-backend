@@ -1,6 +1,6 @@
 package app.lexo.controller;
 
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.enums.CaseStatus;
 import app.lexo.dto.CaseDtos.CaseOpcao;
 import app.lexo.dto.CaseDtos.CaseRequest;
@@ -39,7 +39,7 @@ public class ProcessoController {
     }
 
     @GetMapping
-    public Pagina<CaseResponse> list(
+    public PageResult<CaseResponse> list(
             @AuthenticationPrincipal AuthUser me,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) CaseStatus status,

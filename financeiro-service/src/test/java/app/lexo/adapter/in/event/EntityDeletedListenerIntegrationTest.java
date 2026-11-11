@@ -1,7 +1,7 @@
 package app.lexo.adapter.in.event;
 
 import app.lexo.IntegrationTestBase;
-import app.lexo.common.evento.EventoDominio;
+import app.lexo.common.event.DomainEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +22,8 @@ class EntityDeletedListenerIntegrationTest extends IntegrationTestBase {
 
     private final Instant in30Days = Instant.now().plus(Duration.ofDays(30));
 
-    private EventoDominio event(String type, Identity id, String entityId) {
-        return EventoDominio.de(type, id.orgId(), "CLIENTE", entityId, "description", id.userId(), id.name());
+    private DomainEvent event(String type, Identity id, String entityId) {
+        return DomainEvent.of(type, id.orgId(), "CLIENTE", entityId, "description", id.userId(), id.name());
     }
 
     @Test

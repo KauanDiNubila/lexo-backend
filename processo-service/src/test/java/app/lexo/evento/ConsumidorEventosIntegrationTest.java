@@ -1,7 +1,7 @@
 package app.lexo.evento;
 
 import app.lexo.IntegracaoBase;
-import app.lexo.common.evento.EventoDominio;
+import app.lexo.common.event.DomainEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +19,8 @@ class ConsumidorEventosIntegrationTest extends IntegracaoBase {
     @Autowired
     private ConsumidorEventos consumidor;
 
-    private EventoDominio evento(String tipo, Identidade id, String entidadeId) {
-        return EventoDominio.de(tipo, id.orgId(), "CLIENTE", entidadeId, "descricao", id.userId(), id.name());
+    private DomainEvent evento(String tipo, Identidade id, String entidadeId) {
+        return DomainEvent.of(tipo, id.orgId(), "CLIENTE", entidadeId, "descricao", id.userId(), id.name());
     }
 
     @Test

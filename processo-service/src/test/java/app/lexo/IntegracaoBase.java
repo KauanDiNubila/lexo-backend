@@ -3,8 +3,8 @@ package app.lexo;
 import app.lexo.client.AuthServiceClient;
 import app.lexo.client.ClienteServiceClient;
 import app.lexo.common.email.EnfileiradorEmail;
-import app.lexo.common.kafka.PublicadorEventos;
-import app.lexo.common.referencia.ExisteResponse;
+import app.lexo.common.kafka.EventPublisher;
+import app.lexo.common.reference.ExistsResponse;
 import app.lexo.common.signing.GatewaySignature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -71,7 +71,7 @@ public abstract class IntegracaoBase {
     protected AuthServiceClient authClient;
 
     @MockitoBean
-    protected PublicadorEventos eventos;
+    protected EventPublisher eventos;
 
     @MockitoBean
     protected EnfileiradorEmail email;
@@ -96,8 +96,8 @@ public abstract class IntegracaoBase {
 
     @BeforeEach
     void clienteEResponsavelExistem() {
-        when(clienteClient.clienteExiste(anyString(), anyString())).thenReturn(new ExisteResponse(true));
-        when(authClient.usuarioExiste(anyString(), anyString())).thenReturn(new ExisteResponse(true));
+        when(clienteClient.clienteExiste(anyString(), anyString())).thenReturn(new ExistsResponse(true));
+        when(authClient.usuarioExiste(anyString(), anyString())).thenReturn(new ExistsResponse(true));
     }
 
     protected HttpHeaders comoGateway(Identidade id) {

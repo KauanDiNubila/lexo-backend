@@ -5,7 +5,7 @@ import app.lexo.application.port.in.ClientResponse;
 import app.lexo.common.web.SortOrder;
 import app.lexo.common.web.PageParams;
 import app.lexo.application.port.in.ClientSummary;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.Client;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.ClientNotFoundException;
@@ -56,10 +56,10 @@ class ClientQueryServiceTest {
         Client ana = save(ORGANIZATION, "Ana Paula");
         PageParams pageParams = new PageParams(0, 20, List.of(new SortOrder("name", true)));
         ClientQueryService service = new ClientQueryService(clients,
-                (organization, search, request) -> new Pagina<>(List.of(ana), 0, 20, 1, 1),
+                (organization, search, request) -> new PageResult<>(List.of(ana), 0, 20, 1, 1),
                 null, null, null, clock);
 
-        Pagina<ClientResponse> page = service.list(ORGANIZATION, "ana", pageParams);
+        PageResult<ClientResponse> page = service.list(ORGANIZATION, "ana", pageParams);
 
         assertThat(page.content()).extracting(ClientResponse::name).containsExactly("Ana Paula");
         assertThat(page.totalElements()).isEqualTo(1);

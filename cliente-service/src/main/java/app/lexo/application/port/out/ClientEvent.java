@@ -1,6 +1,7 @@
 package app.lexo.application.port.out;
 
 import app.lexo.application.port.in.Actor;
+import app.lexo.common.event.EventType;
 import app.lexo.domain.Client;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.OrganizationId;
@@ -8,8 +9,8 @@ import app.lexo.domain.OrganizationId;
 public record ClientEvent(String type, OrganizationId organizationId, ClientId clientId, String description,
                               Actor actor) {
 
-    public static final String CREATED = "CLIENTE_CRIADO";
-    public static final String DELETED = "CLIENTE_EXCLUIDO";
+    public static final String CREATED = EventType.CLIENT_CREATED.code();
+    public static final String DELETED = EventType.CLIENT_DELETED.code();
 
     public static ClientEvent created(Client client, Actor actor) {
         return new ClientEvent(CREATED, client.organizationId(), client.id(),

@@ -4,7 +4,8 @@ import app.lexo.application.port.in.DeleteClientInvoicesCommand;
 import app.lexo.application.port.in.DeleteClientInvoicesUseCase;
 import app.lexo.application.port.in.DetachCaseCommand;
 import app.lexo.application.port.in.DetachCaseUseCase;
-import app.lexo.common.evento.EventoDominio;
+import app.lexo.common.event.DomainEvent;
+import app.lexo.common.event.EventType;
 import app.lexo.domain.CaseId;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.OrganizationId;
@@ -28,20 +29,15 @@ class EntityDeletedListener {
     }
 
     @KafkaListener(topics = TOPIC, groupId = "lexo-financeiro")
-    void onEvent(EventoDominio event) {
-        switch (event.tipo()) {
-            case "CLIENTE_EXCLUIDO" -> {
-                int deleted = deleteClientInvoices.deleteOfClient(new DeleteClientInvoicesCommand(
-                        new OrganizationId(event.organizationId()), new ClientId(event.entityId())));
-                log.info("[kafka] client {} deleted, {} invoice(s) removed in cascade", event.entityId(), deleted);
-            }
-            case "PROCESSO_EXCLUIDO" -> {
-                int detached = detachCase.detach(new DetachCaseCommand(
-                        new OrganizationId(event.organizationId()), new CaseId(event.entityId())));
-                log.info("[kafka] case {} deleted, {} invoice(s) detached", event.entityId(), detached);
-            }
-            default -> {
-            }
+    void onEvent(DomainEvent event) {
+        if (event.is(EventType.CLIENT_DELETED)) {
+            int deleted = deleteClientInvoices.deleteOfClient(new DeleteClientInvoicesCommand(
+                    new OrganizationId(event.organizationId()), new ClientId(event.entityId())));
+            log.info("[kafka] client {} deleted, {} invoice(s) removed in cascade", event.entityId(), deleted);
+        } else if (event.is(EventType.CASE_DELETED)) {
+            int detached = detachCase.detach(new DetachCaseCommand(
+                    new OrganizationId(event.organizationId()), new CaseId(event.entityId())));
+            log.info("[kafka] case {} deleted, {} invoice(s) detached", event.entityId(), detached);
         }
     }
 }

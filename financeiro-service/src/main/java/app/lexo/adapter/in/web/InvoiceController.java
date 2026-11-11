@@ -16,7 +16,7 @@ import app.lexo.application.port.in.UpdateInvoiceCommand;
 import app.lexo.application.port.in.UpdateInvoiceUseCase;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.PageParamsMapper;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.domain.InvoiceId;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -67,7 +67,7 @@ class InvoiceController {
     }
 
     @GetMapping
-    Pagina<InvoiceResponse> list(
+    PageResult<InvoiceResponse> list(
             @AuthenticationPrincipal AuthUser me,
             @PageableDefault(size = 20, sort = "dueDate", direction = Sort.Direction.ASC) Pageable pageable) {
         return listInvoices.list(Identity.organization(me), PageParamsMapper.from(pageable));

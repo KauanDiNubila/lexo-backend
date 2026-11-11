@@ -1,7 +1,7 @@
 package app.lexo.controller;
 
 import app.lexo.dto.DeadlineDtos.DeadlineRequest;
-import app.lexo.common.web.Pagina;
+import app.lexo.common.web.PageResult;
 import app.lexo.dto.DeadlineDtos.DeadlineResponse;
 import app.lexo.dto.DeadlineDtos.ResumoAgenda;
 import app.lexo.dto.DeadlineDtos.StatusRequest;
@@ -37,7 +37,7 @@ public class AgendaController {
     }
 
     @GetMapping
-    public Pagina<DeadlineResponse> list(
+    public PageResult<DeadlineResponse> list(
             @AuthenticationPrincipal AuthUser me,
             @RequestParam(required = false) String caseId,
             @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.ASC)

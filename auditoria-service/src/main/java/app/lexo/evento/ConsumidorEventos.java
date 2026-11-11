@@ -1,6 +1,6 @@
 package app.lexo.evento;
 
-import app.lexo.common.evento.EventoDominio;
+import app.lexo.common.event.DomainEvent;
 import app.lexo.service.AuditoriaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,15 +21,15 @@ public class ConsumidorEventos {
     }
 
     @KafkaListener(topics = TOPICO, groupId = "lexo-auditoria")
-    public void consumir(EventoDominio evento) {
-        log.info("[kafka] evento recebido: {} ({})", evento.tipo(), evento.entityId());
+    public void consumir(DomainEvent evento) {
+        log.info("[kafka] evento recebido: {} ({})", evento.type(), evento.entityId());
         auditoria.registrar(
                 evento.organizationId(),
                 evento.userId(),
                 evento.userName(),
-                evento.tipo(),
+                evento.type(),
                 evento.entityType(),
                 evento.entityId(),
-                evento.descricao());
+                evento.description());
     }
 }
