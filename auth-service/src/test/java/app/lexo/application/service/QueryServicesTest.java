@@ -150,6 +150,15 @@ class QueryServicesTest {
     }
 
     @Test
+    @DisplayName("info of a valid invite whose organization is gone is reported as not found")
+    void inviteInfoWithoutOrganization() {
+        UserInvite orphan = h.store.save(UserInvite.issue(new OrganizationId("missing"), "Carla",
+                new EmailAddress("orphan@escritorio.com"), Role.ADVOGADO, Fakes.NOW));
+
+        assertThatThrownBy(() -> invites.get(orphan.token())).isInstanceOf(OrganizationNotFoundException.class);
+    }
+
+    @Test
     @DisplayName("invite info explains why a token cannot be used")
     void inviteInfo() {
         UserInvite valid = invite("valid@escritorio.com");

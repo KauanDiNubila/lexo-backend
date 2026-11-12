@@ -101,8 +101,8 @@ class InMemoryAuth implements SaveUserPort, LoadUserPort, UserExistsPort, ListUs
     }
 
     @Override
-    public void delete(UserId id) {
-        users.remove(id.value());
+    public void delete(OrganizationId organizationId, UserId id) {
+        inOrganization(organizationId, id).ifPresent(user -> users.remove(id.value()));
     }
 
     @Override

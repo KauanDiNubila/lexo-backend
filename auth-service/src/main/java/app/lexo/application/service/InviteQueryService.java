@@ -9,6 +9,7 @@ import app.lexo.application.port.out.LoadInvitePort;
 import app.lexo.application.port.out.LoadOrganizationPort;
 import app.lexo.domain.Organization;
 import app.lexo.domain.OrganizationId;
+import app.lexo.domain.OrganizationNotFoundException;
 import app.lexo.domain.UserInvite;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,8 +20,6 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 class InviteQueryService implements ListPendingInvitesQuery, GetInviteInfoQuery {
-
-    private static final String DEFAULT_ORGANIZATION_NAME = "Lexo";
 
     private final ListPendingInvitesPort listPendingInvitesPort;
     private final LoadInvitePort loadInvitePort;
@@ -60,6 +59,6 @@ class InviteQueryService implements ListPendingInvitesQuery, GetInviteInfoQuery 
 
     private String organizationNameOf(UserInvite invite) {
         return loadOrganizationPort.byId(invite.organizationId()).map(Organization::name)
-                .orElse(DEFAULT_ORGANIZATION_NAME);
+                .orElseThrow(OrganizationNotFoundException::new);
     }
 }

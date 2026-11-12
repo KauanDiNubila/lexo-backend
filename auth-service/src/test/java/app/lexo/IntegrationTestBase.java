@@ -29,6 +29,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -88,10 +89,6 @@ public abstract class IntegrationTestBase {
 
     protected record Account(String userId, String orgId, String name, String email, String role,
                              String accessToken, String refreshToken) {
-
-        Account withRole(String newRole) {
-            return new Account(userId, orgId, name, email, newRole, accessToken, refreshToken);
-        }
     }
 
     protected Account ghost(String orgId) {
@@ -188,7 +185,7 @@ public abstract class IntegrationTestBase {
     }
 
     protected ResultActions login(String email, String password, String totpCode) throws Exception {
-        Map<String, Object> body = new java.util.HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("email", email);
         body.put("password", password);
         body.put("totpCode", totpCode);

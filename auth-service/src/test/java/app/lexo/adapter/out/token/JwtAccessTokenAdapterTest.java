@@ -17,6 +17,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,7 +38,7 @@ class JwtAccessTokenAdapterTest {
 
     private Claims parse(String token, String secret) {
         return Jwts.parser().verifyWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8))).clock(
-                () -> java.util.Date.from(NOW)).build().parseSignedClaims(token).getPayload();
+                () -> Date.from(NOW)).build().parseSignedClaims(token).getPayload();
     }
 
     @Test

@@ -132,13 +132,17 @@ class PersistenceAdaptersIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("deleting a user removes only that user")
+    @DisplayName("deleting a user removes only that user, and only inside the organization")
     void userDeletion() {
         Organization organization = newOrganization();
         User first = newUser(organization.id(), "Ana", Role.ADMIN);
         User second = newUser(organization.id(), "Bruno", Role.ADVOGADO);
 
-        users.delete(first.id());
+        users.delete(newOrganization().id(), first.id());
+        entityManager.flush();
+        assertThat(users.byId(first.id())).isPresent();
+
+        users.delete(organization.id(), first.id());
         entityManager.flush();
 
         assertThat(users.byId(first.id())).isEmpty();

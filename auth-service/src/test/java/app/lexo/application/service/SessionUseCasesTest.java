@@ -308,7 +308,7 @@ class SessionUseCasesTest {
     void refreshForDeletedUser() {
         User user = h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
         String token = sessionFor(user);
-        h.store.delete(user.id());
+        h.store.delete(user.organizationId(), user.id());
 
         assertThatThrownBy(() -> refresh.refresh(new RefreshSessionCommand(token)))
                 .isInstanceOf(InvalidRefreshTokenException.class);

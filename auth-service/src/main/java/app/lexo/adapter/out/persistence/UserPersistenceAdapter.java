@@ -72,7 +72,7 @@ class UserPersistenceAdapter implements SaveUserPort, LoadUserPort, UserExistsPo
     }
 
     @Override
-    public void delete(UserId id) {
-        repository.deleteById(id.value());
+    public void delete(OrganizationId organizationId, UserId id) {
+        repository.deleteByIdAndOrganizationId(id.value(), organizationId.value());
     }
 }

@@ -8,12 +8,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 
 import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -143,8 +146,8 @@ class TeamApiBehaviorTest extends IntegrationTestBase {
     @DisplayName("inviting still succeeds when the email queue is down")
     void invitingSurvivesQueueFailure() throws Exception {
         Account admin = registerAdmin();
-        org.mockito.Mockito.doThrow(new IllegalStateException("rabbit down")).when(rabbit)
-                .convertAndSend(eq(RabbitConfig.EXCHANGE), eq(RabbitConfig.ROUTING_KEY), org.mockito.ArgumentMatchers.<Object>any());
+        doThrow(new IllegalStateException("rabbit down")).when(rabbit)
+                .convertAndSend(eq(RabbitConfig.EXCHANGE), eq(RabbitConfig.ROUTING_KEY), ArgumentMatchers.<Object>any());
 
         postAs(admin, "/api/usuarios/convites", invitation(uniqueEmail(), "ADVOGADO"))
                 .andExpect(status().isCreated());
@@ -165,7 +168,7 @@ class TeamApiBehaviorTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.code").value("CONFLITO"))
                 .andExpect(jsonPath("$.error").value("Já existe um usuário com este email"));
         verify(rabbit, never()).convertAndSend(eq(RabbitConfig.EXCHANGE), eq(RabbitConfig.ROUTING_KEY),
-                org.mockito.ArgumentMatchers.<Object>any());
+                ArgumentMatchers.<Object>any());
     }
 
     @Test
@@ -236,7 +239,7 @@ class TeamApiBehaviorTest extends IntegrationTestBase {
         Account admin = registerAdmin();
         String email = uniqueEmail();
         String id = inviteId(admin, email);
-        org.mockito.Mockito.clearInvocations(events);
+        clearInvocations(events);
 
         deleteAs(admin, "/api/usuarios/convites/" + id).andExpect(status().isNoContent());
 
@@ -255,7 +258,7 @@ class TeamApiBehaviorTest extends IntegrationTestBase {
         Account admin = registerAdmin();
         Account other = registerAdmin();
         String foreign = inviteId(other, uniqueEmail());
-        org.mockito.Mockito.clearInvocations(events);
+        clearInvocations(events);
 
         deleteAs(admin, "/api/usuarios/convites/" + UUID.randomUUID()).andExpect(status().isNoContent());
         deleteAs(admin, "/api/usuarios/convites/" + foreign).andExpect(status().isNoContent());

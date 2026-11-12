@@ -16,6 +16,8 @@ import app.lexo.common.security.Role;
 import app.lexo.domain.EmailAddress;
 import app.lexo.domain.InviteId;
 import app.lexo.domain.Organization;
+import app.lexo.domain.OrganizationId;
+import app.lexo.domain.OrganizationNotFoundException;
 import app.lexo.domain.RefreshToken;
 import app.lexo.domain.User;
 import app.lexo.domain.UserInvite;
@@ -124,6 +126,16 @@ class TeamUseCasesTest {
                 Role.ADVOGADO));
 
         assertThat(inviteCarla()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("inviting for an organization that does not exist fails before anything is sent")
+    void invitingForMissingOrganization() {
+        assertThatThrownBy(() -> invite.invite(new InviteUserCommand(new OrganizationId("missing"), actor,
+                "Carla Nova", NEW_EMAIL, Role.SECRETARIA))).isInstanceOf(OrganizationNotFoundException.class);
+
+        assertThat(h.emails.sent).isEmpty();
+        assertThat(h.events.published).isEmpty();
     }
 
     @Test

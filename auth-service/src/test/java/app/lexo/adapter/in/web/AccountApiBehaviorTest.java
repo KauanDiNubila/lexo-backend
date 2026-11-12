@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -136,15 +137,8 @@ class AccountApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("the account endpoints need authentication")
-    void needAuthentication() throws Exception {
-        int unauthenticated = mvcStatus("/api/conta");
-
-        assertThat(unauthenticated).isIn(401, 403);
-    }
-
-    private int mvcStatus(String url) throws Exception {
-        return mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(url))
-                .andReturn().getResponse().getStatus();
+    @DisplayName("the account endpoint needs authentication")
+    void needsAuthentication() throws Exception {
+        mvc.perform(get("/api/conta")).andExpect(status().isForbidden());
     }
 }

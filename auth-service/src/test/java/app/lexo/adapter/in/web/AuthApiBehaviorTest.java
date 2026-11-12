@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -23,9 +24,11 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -67,7 +70,7 @@ class AuthApiBehaviorTest extends IntegrationTestBase {
                 "select name, plan, trial_ends_at from organizations where id = ?", user.get("organizationId").asText());
         assertThat(organization.get("name")).isEqualTo("Escritorio Silva");
         assertThat(organization.get("plan")).isEqualTo("trial");
-        Instant trialEnds = ((java.sql.Timestamp) organization.get("trial_ends_at")).toInstant();
+        Instant trialEnds = ((Timestamp) organization.get("trial_ends_at")).toInstant();
         assertThat(Duration.between(Instant.now(), trialEnds).toDays()).isBetween(28L, 30L);
 
         Map<String, Object> stored = jdbc.queryForMap(
@@ -93,7 +96,7 @@ class AuthApiBehaviorTest extends IntegrationTestBase {
                 "select token_hash, revoked_at, expires_at from refresh_tokens where user_id = ?", userId);
         assertThat(row.get("token_hash")).isEqualTo(sha256(raw)).isNotEqualTo(raw);
         assertThat(row.get("revoked_at")).isNull();
-        Instant expires = ((java.sql.Timestamp) row.get("expires_at")).toInstant();
+        Instant expires = ((Timestamp) row.get("expires_at")).toInstant();
         assertThat(Duration.between(Instant.now(), expires).toDays()).isBetween(28L, 30L);
     }
 
@@ -144,9 +147,9 @@ class AuthApiBehaviorTest extends IntegrationTestBase {
         postPublic("/api/auth/register", registration("not-an-email", "short", "short"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDACAO"))
-                .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("Email inválido")))
+                .andExpect(jsonPath("$.error").value(containsString("Email inválido")))
                 .andExpect(jsonPath("$.error").value(
-                        org.hamcrest.Matchers.containsString("Senha deve ter ao menos 8 caracteres")));
+                        containsString("Senha deve ter ao menos 8 caracteres")));
     }
 
     @Test
@@ -273,7 +276,7 @@ class AuthApiBehaviorTest extends IntegrationTestBase {
 
         login(email, "senha-errada-123", null).andExpect(status().isUnauthorized());
 
-        org.mockito.Mockito.verify(redis, org.mockito.Mockito.never()).delete(anyString());
+        verify(redis, never()).delete(anyString());
     }
 
     @Test

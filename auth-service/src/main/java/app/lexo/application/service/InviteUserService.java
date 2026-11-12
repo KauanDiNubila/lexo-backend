@@ -13,6 +13,7 @@ import app.lexo.application.port.out.SendInviteEmailPort;
 import app.lexo.application.port.out.UserExistsPort;
 import app.lexo.common.error.ConflictException;
 import app.lexo.domain.Organization;
+import app.lexo.domain.OrganizationNotFoundException;
 import app.lexo.domain.UserInvite;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +24,6 @@ import java.time.Instant;
 @Service
 @Transactional
 class InviteUserService implements InviteUserUseCase {
-
-    private static final String DEFAULT_ORGANIZATION_NAME = "Lexo";
 
     private final UserExistsPort userExistsPort;
     private final PendingInviteExistsPort pendingInviteExistsPort;
@@ -60,7 +59,7 @@ class InviteUserService implements InviteUserUseCase {
                 command.email(), command.role(), now));
 
         String organizationName = loadOrganizationPort.byId(command.organizationId())
-                .map(Organization::name).orElse(DEFAULT_ORGANIZATION_NAME);
+                .map(Organization::name).orElseThrow(OrganizationNotFoundException::new);
         sendInviteEmailPort.send(new InviteEmail(command.email(), command.name(), organizationName,
                 invite.token()));
         publishEventPort.publish(AccountEvent.userInvited(command.organizationId(), command.actor(),

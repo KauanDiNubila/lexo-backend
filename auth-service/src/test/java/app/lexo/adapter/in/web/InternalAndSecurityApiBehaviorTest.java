@@ -1,7 +1,6 @@
 package app.lexo.adapter.in.web;
 
 import app.lexo.IntegrationTestBase;
-import app.lexo.common.signing.GatewaySignature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -11,6 +10,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -66,16 +67,16 @@ class InternalAndSecurityApiBehaviorTest extends IntegrationTestBase {
         int gatewayCaller = mvc.perform(get("/internal/usuarios/{id}/existe", admin.userId())
                 .param("orgId", admin.orgId()).headers(asGateway(admin))).andReturn().getResponse().getStatus();
 
-        assertThat(withoutKey).isIn(401, 403);
-        assertThat(wrongKey).isIn(401, 403);
-        assertThat(gatewayCaller).isIn(401, 403);
+        assertThat(withoutKey).isEqualTo(403);
+        assertThat(wrongKey).isEqualTo(403);
+        assertThat(gatewayCaller).isEqualTo(403);
     }
 
     @Test
     @DisplayName("protected endpoints refuse calls without gateway headers")
     void protectedNeedsGatewayHeaders() throws Exception {
-        assertThat(mvc.perform(get("/api/conta")).andReturn().getResponse().getStatus()).isIn(401, 403);
-        assertThat(mvc.perform(get("/api/usuarios")).andReturn().getResponse().getStatus()).isIn(401, 403);
+        mvc.perform(get("/api/conta")).andExpect(status().isForbidden());
+        mvc.perform(get("/api/usuarios")).andExpect(status().isForbidden());
     }
 
     @Test
@@ -92,32 +93,27 @@ class InternalAndSecurityApiBehaviorTest extends IntegrationTestBase {
 
         for (HttpHeaders headers : new HttpHeaders[] {unsigned, wrongKey, stale, tampered}) {
             int result = mvc.perform(get("/api/conta").headers(headers)).andReturn().getResponse().getStatus();
-            assertThat(result).isIn(401, 403);
+            assertThat(result).isEqualTo(403);
         }
         mvc.perform(get("/api/conta").headers(asGateway(admin))).andExpect(status().isOk());
-        assertThat(GatewaySignature.H_TIMESTAMP).isNotBlank();
     }
 
     @Test
     @DisplayName("swagger and the invite info are public")
     void publicPaths() throws Exception {
-        assertThat(mvc.perform(get("/v3/api-docs")).andReturn().getResponse().getStatus()).isNotIn(401, 403);
+        mvc.perform(get("/v3/api-docs")).andExpect(status().isOk());
         assertThat(mvc.perform(get("/api/convites/info/x")).andReturn().getResponse().getStatus()).isEqualTo(200);
     }
 
     @Test
     @DisplayName("CORS answers the configured origin with credentials")
     void cors() throws Exception {
-        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options("/api/auth/login")
+        mvc.perform(options("/api/auth/login")
                 .header("Origin", "http://localhost:3000").header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
-                        .string("Access-Control-Allow-Origin", "http://localhost:3000"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
-                        .string("Access-Control-Allow-Credentials", "true"));
-        int foreign = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                .options("/api/auth/login").header("Origin", "http://evil.example.com")
-                .header("Access-Control-Request-Method", "POST")).andReturn().getResponse().getStatus();
-        assertThat(foreign).isEqualTo(403);
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:3000"))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+        mvc.perform(options("/api/auth/login").header("Origin", "http://evil.example.com")
+                .header("Access-Control-Request-Method", "POST")).andExpect(status().isForbidden());
     }
 }

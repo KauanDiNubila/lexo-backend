@@ -43,7 +43,7 @@ class RemoveUserService implements RemoveUserUseCase {
         User user = loadUserPort.inOrganization(command.organizationId(), command.targetId())
                 .orElseThrow(UserNotFoundException::new);
         revokeUserRefreshTokensPort.revokeAll(command.targetId(), clock.instant());
-        deleteUserPort.delete(command.targetId());
+        deleteUserPort.delete(command.organizationId(), command.targetId());
         publishEventPort.publish(AccountEvent.userRemoved(command.organizationId(), command.actor(), user));
     }
 }

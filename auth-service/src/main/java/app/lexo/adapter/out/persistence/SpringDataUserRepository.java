@@ -18,4 +18,6 @@ interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, String> 
     boolean existsByIdAndOrganizationId(String id, String organizationId);
 
     long countByOrganizationId(String organizationId);
+
+    void deleteByIdAndOrganizationId(String id, String organizationId);
 }
