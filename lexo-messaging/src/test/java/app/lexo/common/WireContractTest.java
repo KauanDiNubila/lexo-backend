@@ -54,7 +54,9 @@ class WireContractTest {
     @DisplayName("event type codes are the values stored and exchanged today")
     void eventTypeCodes() {
         assertThat(EventType.values()).extracting(EventType::code).containsExactly(
-                "CLIENTE_CRIADO", "CLIENTE_EXCLUIDO", "PROCESSO_CRIADO", "PROCESSO_ATUALIZADO", "PROCESSO_EXCLUIDO");
+                "CLIENTE_CRIADO", "CLIENTE_EXCLUIDO", "PROCESSO_CRIADO", "PROCESSO_ATUALIZADO", "PROCESSO_EXCLUIDO",
+                "CONVIDOU_USUARIO", "REVOGOU_CONVITE", "ALTEROU_PAPEL", "REMOVEU_USUARIO", "ATIVOU_2FA",
+                "DESATIVOU_2FA");
     }
 
     @Test

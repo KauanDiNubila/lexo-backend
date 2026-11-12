@@ -1,68 +1,50 @@
 package app.lexo.domain;
 
-import app.lexo.common.domain.BaseEntity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
-@Entity
-@Table(name = "organizations")
-public class Organization extends BaseEntity {
+public class Organization {
 
-    @Column(nullable = false)
+    private static final String TRIAL_PLAN = "trial";
+    private static final long TRIAL_DAYS = 30;
+
+    private final OrganizationId id;
     private String name;
+    private final String plan;
+    private final Instant trialEndsAt;
 
-    @Column(nullable = false)
-    private String plan = "trial";
-
-    private Instant trialEndsAt;
-
-    @Column(unique = true)
-    private String stripeCustomerId;
-
-    @Column(unique = true)
-    private String stripeSubscriptionId;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
+    private Organization(OrganizationId id, String name, String plan, Instant trialEndsAt) {
+        this.id = id;
         this.name = name;
-    }
-
-    public String getPlan() {
-        return plan;
-    }
-
-    public void setPlan(String plan) {
         this.plan = plan;
-    }
-
-    public Instant getTrialEndsAt() {
-        return trialEndsAt;
-    }
-
-    public void setTrialEndsAt(Instant trialEndsAt) {
         this.trialEndsAt = trialEndsAt;
     }
 
-    public String getStripeCustomerId() {
-        return stripeCustomerId;
+    public static Organization register(String name, Instant now) {
+        return new Organization(null, name, TRIAL_PLAN, now.plus(TRIAL_DAYS, ChronoUnit.DAYS));
     }
 
-    public void setStripeCustomerId(String stripeCustomerId) {
-        this.stripeCustomerId = stripeCustomerId;
+    public static Organization restore(OrganizationId id, String name, String plan, Instant trialEndsAt) {
+        return new Organization(id, name, plan, trialEndsAt);
     }
 
-    public String getStripeSubscriptionId() {
-        return stripeSubscriptionId;
+    public void rename(String newName) {
+        this.name = newName.trim();
     }
 
-    public void setStripeSubscriptionId(String stripeSubscriptionId) {
-        this.stripeSubscriptionId = stripeSubscriptionId;
+    public OrganizationId id() {
+        return id;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public String plan() {
+        return plan;
+    }
+
+    public Instant trialEndsAt() {
+        return trialEndsAt;
     }
 }
