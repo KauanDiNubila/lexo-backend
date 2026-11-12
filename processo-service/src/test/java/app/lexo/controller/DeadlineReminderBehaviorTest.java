@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +22,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -140,8 +142,8 @@ class DeadlineReminderBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("when the queue is down the deadline is still marked as notified today, and the reminder is lost")
-    void queueDownLosesReminder() throws Exception {
+    @DisplayName("when the queue is down the deadline stays pending and is reminded once the queue is back")
+    void queueDownKeepsDeadlinePending() throws Exception {
         Identity id = Identity.create();
         String responsibleId = newId();
         responsibleWithEmail(responsibleId, UUID.randomUUID() + "@firm.com");
@@ -150,9 +152,32 @@ class DeadlineReminderBehaviorTest extends IntegrationTestBase {
         doThrow(new RuntimeException("queue down")).when(rabbit)
                 .convertAndSend(anyString(), anyString(), any(Object.class));
 
-        assertThat(runReminders()).isEqualTo(1);
+        assertThat(runReminders()).isZero();
+        assertThat(wasNotified(deadlineId)).isFalse();
 
+        reset(rabbit);
+        assertThat(runReminders()).isEqualTo(1);
         assertThat(wasNotified(deadlineId)).isTrue();
+    }
+
+    @Test
+    @DisplayName("moving a notified deadline to a new date re-arms its reminder")
+    void rescheduledDeadlineIsRemindedAgain() throws Exception {
+        Identity id = Identity.create();
+        String responsibleId = newId();
+        String address = UUID.randomUUID() + "@firm.com";
+        responsibleWithEmail(responsibleId, address);
+        String caseId = caseWithResponsible(id, responsibleId, "NT-006");
+        String deadlineId = createDeadline(id, caseId, "PRAZO", Duration.ofDays(1));
+        assertThat(runReminders()).isEqualTo(1);
+        assertThat(runReminders()).isZero();
+
+        putAs(id, "/api/agenda/" + deadlineId, Map.of("caseId", caseId, "title", "Respond", "type", "PRAZO",
+                "date", Instant.now().plus(Duration.ofDays(2)).toString())).andExpect(status().isOk());
+
+        assertThat(wasNotified(deadlineId)).isFalse();
+        assertThat(runReminders()).isEqualTo(1);
+        verifyEmails(address, 2);
     }
 
     @Test

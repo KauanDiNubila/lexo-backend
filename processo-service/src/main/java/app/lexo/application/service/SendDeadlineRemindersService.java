@@ -82,7 +82,7 @@ class SendDeadlineRemindersService implements SendDeadlineRemindersUseCase {
                 notified++;
             }
         }
-        log.info("[cron] deadline reminders: {} sent, {} skipped without recipient", notified, due.size() - notified);
+        log.info("[cron] deadline reminders: {} sent, {} skipped", notified, due.size() - notified);
         return notified;
     }
 
@@ -102,9 +102,13 @@ class SendDeadlineRemindersService implements SendDeadlineRemindersUseCase {
                     responsible.value(), deadline.data().title());
             return false;
         }
-        sendReminderPort.send(new DeadlineReminder(contact.name(), contact.email(), deadline.data().title(),
-                deadline.data().date()));
-        return true;
+        boolean queued = sendReminderPort.send(new DeadlineReminder(contact.name(), contact.email(),
+                deadline.data().title(), deadline.data().date()));
+        if (!queued) {
+            log.warn("[cron] reminder of deadline \"{}\" could not be queued, it will be retried on the next run",
+                    deadline.data().title());
+        }
+        return queued;
     }
 
     private record ContactKey(OrganizationId organizationId, UserId userId) {

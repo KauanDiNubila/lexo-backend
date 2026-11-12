@@ -32,6 +32,9 @@ public class Deadline {
     }
 
     public void update(DeadlineData newData) {
+        if (!newData.date().equals(data.date())) {
+            this.notifiedAt = null;
+        }
         this.data = newData;
     }
 

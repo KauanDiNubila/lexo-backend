@@ -43,16 +43,28 @@ class DeadlineTest {
     }
 
     @Test
-    @DisplayName("updating replaces the data but keeps the status and the notification mark")
-    void updateKeepsStatusAndNotification() {
+    @DisplayName("updating without changing the date keeps the status and the notification mark")
+    void updateKeepsNotificationWhenTheDateStays() {
         Deadline deadline = Deadline.restore(new DeadlineId("d-1"), ORGANIZATION,
                 data(DeadlineType.DEADLINE, Duration.ofDays(1)), DeadlineStatus.COMPLETED, NOW);
 
-        deadline.update(data(DeadlineType.HEARING, Duration.ofDays(30)));
+        deadline.update(data(DeadlineType.HEARING, Duration.ofDays(1)));
 
         assertThat(deadline.data().type()).isEqualTo(DeadlineType.HEARING);
         assertThat(deadline.status()).isEqualTo(DeadlineStatus.COMPLETED);
         assertThat(deadline.notifiedAt()).isEqualTo(NOW);
+    }
+
+    @Test
+    @DisplayName("moving the date clears the notification mark and keeps the status")
+    void updateRearmsReminderWhenTheDateChanges() {
+        Deadline deadline = Deadline.restore(new DeadlineId("d-1"), ORGANIZATION,
+                data(DeadlineType.DEADLINE, Duration.ofDays(1)), DeadlineStatus.PENDING, NOW);
+
+        deadline.update(data(DeadlineType.DEADLINE, Duration.ofDays(30)));
+
+        assertThat(deadline.notifiedAt()).isNull();
+        assertThat(deadline.status()).isEqualTo(DeadlineStatus.PENDING);
     }
 
     @Test
