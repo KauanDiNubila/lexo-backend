@@ -18,7 +18,7 @@ public record InvoiceResponse(
         Instant paidAt
 ) {
 
-    public static InvoiceResponse of(Invoice invoice) {
+    public static InvoiceResponse of(Invoice invoice, Instant now) {
         InvoiceData data = invoice.data();
         return new InvoiceResponse(
                 invoice.id().value(),
@@ -26,7 +26,7 @@ public record InvoiceResponse(
                 data.caseId() == null ? null : data.caseId().value(),
                 data.description(),
                 data.amount(),
-                data.status(),
+                invoice.statusAt(now),
                 data.dueDate(),
                 invoice.paidAt());
     }

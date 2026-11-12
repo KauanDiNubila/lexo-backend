@@ -30,9 +30,19 @@ class InvoiceTest {
     }
 
     @Test
-    @DisplayName("today, updating a PAID invoice stamps paidAt again")
-    void updateRestampsPaidAt() {
+    @DisplayName("updating an invoice that stays PAID keeps the original paidAt")
+    void updateKeepsPaidAtWhileStillPaid() {
         Invoice invoice = Invoice.issue(ORGANIZATION, data(InvoiceStatus.PAID), NOW);
+
+        invoice.update(data(InvoiceStatus.PAID), LATER);
+
+        assertThat(invoice.paidAt()).isEqualTo(NOW);
+    }
+
+    @Test
+    @DisplayName("updating an invoice into PAID stamps paidAt")
+    void updateStampsWhenEnteringPaid() {
+        Invoice invoice = Invoice.issue(ORGANIZATION, data(InvoiceStatus.PENDING), NOW);
 
         invoice.update(data(InvoiceStatus.PAID), LATER);
 
@@ -51,16 +61,38 @@ class InvoiceTest {
     }
 
     @Test
-    @DisplayName("changing the status to PAID stamps paidAt; today, leaving PAID keeps it")
+    @DisplayName("changing the status stamps paidAt on entering PAID, keeps it while PAID and clears it on leaving")
     void changeStatus() {
         Invoice invoice = Invoice.issue(ORGANIZATION, data(InvoiceStatus.PENDING), NOW);
 
         invoice.changeStatus(InvoiceStatus.PAID, NOW);
         assertThat(invoice.paidAt()).isEqualTo(NOW);
 
-        invoice.changeStatus(InvoiceStatus.PENDING, LATER);
+        invoice.changeStatus(InvoiceStatus.PAID, LATER);
         assertThat(invoice.paidAt()).isEqualTo(NOW);
+
+        invoice.changeStatus(InvoiceStatus.PENDING, LATER);
+        assertThat(invoice.paidAt()).isNull();
         assertThat(invoice.data().status()).isEqualTo(InvoiceStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("a PENDING invoice past its due date is OVERDUE when read; any other status is read as stored")
+    void statusAt() {
+        Instant past = Instant.parse("2026-01-01T00:00:00Z");
+        Instant future = Instant.parse("2027-01-01T00:00:00Z");
+
+        assertThat(withDue(InvoiceStatus.PENDING, past).statusAt(NOW)).isEqualTo(InvoiceStatus.OVERDUE);
+        assertThat(withDue(InvoiceStatus.PENDING, future).statusAt(NOW)).isEqualTo(InvoiceStatus.PENDING);
+        assertThat(withDue(InvoiceStatus.PAID, past).statusAt(NOW)).isEqualTo(InvoiceStatus.PAID);
+        assertThat(withDue(InvoiceStatus.CANCELLED, past).statusAt(NOW)).isEqualTo(InvoiceStatus.CANCELLED);
+        assertThat(withDue(InvoiceStatus.OVERDUE, future).statusAt(NOW)).isEqualTo(InvoiceStatus.OVERDUE);
+        assertThat(withDue(InvoiceStatus.PENDING, past).data().status()).isEqualTo(InvoiceStatus.PENDING);
+    }
+
+    private Invoice withDue(InvoiceStatus status, Instant dueDate) {
+        return Invoice.issue(ORGANIZATION, new InvoiceData(new ClientId("client-1"), null, "Consultation",
+                new BigDecimal("100.00"), status, dueDate), NOW);
     }
 
     @Test
