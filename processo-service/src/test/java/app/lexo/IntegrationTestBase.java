@@ -1,7 +1,7 @@
 package app.lexo;
 
-import app.lexo.client.AuthServiceClient;
-import app.lexo.client.ClienteServiceClient;
+import app.lexo.adapter.out.client.ClientServiceClient;
+import app.lexo.adapter.out.client.UserServiceClient;
 import app.lexo.common.kafka.EventPublisher;
 import app.lexo.common.reference.ExistsResponse;
 import app.lexo.common.signing.GatewaySignature;
@@ -70,10 +70,10 @@ public abstract class IntegrationTestBase {
     protected JdbcTemplate jdbc;
 
     @MockitoBean
-    protected ClienteServiceClient clientService;
+    protected ClientServiceClient clientService;
 
     @MockitoBean
-    protected AuthServiceClient authService;
+    protected UserServiceClient userService;
 
     @MockitoBean
     protected EventPublisher events;
@@ -101,8 +101,8 @@ public abstract class IntegrationTestBase {
 
     @BeforeEach
     void clientAndResponsibleExist() {
-        when(clientService.clienteExiste(anyString(), anyString())).thenReturn(new ExistsResponse(true));
-        when(authService.usuarioExiste(anyString(), anyString())).thenReturn(new ExistsResponse(true));
+        when(clientService.clientExists(anyString(), anyString())).thenReturn(new ExistsResponse(true));
+        when(userService.userExists(anyString(), anyString())).thenReturn(new ExistsResponse(true));
     }
 
     protected HttpHeaders asGateway(Identity id) {

@@ -60,7 +60,7 @@ class DeadlineReminderBehaviorTest extends IntegrationTestBase {
     }
 
     private void responsibleWithEmail(String responsibleId, String email) {
-        when(authService.buscarUsuario(eq(responsibleId), anyString()))
+        when(userService.findUser(eq(responsibleId), anyString()))
                 .thenReturn(new InternalUser(responsibleId, "Ana Lawyer", email));
     }
 
@@ -135,7 +135,7 @@ class DeadlineReminderBehaviorTest extends IntegrationTestBase {
         assertThat(runReminders()).isZero();
 
         verifyNoInteractions(rabbit);
-        verify(authService, never()).buscarUsuario(anyString(), anyString());
+        verify(userService, never()).findUser(anyString(), anyString());
         assertThat(wasNotified(deadlineId)).isFalse();
     }
 

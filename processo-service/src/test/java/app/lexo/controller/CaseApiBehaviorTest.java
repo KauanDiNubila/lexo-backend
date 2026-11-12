@@ -49,7 +49,7 @@ class CaseApiBehaviorTest extends IntegrationTestBase {
     void unknownClient() throws Exception {
         Identity id = Identity.create();
         String clientId = newId();
-        when(clientService.clienteExiste(eq(clientId), anyString())).thenReturn(new ExistsResponse(false));
+        when(clientService.clientExists(eq(clientId), anyString())).thenReturn(new ExistsResponse(false));
 
         postAs(id, "/api/processos", caseData(clientId, "0002-A"))
                 .andExpect(status().isNotFound())
@@ -64,7 +64,7 @@ class CaseApiBehaviorTest extends IntegrationTestBase {
     void unknownResponsible() throws Exception {
         Identity id = Identity.create();
         String responsibleId = newId();
-        when(authService.usuarioExiste(eq(responsibleId), anyString())).thenReturn(new ExistsResponse(false));
+        when(userService.userExists(eq(responsibleId), anyString())).thenReturn(new ExistsResponse(false));
         Map<String, Object> data = new HashMap<>(caseData(newId(), "0003-A"));
         data.put("responsavelId", responsibleId);
 
@@ -77,7 +77,7 @@ class CaseApiBehaviorTest extends IntegrationTestBase {
     @DisplayName("the client service being down returns 503")
     void clientServiceDown() throws Exception {
         Identity id = Identity.create();
-        when(clientService.clienteExiste(anyString(), anyString())).thenThrow(new RuntimeException("down"));
+        when(clientService.clientExists(anyString(), anyString())).thenThrow(new RuntimeException("down"));
 
         postAs(id, "/api/processos", caseData(newId(), "0004-A"))
                 .andExpect(status().isServiceUnavailable())
