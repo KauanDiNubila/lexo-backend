@@ -1,109 +1,98 @@
 package app.lexo.domain;
 
-import app.lexo.common.domain.BaseEntity;
-
 import app.lexo.common.security.Role;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Index;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
+
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
-@Entity
-@Table(
-        name = "user_invites",
-        indexes = {
-                @Index(name = "idx_invite_org", columnList = "organizationId"),
-                @Index(name = "idx_invite_token", columnList = "token")
-        }
-)
-public class UserInvite extends BaseEntity {
+public class UserInvite {
 
-    @Column(nullable = false)
-    private String organizationId;
+    private static final long VALID_DAYS = 7;
 
-    @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false)
-    private String email;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role = Role.ADVOGADO;
-
-    @Column(nullable = false, unique = true)
-    private String token;
-
-    @Column(nullable = false)
-    private Instant expiresAt;
-
+    private final InviteId id;
+    private final OrganizationId organizationId;
+    private final String name;
+    private final EmailAddress email;
+    private final Role role;
+    private final String token;
+    private final Instant expiresAt;
     private Instant acceptedAt;
+    private final Instant createdAt;
 
-    @PrePersist
-    void ensureToken() {
-        if (token == null) {
-            token = UUID.randomUUID().toString().replace("-", "");
-        }
+    private UserInvite(InviteId id, OrganizationId organizationId, String name, EmailAddress email, Role role,
+                       String token, Instant expiresAt, Instant acceptedAt, Instant createdAt) {
+        this.id = id;
+        this.organizationId = organizationId;
+        this.name = name;
+        this.email = email;
+        this.role = role;
+        this.token = token;
+        this.expiresAt = expiresAt;
+        this.acceptedAt = acceptedAt;
+        this.createdAt = createdAt;
     }
 
-    public String getOrganizationId() {
+    public static UserInvite issue(OrganizationId organizationId, String name, EmailAddress email, Role role,
+                                   Instant now) {
+        String token = UUID.randomUUID().toString().replace("-", "");
+        return new UserInvite(null, organizationId, name, email, role, token,
+                now.plus(VALID_DAYS, ChronoUnit.DAYS), null, null);
+    }
+
+    public static UserInvite restore(InviteId id, OrganizationId organizationId, String name, EmailAddress email,
+                                     Role role, String token, Instant expiresAt, Instant acceptedAt,
+                                     Instant createdAt) {
+        return new UserInvite(id, organizationId, name, email, role, token, expiresAt, acceptedAt, createdAt);
+    }
+
+    public InviteStatus statusAt(Instant now) {
+        if (acceptedAt != null) {
+            return InviteStatus.ACCEPTED;
+        }
+        if (expiresAt.isBefore(now)) {
+            return InviteStatus.EXPIRED;
+        }
+        return InviteStatus.PENDING;
+    }
+
+    public void accept(Instant now) {
+        this.acceptedAt = now;
+    }
+
+    public InviteId id() {
+        return id;
+    }
+
+    public OrganizationId organizationId() {
         return organizationId;
     }
 
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
-    }
-
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
+    public EmailAddress email() {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Role getRole() {
+    public Role role() {
         return role;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public String getToken() {
+    public String token() {
         return token;
     }
 
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public Instant getExpiresAt() {
+    public Instant expiresAt() {
         return expiresAt;
     }
 
-    public void setExpiresAt(Instant expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public Instant getAcceptedAt() {
+    public Instant acceptedAt() {
         return acceptedAt;
     }
 
-    public void setAcceptedAt(Instant acceptedAt) {
-        this.acceptedAt = acceptedAt;
+    public Instant createdAt() {
+        return createdAt;
     }
 }

@@ -1,103 +1,122 @@
 package app.lexo.domain;
 
-import app.lexo.common.domain.BaseEntity;
-
 import app.lexo.common.security.Role;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
 
-@Entity
-@Table(name = "users", indexes = @Index(name = "idx_user_org", columnList = "organizationId"))
-public class User extends BaseEntity {
+import java.time.Instant;
+import java.util.Optional;
 
-    @Column(nullable = false)
-    private String organizationId;
+public class User {
 
-    @Column(nullable = false)
+    private final UserId id;
+    private final OrganizationId organizationId;
     private String name;
+    private final EmailAddress email;
+    private final String passwordHash;
+    private Role role;
+    private String twoFactorSecret;
+    private boolean twoFactorEnabled;
+    private String pendingTwoFactorSecret;
+    private final Instant createdAt;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+    private User(UserId id, OrganizationId organizationId, String name, EmailAddress email, String passwordHash,
+                 Role role, String twoFactorSecret, boolean twoFactorEnabled, String pendingTwoFactorSecret,
+                 Instant createdAt) {
+        this.id = id;
+        this.organizationId = organizationId;
+        this.name = name;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.role = role;
+        this.twoFactorSecret = twoFactorSecret;
+        this.twoFactorEnabled = twoFactorEnabled;
+        this.pendingTwoFactorSecret = pendingTwoFactorSecret;
+        this.createdAt = createdAt;
+    }
 
-    @Column(nullable = false)
-    private String passwordHash;
+    public static User register(OrganizationId organizationId, String name, EmailAddress email,
+                                String passwordHash, Role role) {
+        return new User(null, organizationId, name, email, passwordHash, role, null, false, null, null);
+    }
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role = Role.ADVOGADO;
+    public static User restore(UserId id, OrganizationId organizationId, String name, EmailAddress email,
+                               String passwordHash, Role role, String twoFactorSecret, boolean twoFactorEnabled,
+                               String pendingTwoFactorSecret, Instant createdAt) {
+        return new User(id, organizationId, name, email, passwordHash, role, twoFactorSecret, twoFactorEnabled,
+                pendingTwoFactorSecret, createdAt);
+    }
 
-    private String totpSecret;
+    public void rename(String newName) {
+        this.name = newName.trim();
+    }
 
-    @Column(nullable = false)
-    private boolean totpEnabled = false;
+    public void changeRole(Role newRole) {
+        this.role = newRole;
+    }
 
-    private String totpPendingSecret;
+    public boolean requiresTwoFactor() {
+        return twoFactorEnabled && twoFactorSecret != null;
+    }
 
-    public String getOrganizationId() {
+    public boolean hasTwoFactorSecret() {
+        return twoFactorSecret != null;
+    }
+
+    public void beginTwoFactorSetup(String encryptedSecret) {
+        this.pendingTwoFactorSecret = encryptedSecret;
+    }
+
+    public Optional<String> pendingTwoFactorSecret() {
+        return Optional.ofNullable(pendingTwoFactorSecret);
+    }
+
+    public void confirmTwoFactorSetup() {
+        if (pendingTwoFactorSecret == null) {
+            throw new IllegalStateException("There is no two factor setup to confirm");
+        }
+        this.twoFactorSecret = pendingTwoFactorSecret;
+        this.twoFactorEnabled = true;
+        this.pendingTwoFactorSecret = null;
+    }
+
+    public void disableTwoFactor() {
+        this.twoFactorSecret = null;
+        this.twoFactorEnabled = false;
+        this.pendingTwoFactorSecret = null;
+    }
+
+    public UserId id() {
+        return id;
+    }
+
+    public OrganizationId organizationId() {
         return organizationId;
     }
 
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
-    }
-
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
+    public EmailAddress email() {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPasswordHash() {
+    public String passwordHash() {
         return passwordHash;
     }
 
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public Role getRole() {
+    public Role role() {
         return role;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
+    public String twoFactorSecret() {
+        return twoFactorSecret;
     }
 
-    public String getTotpSecret() {
-        return totpSecret;
+    public boolean twoFactorEnabled() {
+        return twoFactorEnabled;
     }
 
-    public void setTotpSecret(String totpSecret) {
-        this.totpSecret = totpSecret;
-    }
-
-    public boolean isTotpEnabled() {
-        return totpEnabled;
-    }
-
-    public void setTotpEnabled(boolean totpEnabled) {
-        this.totpEnabled = totpEnabled;
-    }
-
-    public String getTotpPendingSecret() {
-        return totpPendingSecret;
-    }
-
-    public void setTotpPendingSecret(String totpPendingSecret) {
-        this.totpPendingSecret = totpPendingSecret;
+    public Instant createdAt() {
+        return createdAt;
     }
 }
