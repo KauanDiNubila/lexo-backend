@@ -7,4 +7,8 @@ public record CaseId(String value) {
             throw new IllegalArgumentException("CaseId is empty");
         }
     }
+
+    public static CaseId optional(String value) {
+        return value == null || value.isBlank() ? null : new CaseId(value);
+    }
 }

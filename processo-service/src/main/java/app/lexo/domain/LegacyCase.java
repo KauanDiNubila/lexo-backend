@@ -42,6 +42,7 @@ public class LegacyCase extends BaseEntity {
     @Column(columnDefinition = "text")
     private String description;
 
+    @Column(name = "responsavel_id")
     private String responsavelId;
 
     public String getOrganizationId() {
