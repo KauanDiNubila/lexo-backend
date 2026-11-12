@@ -25,13 +25,24 @@ public class Invoice {
     }
 
     public void update(InvoiceData newData, Instant now) {
+        moveTo(newData.status(), now);
         this.data = newData;
-        this.paidAt = newData.status() == InvoiceStatus.PAID ? now : null;
     }
 
     public void changeStatus(InvoiceStatus newStatus, Instant now) {
+        moveTo(newStatus, now);
         this.data = data.withStatus(newStatus);
-        if (newStatus == InvoiceStatus.PAID) {
+    }
+
+    public InvoiceStatus statusAt(Instant now) {
+        boolean pastDue = data.status() == InvoiceStatus.PENDING && data.dueDate().isBefore(now);
+        return pastDue ? InvoiceStatus.OVERDUE : data.status();
+    }
+
+    private void moveTo(InvoiceStatus newStatus, Instant now) {
+        if (newStatus != InvoiceStatus.PAID) {
+            this.paidAt = null;
+        } else if (data.status() != InvoiceStatus.PAID) {
             this.paidAt = now;
         }
     }

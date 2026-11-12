@@ -21,6 +21,7 @@ import app.lexo.domain.OrganizationId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -37,19 +38,23 @@ class InvoiceQueryService implements ListInvoicesQuery, GetFinancialSummaryQuery
     private final SumInvoicesPort sumInvoicesPort;
     private final LoadInvoicesDuePort loadInvoicesDuePort;
     private final LoadClientInvoicesPort loadClientInvoicesPort;
+    private final Clock clock;
 
     InvoiceQueryService(ListInvoicesPort listInvoicesPort, SumInvoicesPort sumInvoicesPort,
-                        LoadInvoicesDuePort loadInvoicesDuePort, LoadClientInvoicesPort loadClientInvoicesPort) {
+                        LoadInvoicesDuePort loadInvoicesDuePort, LoadClientInvoicesPort loadClientInvoicesPort,
+                        Clock clock) {
         this.listInvoicesPort = listInvoicesPort;
         this.sumInvoicesPort = sumInvoicesPort;
         this.loadInvoicesDuePort = loadInvoicesDuePort;
         this.loadClientInvoicesPort = loadClientInvoicesPort;
+        this.clock = clock;
     }
 
     @Override
     public PageResult<InvoiceResponse> list(OrganizationId organizationId, PageParams pageParams) {
         PageResult<Invoice> page = listInvoicesPort.list(organizationId, pageParams);
-        List<InvoiceResponse> content = page.content().stream().map(InvoiceResponse::of).toList();
+        Instant now = clock.instant();
+        List<InvoiceResponse> content = page.content().stream().map(invoice -> InvoiceResponse.of(invoice, now)).toList();
         return new PageResult<>(content, page.page(), page.size(), page.totalElements(), page.totalPages());
     }
 
@@ -62,12 +67,15 @@ class InvoiceQueryService implements ListInvoicesQuery, GetFinancialSummaryQuery
 
     @Override
     public FinancialReport report(OrganizationId organizationId, Instant start, Instant end) {
-        InvoiceTotals totals = InvoiceTotals.of(loadInvoicesDuePort.dueBetween(organizationId, start, end));
+        InvoiceTotals totals = InvoiceTotals.of(loadInvoicesDuePort.dueBetween(organizationId, start, end),
+                clock.instant());
         return new FinancialReport(start, end, totals.paid(), totals.pending(), totals.overdue());
     }
 
     @Override
     public List<InvoiceResponse> list(OrganizationId organizationId, ClientId clientId) {
-        return loadClientInvoicesPort.ofClient(organizationId, clientId).stream().map(InvoiceResponse::of).toList();
+        Instant now = clock.instant();
+        return loadClientInvoicesPort.ofClient(organizationId, clientId).stream()
+                .map(invoice -> InvoiceResponse.of(invoice, now)).toList();
     }
 }

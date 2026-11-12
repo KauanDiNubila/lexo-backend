@@ -182,8 +182,8 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("today: editing an invoice that is already PAGO stamps paidAt again")
-    void updateRestampsPaidAt() throws Exception {
+    @DisplayName("editing an invoice that stays PAGO keeps the original paidAt")
+    void updateKeepsPaidAt() throws Exception {
         Identity id = Identity.create();
         String clientId = newId();
         String invoiceId = createInvoice(id, clientId, "paid", "10.00", "PAGO", in30Days);
@@ -194,7 +194,7 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
                 .andExpect(status().isOk());
 
         Instant second = Instant.parse(invoiceOf(id, invoiceId).get("paidAt").asText());
-        assertThat(second).isAfter(first);
+        assertThat(second).isEqualTo(first);
     }
 
     @Test
@@ -210,7 +210,7 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("changing the status to PAGO stamps paidAt; today, leaving PAGO keeps it")
+    @DisplayName("changing the status to PAGO stamps paidAt, to PAGO again keeps it, and leaving PAGO clears it")
     void changeStatus() throws Exception {
         Identity id = Identity.create();
         String invoiceId = createInvoice(id, newId(), "x", "10.00", "PENDENTE", in30Days);
@@ -220,10 +220,42 @@ class InvoiceApiBehaviorTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.status").value("PAGO"))
                 .andExpect(jsonPath("$.paidAt").exists());
 
+        Instant stamped = Instant.parse(invoiceOf(id, invoiceId).get("paidAt").asText());
+        patchAs(id, "/api/financeiro/" + invoiceId + "/status", Map.of("status", "PAGO")).andExpect(status().isOk());
+        assertThat(Instant.parse(invoiceOf(id, invoiceId).get("paidAt").asText())).isEqualTo(stamped);
+
         patchAs(id, "/api/financeiro/" + invoiceId + "/status", Map.of("status", "PENDENTE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PENDENTE"))
-                .andExpect(jsonPath("$.paidAt").exists());
+                .andExpect(jsonPath("$.paidAt").value(nullValue()));
+    }
+
+    @Test
+    @DisplayName("a PENDENTE invoice past its due date is shown as ATRASADO in the list, the report and the portal, "
+            + "but stored as PENDENTE")
+    void pendingPastDueIsShownAsOverdue() throws Exception {
+        Identity id = Identity.create();
+        String clientId = newId();
+        Instant dueDate = Instant.parse("2025-01-15T12:00:00Z");
+        String lateId = createInvoice(id, clientId, "late", "70.00", "PENDENTE", dueDate);
+        createInvoice(id, clientId, "paid late", "30.00", "PAGO", dueDate);
+        createInvoice(id, clientId, "future", "5.00", "PENDENTE", in30Days);
+        String portalClient = newId();
+        createInvoice(id, portalClient, "portal late", "9.00", "PENDENTE", Instant.parse("2025-02-01T12:00:00Z"));
+
+        assertThat(invoiceOf(id, lateId).get("status").asText()).isEqualTo("ATRASADO");
+        getAs(id, "/api/financeiro/relatorio?start=2025-01-01T00:00:00Z&end=2025-01-31T00:00:00Z")
+                .andExpect(jsonPath("$.totalAtrasado").value(70.0))
+                .andExpect(jsonPath("$.totalPendente").value(0))
+                .andExpect(jsonPath("$.totalPago").value(30.0));
+        mvc.perform(get("/internal/portal/honorarios").param("clientId", portalClient).param("orgId", id.orgId())
+                        .header("X-Internal-Key", INTERNAL_KEY))
+                .andExpect(jsonPath("$[0].status").value("ATRASADO"));
+        getAs(id, "/api/financeiro/resumo")
+                .andExpect(jsonPath("$.emAberto").value(84.0))
+                .andExpect(jsonPath("$.recebido").value(30.0));
+        assertThat(jdbc.queryForObject("select status from invoices where id = ?", String.class, lateId))
+                .isEqualTo("PENDENTE");
     }
 
     @Test

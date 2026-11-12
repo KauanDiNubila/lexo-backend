@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
 
 @Service
 @Transactional
@@ -27,7 +28,8 @@ class CreateInvoiceService implements CreateInvoiceUseCase {
     @Override
     public InvoiceResponse create(CreateInvoiceCommand command) {
         references.requireExist(command.organizationId(), command.data());
-        Invoice invoice = Invoice.issue(command.organizationId(), command.data(), clock.instant());
-        return InvoiceResponse.of(saveInvoicePort.save(invoice));
+        Instant now = clock.instant();
+        Invoice invoice = Invoice.issue(command.organizationId(), command.data(), now);
+        return InvoiceResponse.of(saveInvoicePort.save(invoice), now);
     }
 }

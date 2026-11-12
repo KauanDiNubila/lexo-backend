@@ -26,6 +26,7 @@ class InvoiceQueryServiceTest {
 
     private static final OrganizationId ORGANIZATION = new OrganizationId("organization-1");
     private static final Instant NOW = Instant.parse("2026-11-11T12:00:00Z");
+    private static final java.time.Clock CLOCK = java.time.Clock.fixed(NOW, java.time.ZoneOffset.UTC);
 
     private Invoice invoice(String amount, InvoiceStatus status, String description) {
         return Invoice.restore(new app.lexo.domain.InvoiceId("i-" + description), ORGANIZATION,
@@ -38,7 +39,7 @@ class InvoiceQueryServiceTest {
     void list() {
         Invoice invoice = invoice("10.00", InvoiceStatus.PENDING, "a");
         InvoiceQueryService service = new InvoiceQueryService(
-                (organization, params) -> new PageResult<>(List.of(invoice), 0, 20, 1, 1), null, null, null);
+                (organization, params) -> new PageResult<>(List.of(invoice), 0, 20, 1, 1), null, null, null, CLOCK);
 
         PageResult<InvoiceResponse> page = service.list(ORGANIZATION, new PageParams(0, 20, List.of()));
 
@@ -53,7 +54,7 @@ class InvoiceQueryServiceTest {
                 Set.of(InvoiceStatus.PENDING, InvoiceStatus.OVERDUE), new BigDecimal("150.50"),
                 Set.of(InvoiceStatus.PAID), new BigDecimal("200.00"));
         InvoiceQueryService service = new InvoiceQueryService(null,
-                (organization, statuses) -> sums.get(statuses), null, null);
+                (organization, statuses) -> sums.get(statuses), null, null, CLOCK);
 
         FinancialSummary summary = service.summarize(ORGANIZATION);
 
@@ -68,7 +69,7 @@ class InvoiceQueryServiceTest {
                 (organization, start, end) -> List.of(
                         invoice("100.00", InvoiceStatus.PAID, "a"), invoice("40.50", InvoiceStatus.PENDING, "b"),
                         invoice("10.25", InvoiceStatus.OVERDUE, "c"), invoice("999.00", InvoiceStatus.CANCELLED, "d")),
-                null);
+                null, CLOCK);
 
         FinancialReport report = service.report(ORGANIZATION, NOW, NOW.plusSeconds(60));
 
@@ -79,10 +80,29 @@ class InvoiceQueryServiceTest {
     }
 
     @Test
+    @DisplayName("a PENDING invoice past its due date is shown as OVERDUE in the list, the report and the client fees")
+    void pastDueIsShownAsOverdue() {
+        Invoice late = Invoice.restore(new app.lexo.domain.InvoiceId("i-late"), ORGANIZATION,
+                new InvoiceData(new ClientId("client-1"), null, "late", new BigDecimal("70.00"),
+                        InvoiceStatus.PENDING, Instant.parse("2026-01-01T00:00:00Z")), null);
+        InvoiceQueryService service = new InvoiceQueryService(
+                (organization, params) -> new PageResult<>(List.of(late), 0, 20, 1, 1), null,
+                (organization, start, end) -> List.of(late), (organization, client) -> List.of(late), CLOCK);
+
+        assertThat(service.list(ORGANIZATION, new PageParams(0, 20, List.of())).content())
+                .singleElement().extracting(InvoiceResponse::status).isEqualTo(InvoiceStatus.OVERDUE);
+        FinancialReport report = service.report(ORGANIZATION, NOW, NOW.plusSeconds(60));
+        assertThat(report.totalOverdue()).isEqualByComparingTo("70.00");
+        assertThat(report.totalPending()).isEqualByComparingTo("0");
+        assertThat(service.list(ORGANIZATION, new ClientId("client-1")))
+                .singleElement().extracting(InvoiceResponse::status).isEqualTo(InvoiceStatus.OVERDUE);
+    }
+
+    @Test
     @DisplayName("client fees list the client's invoices with their domain status")
     void clientFees() {
         InvoiceQueryService service = new InvoiceQueryService(null, null, null,
-                (organization, client) -> List.of(invoice("10.00", InvoiceStatus.OVERDUE, "late")));
+                (organization, client) -> List.of(invoice("10.00", InvoiceStatus.OVERDUE, "late")), CLOCK);
 
         List<InvoiceResponse> fees = service.list(ORGANIZATION, new ClientId("client-1"));
 

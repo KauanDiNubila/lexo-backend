@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
 
 @Service
 @Transactional
@@ -30,7 +31,8 @@ class ChangeInvoiceStatusService implements ChangeInvoiceStatusUseCase {
     public InvoiceResponse changeStatus(ChangeInvoiceStatusCommand command) {
         Invoice invoice = loadInvoicePort.byId(command.organizationId(), command.invoiceId())
                 .orElseThrow(InvoiceNotFoundException::new);
-        invoice.changeStatus(command.status(), clock.instant());
-        return InvoiceResponse.of(saveInvoicePort.save(invoice));
+        Instant now = clock.instant();
+        invoice.changeStatus(command.status(), now);
+        return InvoiceResponse.of(saveInvoicePort.save(invoice), now);
     }
 }
