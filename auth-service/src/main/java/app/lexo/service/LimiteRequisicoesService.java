@@ -4,9 +4,11 @@ import app.lexo.common.web.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import java.util.List;
 
 @Service
 public class LimiteRequisicoesService {
@@ -14,6 +16,10 @@ public class LimiteRequisicoesService {
     private static final Logger log = LoggerFactory.getLogger(LimiteRequisicoesService.class);
 
     private static final String PREFIXO = "ratelimit:";
+    private static final RedisScript<Long> INCREMENT_WITH_TTL = new DefaultRedisScript<>(
+            "local count = redis.call('INCR', KEYS[1]) "
+                    + "if redis.call('TTL', KEYS[1]) < 0 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end "
+                    + "return count", Long.class);
 
     private final StringRedisTemplate redis;
 
@@ -24,10 +30,7 @@ public class LimiteRequisicoesService {
     public boolean verificar(String key, int max, long windowSeconds) {
         String redisKey = PREFIXO + key;
         try {
-            Long count = redis.opsForValue().increment(redisKey);
-            if (count != null && count == 1L) {
-                redis.expire(redisKey, Duration.ofSeconds(windowSeconds));
-            }
+            Long count = redis.execute(INCREMENT_WITH_TTL, List.of(redisKey), String.valueOf(windowSeconds));
             return count == null || count <= max;
         } catch (Exception e) {
             log.error("[rate-limit] Redis indisponivel para \"{}\", recusando a requisicao", key, e);

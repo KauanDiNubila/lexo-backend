@@ -6,9 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.List;
 
 @Service
 public class LimiteIaService {
@@ -16,6 +19,10 @@ public class LimiteIaService {
     private static final Logger log = LoggerFactory.getLogger(LimiteIaService.class);
 
     private static final Duration JANELA = Duration.ofMinutes(1);
+    private static final RedisScript<Long> INCREMENT_WITH_TTL = new DefaultRedisScript<>(
+            "local count = redis.call('INCR', KEYS[1]) "
+                    + "if redis.call('TTL', KEYS[1]) < 0 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end "
+                    + "return count", Long.class);
 
     private final StringRedisTemplate redis;
     private final int limitePorMinuto;
@@ -30,10 +37,7 @@ public class LimiteIaService {
         String chave = "ratelimit:ia:" + organizationId;
         Long total;
         try {
-            total = redis.opsForValue().increment(chave);
-            if (total != null && total == 1L) {
-                redis.expire(chave, JANELA);
-            }
+            total = redis.execute(INCREMENT_WITH_TTL, List.of(chave), String.valueOf(JANELA.toSeconds()));
         } catch (Exception e) {
             log.error("[ia] Redis indisponivel para a organizacao {}, recusando a chamada",
                     organizationId, e);
