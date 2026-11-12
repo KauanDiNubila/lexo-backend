@@ -131,11 +131,12 @@ class DeadlinePersistenceAdapterIntegrationTest extends IntegrationTestBase {
         Deadline first = saveDeadline(owner, caseId, Duration.ofDays(1));
         Deadline second = saveDeadline(owner, caseId, Duration.ofDays(2));
 
-        delete.delete(newOrganization(), first.id());
+        assertThat(delete.delete(newOrganization(), first.id())).isFalse();
         deleteOfCase.deleteOfCase(newOrganization(), caseId);
         assertThat(load.byId(owner, first.id())).isPresent();
 
-        delete.delete(owner, first.id());
+        assertThat(delete.delete(owner, first.id())).isTrue();
+        assertThat(delete.delete(owner, first.id())).isFalse();
         assertThat(load.byId(owner, first.id())).isEmpty();
         deleteOfCase.deleteOfCase(owner, caseId);
         assertThat(load.byId(owner, second.id())).isEmpty();

@@ -30,9 +30,10 @@ class InMemoryMovements implements SaveMovementPort, DeleteMovementPort, DeleteM
     }
 
     @Override
-    public boolean delete(OrganizationId organizationId, MovementId movementId) {
+    public boolean delete(OrganizationId organizationId, CaseId caseId, MovementId movementId) {
         CaseMovement movement = movements.get(movementId.value());
-        if (movement == null || !movement.organizationId().equals(organizationId)) {
+        if (movement == null || !movement.organizationId().equals(organizationId)
+                || !movement.caseId().equals(caseId)) {
             return false;
         }
         movements.remove(movementId.value());

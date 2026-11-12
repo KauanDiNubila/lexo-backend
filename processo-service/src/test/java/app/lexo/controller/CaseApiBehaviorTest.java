@@ -99,17 +99,43 @@ class CaseApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("a repeated number in the same organization returns 500 today; in another organization it is allowed")
+    @DisplayName("a repeated number in the same organization returns 409; in another organization it is allowed")
     void repeatedNumber() throws Exception {
         Identity a = Identity.create();
         Identity b = Identity.create();
         createCase(a, newId(), "0005-A");
 
         postAs(a, "/api/processos", caseData(newId(), "0005-A"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value("ERRO_INTERNO"));
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONFLITO"))
+                .andExpect(jsonPath("$.error").value("J\u00e1 existe um processo com este n\u00famero"));
 
         postAs(b, "/api/processos", caseData(newId(), "0005-A")).andExpect(status().isCreated());
+    }
+
+    @Test
+    @DisplayName("renaming a case to a number already used in the organization returns 409 and keeps the old number")
+    void renameToRepeatedNumber() throws Exception {
+        Identity id = Identity.create();
+        createCase(id, newId(), "0011-A");
+        String second = createCase(id, newId(), "0011-B");
+
+        putAs(id, "/api/processos/" + second, caseData(newId(), "0011-A"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONFLITO"));
+
+        getAs(id, "/api/processos/" + second).andExpect(jsonPath("$.number").value("0011-B"));
+    }
+
+    @Test
+    @DisplayName("an invalid status filter returns 400 instead of 500")
+    void invalidStatusFilter() throws Exception {
+        Identity id = Identity.create();
+
+        getAs(id, "/api/processos?status=INEXISTENTE")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("REQUISICAO_INVALIDA"))
+                .andExpect(jsonPath("$.error").value("Par\u00e2metro inv\u00e1lido: status"));
     }
 
     @Test

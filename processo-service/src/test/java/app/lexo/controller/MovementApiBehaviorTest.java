@@ -76,16 +76,17 @@ class MovementApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("deleting through the URL of another case of the same organization deletes it today")
-    void deleteIgnoresCaseInPath() throws Exception {
+    @DisplayName("deleting through the URL of another case of the same organization returns 404 and keeps the movement")
+    void deleteChecksCaseInPath() throws Exception {
         Identity id = Identity.create();
         String firstCase = createCase(id, newId(), "AN-005");
         String secondCase = createCase(id, newId(), "AN-006");
         String movementId = createMovement(id, firstCase, "Hearing", Instant.now());
 
         deleteAs(id, "/api/processos/" + secondCase + "/andamentos/" + movementId)
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Andamento n\u00e3o encontrado"));
 
-        getAs(id, "/api/processos/" + firstCase + "/andamentos").andExpect(jsonPath("$.length()").value(0));
+        getAs(id, "/api/processos/" + firstCase + "/andamentos").andExpect(jsonPath("$.length()").value(1));
     }
 }

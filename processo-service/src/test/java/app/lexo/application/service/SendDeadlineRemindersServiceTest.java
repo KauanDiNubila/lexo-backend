@@ -39,13 +39,14 @@ class SendDeadlineRemindersServiceTest {
     private final List<DeadlineReminder> sent = new ArrayList<>();
     private final List<String> lookups = new ArrayList<>();
     private boolean windowFree = true;
+    private boolean queueUp = true;
     private final SendDeadlineRemindersService service = new SendDeadlineRemindersService(
             (key, ttl) -> windowFree, deadlines, cases,
             (organization, user) -> {
                 lookups.add(user.value());
                 return Optional.ofNullable(contacts.get(user.value()));
             },
-            sent::add, deadlines, Clock.fixed(NOW, ZoneOffset.UTC));
+            reminder -> queueUp && sent.add(reminder), deadlines, Clock.fixed(NOW, ZoneOffset.UTC));
 
     private CaseId openCase(String responsible) {
         return cases.save(Case.open(ORGANIZATION, new CaseData(new ClientId("client-1"), "N-" + sent.size(), null,
@@ -118,6 +119,21 @@ class SendDeadlineRemindersServiceTest {
 
         assertThat(lookups).containsExactly("user-1");
         assertThat(sent).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("a reminder that could not be queued is not counted and leaves the deadline unmarked, so the next run retries")
+    void unqueuedReminderIsRetried() {
+        contacts.put("user-1", new UserContact("Ana", "ana@firm.com"));
+        deadlineAt(openCase("user-1"), Duration.ofDays(1));
+        queueUp = false;
+
+        assertThat(service.sendReminders()).isZero();
+        assertThat(deadlines.all().get(0).notifiedAt()).isNull();
+
+        queueUp = true;
+        assertThat(service.sendReminders()).isEqualTo(1);
+        assertThat(deadlines.all().get(0).notifiedAt()).isNotNull();
     }
 
     @Test

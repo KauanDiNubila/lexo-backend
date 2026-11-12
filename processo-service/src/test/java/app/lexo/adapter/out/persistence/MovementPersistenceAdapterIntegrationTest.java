@@ -70,9 +70,12 @@ class MovementPersistenceAdapterIntegrationTest extends IntegrationTestBase {
         OrganizationId owner = newOrganization();
         CaseMovement saved = saveMovement(owner, new CaseId("case-3"), "Order", Duration.ZERO);
 
-        assertThat(delete.delete(newOrganization(), saved.id())).isFalse();
-        assertThat(delete.delete(owner, saved.id())).isTrue();
-        assertThat(delete.delete(owner, saved.id())).isFalse();
+        CaseId caseId = new CaseId("case-3");
+
+        assertThat(delete.delete(newOrganization(), caseId, saved.id())).isFalse();
+        assertThat(delete.delete(owner, new CaseId("another-case"), saved.id())).isFalse();
+        assertThat(delete.delete(owner, caseId, saved.id())).isTrue();
+        assertThat(delete.delete(owner, caseId, saved.id())).isFalse();
     }
 
     @Test

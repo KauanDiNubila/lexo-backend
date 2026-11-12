@@ -37,7 +37,9 @@ class OrganizationIsolationBehaviorTest extends IntegrationTestBase {
         toggleStatus(b, deadlineId, true).andExpect(status().isNotFound());
         putAs(b, "/api/agenda/" + deadlineId, Map.of("caseId", caseId, "title", "x", "type", "PRAZO",
                 "date", Instant.now().toString())).andExpect(status().isNotFound());
-        deleteAs(b, "/api/agenda/" + deadlineId).andExpect(status().isNoContent());
+        deleteAs(b, "/api/agenda/" + deadlineId)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Prazo n\u00e3o encontrado"));
 
         getAs(b, "/api/processos/" + caseId + "/andamentos").andExpect(status().isNotFound());
         deleteAs(b, "/api/processos/" + caseId + "/andamentos/" + movementId).andExpect(status().isNotFound());

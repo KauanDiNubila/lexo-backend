@@ -41,8 +41,9 @@ class InMemoryDeadlines implements SaveDeadlinePort, LoadDeadlinePort, DeleteDea
     }
 
     @Override
-    public void delete(OrganizationId organizationId, DeadlineId deadlineId) {
-        byId(organizationId, deadlineId).ifPresent(deadline -> deadlines.remove(deadlineId.value()));
+    public boolean delete(OrganizationId organizationId, DeadlineId deadlineId) {
+        return byId(organizationId, deadlineId)
+                .map(deadline -> deadlines.remove(deadlineId.value()) != null).orElse(false);
     }
 
     @Override

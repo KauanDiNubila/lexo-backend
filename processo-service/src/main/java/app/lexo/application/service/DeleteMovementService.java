@@ -22,7 +22,7 @@ class DeleteMovementService implements DeleteMovementUseCase {
     @Override
     public void delete(DeleteMovementCommand command) {
         guard.requireExists(command.organizationId(), command.caseId());
-        if (!deleteMovementPort.delete(command.organizationId(), command.movementId())) {
+        if (!deleteMovementPort.delete(command.organizationId(), command.caseId(), command.movementId())) {
             throw new MovementNotFoundException();
         }
     }

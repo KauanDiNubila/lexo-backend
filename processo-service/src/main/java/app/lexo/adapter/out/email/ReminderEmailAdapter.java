@@ -16,8 +16,8 @@ class ReminderEmailAdapter implements SendReminderPort {
     }
 
     @Override
-    public void send(DeadlineReminder reminder) {
-        emailQueue.enfileirar(new TarefaEmail(
+    public boolean send(DeadlineReminder reminder) {
+        return emailQueue.enfileirar(new TarefaEmail(
                 "LEMBRETE_PRAZO", reminder.recipientEmail(),
                 "Prazo pr\u00f3ximo: " + reminder.deadlineTitle(),
                 "Ol\u00e1 " + reminder.recipientName() + ", o prazo \"" + reminder.deadlineTitle()

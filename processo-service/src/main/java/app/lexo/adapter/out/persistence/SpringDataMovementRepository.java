@@ -15,7 +15,7 @@ interface SpringDataMovementRepository extends JpaRepository<MovementJpaEntity, 
 
     Optional<MovementJpaEntity> findByIdAndOrganizationId(String id, String organizationId);
 
-    long deleteByIdAndOrganizationId(String id, String organizationId);
+    long deleteByIdAndCaseIdAndOrganizationId(String id, String caseId, String organizationId);
 
     long deleteByCaseIdAndOrganizationId(String caseId, String organizationId);
 }
