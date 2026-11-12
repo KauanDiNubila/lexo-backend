@@ -1,102 +1,46 @@
 package app.lexo.domain;
 
-import app.lexo.common.domain.BaseEntity;
+import java.time.Instant;
 
-import app.lexo.domain.enums.CaseStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+public class Case {
 
-@Entity
-@Table(
-        name = "cases",
-        uniqueConstraints = @UniqueConstraint(name = "uq_case_org_number", columnNames = {"organizationId", "number"}),
-        indexes = {
-                @Index(name = "idx_case_org", columnList = "organizationId"),
-                @Index(name = "idx_case_client", columnList = "clientId"),
-                @Index(name = "idx_case_responsavel", columnList = "responsavelId"),
-                @Index(name = "idx_case_status", columnList = "status")
-        }
-)
-public class Case extends BaseEntity {
+    private final CaseId id;
+    private final OrganizationId organizationId;
+    private final Instant createdAt;
+    private CaseData data;
 
-    @Column(nullable = false)
-    private String organizationId;
+    private Case(CaseId id, OrganizationId organizationId, CaseData data, Instant createdAt) {
+        this.id = id;
+        this.organizationId = organizationId;
+        this.data = data;
+        this.createdAt = createdAt;
+    }
 
-    @Column(nullable = false)
-    private String clientId;
+    public static Case open(OrganizationId organizationId, CaseData data) {
+        return new Case(null, organizationId, data, null);
+    }
 
-    @Column(nullable = false)
-    private String number;
+    public static Case restore(CaseId id, OrganizationId organizationId, CaseData data, Instant createdAt) {
+        return new Case(id, organizationId, data, createdAt);
+    }
 
-    private String area;
+    public void update(CaseData newData) {
+        this.data = newData;
+    }
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private CaseStatus status = CaseStatus.ATIVO;
+    public CaseId id() {
+        return id;
+    }
 
-    @Column(columnDefinition = "text")
-    private String description;
-
-    private String responsavelId;
-
-    public String getOrganizationId() {
+    public OrganizationId organizationId() {
         return organizationId;
     }
 
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
+    public CaseData data() {
+        return data;
     }
 
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getNumber() {
-        return number;
-    }
-
-    public void setNumber(String number) {
-        this.number = number;
-    }
-
-    public String getArea() {
-        return area;
-    }
-
-    public void setArea(String area) {
-        this.area = area;
-    }
-
-    public CaseStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(CaseStatus status) {
-        this.status = status;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getResponsavelId() {
-        return responsavelId;
-    }
-
-    public void setResponsavelId(String responsavelId) {
-        this.responsavelId = responsavelId;
+    public Instant createdAt() {
+        return createdAt;
     }
 }
