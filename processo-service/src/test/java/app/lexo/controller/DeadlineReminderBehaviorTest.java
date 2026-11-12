@@ -39,7 +39,7 @@ class DeadlineReminderBehaviorTest extends IntegrationTestBase {
 
     @BeforeEach
     @SuppressWarnings("unchecked")
-    void lockIsFree() {
+    void windowIsFree() {
         values = mock(ValueOperations.class);
         when(redis.opsForValue()).thenReturn(values);
         when(values.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(true);
@@ -123,8 +123,8 @@ class DeadlineReminderBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("with the lock held by another instance, does nothing")
-    void lockHeld() throws Exception {
+    @DisplayName("with the window already claimed by another run, does nothing")
+    void windowAlreadyClaimed() throws Exception {
         Identity id = Identity.create();
         String responsibleId = newId();
         responsibleWithEmail(responsibleId, UUID.randomUUID() + "@firm.com");

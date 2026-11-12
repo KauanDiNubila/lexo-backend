@@ -2,16 +2,17 @@ package app.lexo.application.service;
 
 import app.lexo.application.port.in.SendDeadlineRemindersUseCase;
 import app.lexo.application.port.out.DeadlineReminder;
-import app.lexo.application.port.out.ExecutionLockPort;
 import app.lexo.application.port.out.LoadCasesByIdsPort;
 import app.lexo.application.port.out.LoadDeadlinesToRemindPort;
 import app.lexo.application.port.out.LoadUserContactPort;
+import app.lexo.application.port.out.OncePerWindowPort;
 import app.lexo.application.port.out.SaveDeadlinePort;
 import app.lexo.application.port.out.SendReminderPort;
 import app.lexo.application.port.out.UserContact;
 import app.lexo.domain.Case;
 import app.lexo.domain.CaseId;
 import app.lexo.domain.Deadline;
+import app.lexo.domain.OrganizationId;
 import app.lexo.domain.UserId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,11 +33,11 @@ import java.util.stream.Collectors;
 class SendDeadlineRemindersService implements SendDeadlineRemindersUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(SendDeadlineRemindersService.class);
-    private static final String LOCK_KEY = "lock:cron:notify-deadlines";
-    private static final Duration LOCK_TTL = Duration.ofMinutes(5);
+    private static final String CLAIM_KEY = "lock:cron:notify-deadlines";
+    private static final Duration CLAIM_WINDOW = Duration.ofMinutes(5);
     private static final Duration WINDOW = Duration.ofDays(3);
 
-    private final ExecutionLockPort lockPort;
+    private final OncePerWindowPort oncePerWindowPort;
     private final LoadDeadlinesToRemindPort loadDeadlinesPort;
     private final LoadCasesByIdsPort loadCasesPort;
     private final LoadUserContactPort loadContactPort;
@@ -42,11 +45,11 @@ class SendDeadlineRemindersService implements SendDeadlineRemindersUseCase {
     private final SaveDeadlinePort saveDeadlinePort;
     private final Clock clock;
 
-    SendDeadlineRemindersService(ExecutionLockPort lockPort, LoadDeadlinesToRemindPort loadDeadlinesPort,
+    SendDeadlineRemindersService(OncePerWindowPort oncePerWindowPort, LoadDeadlinesToRemindPort loadDeadlinesPort,
                                  LoadCasesByIdsPort loadCasesPort, LoadUserContactPort loadContactPort,
                                  SendReminderPort sendReminderPort, SaveDeadlinePort saveDeadlinePort,
                                  Clock clock) {
-        this.lockPort = lockPort;
+        this.oncePerWindowPort = oncePerWindowPort;
         this.loadDeadlinesPort = loadDeadlinesPort;
         this.loadCasesPort = loadCasesPort;
         this.loadContactPort = loadContactPort;
@@ -57,7 +60,7 @@ class SendDeadlineRemindersService implements SendDeadlineRemindersUseCase {
 
     @Override
     public int sendReminders() {
-        if (!lockPort.tryAcquire(LOCK_KEY, LOCK_TTL)) {
+        if (!oncePerWindowPort.tryClaim(CLAIM_KEY, CLAIM_WINDOW)) {
             log.info("[cron] deadline reminders are already running in another instance, skipping");
             return 0;
         }
@@ -70,9 +73,10 @@ class SendDeadlineRemindersService implements SendDeadlineRemindersUseCase {
         Map<CaseId, Case> casesById = loadCasesPort
                 .byIds(due.stream().map(deadline -> deadline.data().caseId()).distinct().toList()).stream()
                 .collect(Collectors.toMap(Case::id, value -> value));
+        Map<ContactKey, Optional<UserContact>> contacts = new HashMap<>();
         int notified = 0;
         for (Deadline deadline : due) {
-            if (remind(deadline, casesById.get(deadline.data().caseId()))) {
+            if (remind(deadline, casesById.get(deadline.data().caseId()), contacts)) {
                 deadline.markNotified(now);
                 saveDeadlinePort.save(deadline);
                 notified++;
@@ -82,14 +86,17 @@ class SendDeadlineRemindersService implements SendDeadlineRemindersUseCase {
         return notified;
     }
 
-    private boolean remind(Deadline deadline, Case value) {
+    private boolean remind(Deadline deadline, Case value, Map<ContactKey, Optional<UserContact>> contacts) {
         UserId responsible = value == null ? null : value.data().responsibleId();
         if (responsible == null) {
             log.warn("[cron] deadline \"{}\" (case {}) has no responsible, skipping",
                     deadline.data().title(), deadline.data().caseId().value());
             return false;
         }
-        UserContact contact = loadContactPort.byId(deadline.organizationId(), responsible).orElse(null);
+        UserContact contact = contacts
+                .computeIfAbsent(new ContactKey(deadline.organizationId(), responsible),
+                        key -> loadContactPort.byId(key.organizationId(), key.userId()))
+                .orElse(null);
         if (contact == null || contact.email() == null || contact.email().isBlank()) {
             log.warn("[cron] responsible {} of deadline \"{}\" not found or without e-mail, skipping",
                     responsible.value(), deadline.data().title());
@@ -98,5 +105,8 @@ class SendDeadlineRemindersService implements SendDeadlineRemindersUseCase {
         sendReminderPort.send(new DeadlineReminder(contact.name(), contact.email(), deadline.data().title(),
                 deadline.data().date()));
         return true;
+    }
+
+    private record ContactKey(OrganizationId organizationId, UserId userId) {
     }
 }

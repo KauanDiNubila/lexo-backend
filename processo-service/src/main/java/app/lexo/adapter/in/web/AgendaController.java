@@ -43,17 +43,17 @@ class AgendaController {
     private final GetAgendaSummaryQuery agendaSummary;
     private final ScheduleDeadlineUseCase scheduleDeadline;
     private final UpdateDeadlineUseCase updateDeadline;
-    private final ChangeDeadlineStatusUseCase changeStatus;
+    private final ChangeDeadlineStatusUseCase changeDeadlineStatus;
     private final DeleteDeadlineUseCase deleteDeadline;
 
     AgendaController(ListDeadlinesQuery listDeadlines, GetAgendaSummaryQuery agendaSummary,
                      ScheduleDeadlineUseCase scheduleDeadline, UpdateDeadlineUseCase updateDeadline,
-                     ChangeDeadlineStatusUseCase changeStatus, DeleteDeadlineUseCase deleteDeadline) {
+                     ChangeDeadlineStatusUseCase changeDeadlineStatus, DeleteDeadlineUseCase deleteDeadline) {
         this.listDeadlines = listDeadlines;
         this.agendaSummary = agendaSummary;
         this.scheduleDeadline = scheduleDeadline;
         this.updateDeadline = updateDeadline;
-        this.changeStatus = changeStatus;
+        this.changeDeadlineStatus = changeDeadlineStatus;
         this.deleteDeadline = deleteDeadline;
     }
 
@@ -87,7 +87,7 @@ class AgendaController {
     @PatchMapping("/{id}/status")
     DeadlineResponse changeStatus(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
                                   @RequestBody StatusRequest req) {
-        return changeStatus.changeStatus(new ChangeDeadlineStatusCommand(Identity.organization(me),
+        return changeDeadlineStatus.changeStatus(new ChangeDeadlineStatusCommand(Identity.organization(me),
                 new DeadlineId(id), req.completed()));
     }
 

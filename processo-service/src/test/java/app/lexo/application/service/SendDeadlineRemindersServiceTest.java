@@ -38,9 +38,9 @@ class SendDeadlineRemindersServiceTest {
     private final Map<String, UserContact> contacts = new HashMap<>();
     private final List<DeadlineReminder> sent = new ArrayList<>();
     private final List<String> lookups = new ArrayList<>();
-    private boolean lockFree = true;
+    private boolean windowFree = true;
     private final SendDeadlineRemindersService service = new SendDeadlineRemindersService(
-            (key, ttl) -> lockFree, deadlines, cases,
+            (key, ttl) -> windowFree, deadlines, cases,
             (organization, user) -> {
                 lookups.add(user.value());
                 return Optional.ofNullable(contacts.get(user.value()));
@@ -92,17 +92,32 @@ class SendDeadlineRemindersServiceTest {
     }
 
     @Test
-    @DisplayName("with the lock held by another instance, does nothing at all")
-    void lockHeld() {
+    @DisplayName("with the window already claimed by another run, does nothing at all")
+    void windowAlreadyClaimed() {
         contacts.put("user-1", new UserContact("Ana", "ana@firm.com"));
         deadlineAt(openCase("user-1"), Duration.ofDays(1));
-        lockFree = false;
+        windowFree = false;
 
         assertThat(service.sendReminders()).isZero();
 
         assertThat(lookups).isEmpty();
         assertThat(sent).isEmpty();
         assertThat(deadlines.all().get(0).notifiedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("looks each responsible up only once per run, even with several deadlines")
+    void looksUpEachResponsibleOnce() {
+        contacts.put("user-1", new UserContact("Ana", "ana@firm.com"));
+        CaseId caseId = openCase("user-1");
+        deadlineAt(caseId, Duration.ofDays(1));
+        deadlineAt(caseId, Duration.ofDays(2));
+        deadlineAt(openCase("user-1"), Duration.ofDays(1));
+
+        assertThat(service.sendReminders()).isEqualTo(3);
+
+        assertThat(lookups).containsExactly("user-1");
+        assertThat(sent).hasSize(3);
     }
 
     @Test
