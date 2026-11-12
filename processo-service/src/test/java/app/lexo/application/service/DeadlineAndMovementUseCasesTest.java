@@ -82,7 +82,7 @@ class DeadlineAndMovementUseCasesTest {
     }
 
     @Test
-    @DisplayName("updating keeps the status and the notification mark, and needs the case and the deadline")
+    @DisplayName("updating keeps the status, re-arms the reminder when the date moves, and needs the case and the deadline")
     void updates() {
         CaseId caseId = openCase("D-2");
         Deadline saved = deadlines.save(Deadline.restore(null, ORGANIZATION,
@@ -93,7 +93,7 @@ class DeadlineAndMovementUseCasesTest {
 
         assertThat(response.type()).isEqualTo(DeadlineType.HEARING);
         assertThat(response.status()).isEqualTo(DeadlineStatus.COMPLETED);
-        assertThat(deadlines.all().get(0).notifiedAt()).isEqualTo(NOW);
+        assertThat(deadlines.all().get(0).notifiedAt()).isNull();
         assertThatThrownBy(() -> update.update(new UpdateDeadlineCommand(ORGANIZATION, new DeadlineId("ghost"),
                 deadlineData(caseId, DeadlineType.HEARING, Duration.ofDays(1)))))
                 .isInstanceOf(DeadlineNotFoundException.class);
@@ -122,14 +122,16 @@ class DeadlineAndMovementUseCasesTest {
     }
 
     @Test
-    @DisplayName("deleting a deadline never fails, even for one that does not exist or belongs to another organization")
-    void deletesSilently() {
+    @DisplayName("deleting a deadline that does not exist or belongs to another organization fails")
+    void deleteFailsForUnknownOrForeign() {
         CaseId caseId = openCase("D-4");
         DeadlineId id = deadlines.save(Deadline.schedule(ORGANIZATION,
                 deadlineData(caseId, DeadlineType.OTHER, Duration.ofDays(5)))).id();
 
-        deleteDeadline.delete(new DeleteDeadlineCommand(OTHER_ORGANIZATION, id));
-        deleteDeadline.delete(new DeleteDeadlineCommand(ORGANIZATION, new DeadlineId("ghost")));
+        assertThatThrownBy(() -> deleteDeadline.delete(new DeleteDeadlineCommand(OTHER_ORGANIZATION, id)))
+                .isInstanceOf(DeadlineNotFoundException.class);
+        assertThatThrownBy(() -> deleteDeadline.delete(new DeleteDeadlineCommand(ORGANIZATION, new DeadlineId("ghost"))))
+                .isInstanceOf(DeadlineNotFoundException.class);
         assertThat(deadlines.all()).hasSize(1);
 
         deleteDeadline.delete(new DeleteDeadlineCommand(ORGANIZATION, id));
@@ -150,7 +152,7 @@ class DeadlineAndMovementUseCasesTest {
     }
 
     @Test
-    @DisplayName("deleting a movement fails for an unknown movement or case, and ignores which case is in the path")
+    @DisplayName("deleting a movement fails for an unknown movement or case, and needs it to belong to the case in the path")
     void deletesMovement() {
         CaseId first = openCase("M-2");
         CaseId second = openCase("M-3");
@@ -162,7 +164,11 @@ class DeadlineAndMovementUseCasesTest {
         assertThatThrownBy(() -> deleteMovement.delete(new DeleteMovementCommand(ORGANIZATION,
                 new CaseId("ghost"), id))).isInstanceOf(CaseNotFoundException.class);
 
-        deleteMovement.delete(new DeleteMovementCommand(ORGANIZATION, second, id));
+        assertThatThrownBy(() -> deleteMovement.delete(new DeleteMovementCommand(ORGANIZATION, second, id)))
+                .isInstanceOf(MovementNotFoundException.class);
+        assertThat(movements.all()).hasSize(1);
+
+        deleteMovement.delete(new DeleteMovementCommand(ORGANIZATION, first, id));
 
         assertThat(movements.all()).isEmpty();
     }

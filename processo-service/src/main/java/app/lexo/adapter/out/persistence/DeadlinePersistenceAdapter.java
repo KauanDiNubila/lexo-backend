@@ -55,8 +55,8 @@ class DeadlinePersistenceAdapter implements SaveDeadlinePort, LoadDeadlinePort, 
     }
 
     @Override
-    public void delete(OrganizationId organizationId, DeadlineId deadlineId) {
-        repository.deleteByIdAndOrganizationId(deadlineId.value(), organizationId.value());
+    public boolean delete(OrganizationId organizationId, DeadlineId deadlineId) {
+        return repository.deleteByIdAndOrganizationId(deadlineId.value(), organizationId.value()) > 0;
     }
 
     @Override

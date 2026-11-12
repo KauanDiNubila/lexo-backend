@@ -36,8 +36,9 @@ class MovementPersistenceAdapter implements SaveMovementPort, DeleteMovementPort
     }
 
     @Override
-    public boolean delete(OrganizationId organizationId, MovementId movementId) {
-        return repository.deleteByIdAndOrganizationId(movementId.value(), organizationId.value()) > 0;
+    public boolean delete(OrganizationId organizationId, CaseId caseId, MovementId movementId) {
+        return repository.deleteByIdAndCaseIdAndOrganizationId(
+                movementId.value(), caseId.value(), organizationId.value()) > 0;
     }
 
     @Override

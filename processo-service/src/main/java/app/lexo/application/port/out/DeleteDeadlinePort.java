@@ -5,5 +5,5 @@ import app.lexo.domain.OrganizationId;
 
 public interface DeleteDeadlinePort {
 
-    void delete(OrganizationId organizationId, DeadlineId deadlineId);
+    boolean delete(OrganizationId organizationId, DeadlineId deadlineId);
 }
