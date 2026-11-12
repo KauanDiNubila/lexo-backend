@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -163,6 +164,10 @@ class CaseApiBehaviorTest extends IntegrationTestBase {
 
         getAs(id, "/api/agenda?caseId=" + caseId).andExpect(jsonPath("$.totalElements").value(0));
         getAs(id, "/api/processos/" + caseId + "/andamentos").andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("select count(*) from andamentos where case_id = ?", Integer.class, caseId))
+                .isZero();
+        assertThat(jdbc.queryForObject("select count(*) from deadlines where case_id = ?", Integer.class, caseId))
+                .isZero();
         verify(events).publish(argThat(e -> "PROCESSO_EXCLUIDO".equals(e.type())
                 && caseId.equals(e.entityId())));
     }
