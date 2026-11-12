@@ -17,10 +17,13 @@ import app.lexo.domain.Case;
 import app.lexo.domain.CaseFilter;
 import app.lexo.domain.CaseId;
 import app.lexo.domain.CaseStatus;
+import app.lexo.domain.DuplicateCaseNumberException;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.OrganizationId;
 import org.springframework.cache.annotation.CacheEvict;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -34,6 +37,7 @@ class CasePersistenceAdapter implements SaveCasePort, LoadCasePort, CaseExistsPo
         ListCaseOptionsPort, CountCasesByStatusPort, LoadClientCasesPort, LoadCasesByIdsPort {
 
     private static final String OPTIONS_CACHE = "processos-opcoes-v2";
+    private static final String NUMBER_CONSTRAINT = "uq_case_org_number";
 
     private final SpringDataCaseRepository repository;
 
@@ -50,7 +54,24 @@ class CasePersistenceAdapter implements SaveCasePort, LoadCasePort, CaseExistsPo
                         .orElseThrow(() -> new IllegalStateException(
                                 "Case " + domainCase.id().value() + " does not exist to update"));
         CaseMapper.copyTo(domainCase, entity);
-        return CaseMapper.toDomain(repository.save(entity));
+        try {
+            return CaseMapper.toDomain(repository.saveAndFlush(entity));
+        } catch (DataIntegrityViolationException e) {
+            if (isNumberConflict(e)) {
+                throw new DuplicateCaseNumberException();
+            }
+            throw e;
+        }
+    }
+
+    private static boolean isNumberConflict(Throwable error) {
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException violation
+                    && NUMBER_CONSTRAINT.equals(violation.getConstraintName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

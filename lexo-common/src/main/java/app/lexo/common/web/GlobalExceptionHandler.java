@@ -1,5 +1,6 @@
 package app.lexo.common.web;
 
+import app.lexo.common.error.ConflictException;
 import app.lexo.common.error.InvalidDataException;
 import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.common.error.ResourceNotFoundException;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -42,6 +44,18 @@ public class GlobalExceptionHandler {
                                                                    HttpServletRequest req) {
         return build(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.paraStatus(HttpStatus.SERVICE_UNAVAILABLE),
                 ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ErrorCode.CONFLITO, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+                                                            HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.REQUISICAO_INVALIDA,
+                "Par\u00e2metro inv\u00e1lido: " + ex.getName(), req);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

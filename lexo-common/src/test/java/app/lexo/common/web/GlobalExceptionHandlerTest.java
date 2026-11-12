@@ -1,5 +1,6 @@
 package app.lexo.common.web;
 
+import app.lexo.common.error.ConflictException;
 import app.lexo.common.error.InvalidDataException;
 import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.common.error.ResourceNotFoundException;
@@ -48,6 +49,29 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(503);
         assertThat(response.getBody().code()).isEqualTo(ErrorCode.SERVICO_INDISPONIVEL);
         assertThat(response.getBody().error()).isEqualTo("try again");
+    }
+
+    @Test
+    @DisplayName("a conflict becomes 409 with the code CONFLITO and the same message")
+    void conflict() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleConflict(new ConflictException("already exists"), request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.CONFLITO);
+        assertThat(response.getBody().error()).isEqualTo("already exists");
+    }
+
+    @Test
+    @DisplayName("a parameter that cannot be converted becomes 400 with the code REQUISICAO_INVALIDA and its name")
+    void typeMismatch() {
+        ResponseEntity<ErrorResponse> response = handler.handleTypeMismatch(
+                new org.springframework.web.method.annotation.MethodArgumentTypeMismatchException(
+                        "BOGUS", Integer.class, "status", null, null), request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.REQUISICAO_INVALIDA);
+        assertThat(response.getBody().error()).isEqualTo("Par\u00e2metro inv\u00e1lido: status");
     }
 
     @Test

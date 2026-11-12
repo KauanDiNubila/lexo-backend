@@ -18,6 +18,7 @@ import app.lexo.domain.Case;
 import app.lexo.domain.CaseData;
 import app.lexo.domain.CaseFilter;
 import app.lexo.domain.CaseStatus;
+import app.lexo.domain.DuplicateCaseNumberException;
 import app.lexo.domain.ClientId;
 import app.lexo.domain.OrganizationId;
 import app.lexo.domain.UserId;
@@ -103,6 +104,18 @@ class CasePersistenceAdapterIntegrationTest extends IntegrationTestBase {
         assertThat(exists.exists(intruder, saved.id())).isFalse();
         Case asIntruder = Case.restore(saved.id(), intruder, saved.data(), saved.createdAt());
         assertThatThrownBy(() -> save.save(asIntruder)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("a repeated number in the same organization is a conflict; in another organization it is allowed")
+    void repeatedNumber() {
+        OrganizationId organization = newOrganization();
+        CaseData data = new CaseData(new ClientId("c-1"), "0009", null, CaseStatus.ACTIVE, null, null);
+        save.save(Case.open(organization, data));
+
+        assertThatThrownBy(() -> save.save(Case.open(organization, data)))
+                .isInstanceOf(DuplicateCaseNumberException.class);
+        assertThat(save.save(Case.open(newOrganization(), data)).id()).isNotNull();
     }
 
     @Test
