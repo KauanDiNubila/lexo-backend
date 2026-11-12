@@ -6,7 +6,7 @@ import app.lexo.common.event.EventType;
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
 import app.lexo.common.web.PageResult;
-import app.lexo.domain.Case;
+import app.lexo.domain.LegacyCase;
 import app.lexo.domain.enums.CaseStatus;
 import app.lexo.dto.CaseDtos.CaseOpcao;
 import app.lexo.dto.CaseDtos.CaseRequest;
@@ -84,7 +84,7 @@ public class ProcessoService {
     @Transactional
     public CaseResponse criar(AuthUser me, CaseRequest req) {
         validarReferencias(me, req);
-        Case c = new Case();
+        LegacyCase c = new LegacyCase();
         c.setOrganizationId(me.organizationId());
         preencher(c, req);
         c = repo.save(c);
@@ -98,7 +98,7 @@ public class ProcessoService {
     @Transactional
     public CaseResponse atualizar(AuthUser me, String id, CaseRequest req) {
         validarReferencias(me, req);
-        Case c = carregar(me, id);
+        LegacyCase c = carregar(me, id);
         preencher(c, req);
         c = repo.save(c);
 
@@ -110,7 +110,7 @@ public class ProcessoService {
     @CacheEvict(value = CACHE_OPCOES, key = "#me.organizationId()")
     @Transactional
     public void excluir(AuthUser me, String id) {
-        Case c = carregar(me, id);
+        LegacyCase c = carregar(me, id);
         apagarComFilhos(c);
 
         eventos.publish(DomainEvent.of(EventType.CASE_DELETED.code(), me.organizationId(), "PROCESSO",
@@ -120,18 +120,18 @@ public class ProcessoService {
     @CacheEvict(value = CACHE_OPCOES, key = "#organizationId")
     @Transactional
     public int excluirPorCliente(String organizationId, String clientId) {
-        List<Case> casos = repo.findByClientIdAndOrganizationId(clientId, organizationId);
+        List<LegacyCase> casos = repo.findByClientIdAndOrganizationId(clientId, organizationId);
         casos.forEach(this::apagarComFilhos);
         return casos.size();
     }
 
-    private void apagarComFilhos(Case c) {
+    private void apagarComFilhos(LegacyCase c) {
         prazos.deleteByCaseIdAndOrganizationId(c.getId(), c.getOrganizationId());
         andamentos.deleteByCaseIdAndOrganizationId(c.getId(), c.getOrganizationId());
         repo.delete(c);
     }
 
-    private Case carregar(AuthUser me, String id) {
+    private LegacyCase carregar(AuthUser me, String id) {
         return repo.findByIdAndOrganizationId(id, me.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Processo não encontrado"));
     }
@@ -148,7 +148,7 @@ public class ProcessoService {
         }
     }
 
-    private void preencher(Case c, CaseRequest req) {
+    private void preencher(LegacyCase c, CaseRequest req) {
         c.setClientId(req.clientId());
         c.setNumber(req.number());
         c.setArea(vazioParaNulo(req.area()));

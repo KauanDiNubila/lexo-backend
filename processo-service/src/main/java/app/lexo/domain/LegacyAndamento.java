@@ -18,7 +18,7 @@ import java.time.Instant;
                 @Index(name = "idx_andamento_date", columnList = "date")
         }
 )
-public class Andamento extends BaseEntity {
+public class LegacyAndamento extends BaseEntity {
 
     @Column(nullable = false)
     private String organizationId;

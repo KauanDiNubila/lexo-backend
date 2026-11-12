@@ -1,6 +1,6 @@
 package app.lexo.service;
 
-import app.lexo.domain.Deadline;
+import app.lexo.domain.LegacyDeadline;
 import app.lexo.dto.DeadlineDtos.DeadlineRequest;
 import app.lexo.dto.DeadlineDtos.DeadlineResponse;
 import app.lexo.dto.DeadlineDtos.ResumoAgenda;
@@ -55,7 +55,7 @@ public class AgendaService {
     @Transactional
     public DeadlineResponse criar(AuthUser me, DeadlineRequest req) {
         exigirProcessoProprio(me, req.caseId());
-        Deadline d = new Deadline();
+        LegacyDeadline d = new LegacyDeadline();
         d.setOrganizationId(me.organizationId());
         d.setCaseId(req.caseId());
         preencher(d, req);
@@ -66,7 +66,7 @@ public class AgendaService {
     @Transactional
     public DeadlineResponse atualizar(AuthUser me, String id, DeadlineRequest req) {
         exigirProcessoProprio(me, req.caseId());
-        Deadline d = carregar(me, id);
+        LegacyDeadline d = carregar(me, id);
         d.setCaseId(req.caseId());
         preencher(d, req);
         d = repo.save(d);
@@ -75,7 +75,7 @@ public class AgendaService {
 
     @Transactional
     public DeadlineResponse alternarStatus(AuthUser me, String id, boolean completed) {
-        Deadline d = carregar(me, id);
+        LegacyDeadline d = carregar(me, id);
         d.setStatus(completed ? DeadlineStatus.CONCLUIDO : DeadlineStatus.PENDENTE);
         d = repo.save(d);
         return DeadlineResponse.from(d);
@@ -86,7 +86,7 @@ public class AgendaService {
         repo.deleteByIdAndOrganizationId(id, me.organizationId());
     }
 
-    private Deadline carregar(AuthUser me, String id) {
+    private LegacyDeadline carregar(AuthUser me, String id) {
         return repo.findByIdAndOrganizationId(id, me.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Prazo não encontrado"));
     }
@@ -97,7 +97,7 @@ public class AgendaService {
         }
     }
 
-    private void preencher(Deadline d, DeadlineRequest req) {
+    private void preencher(LegacyDeadline d, DeadlineRequest req) {
         d.setTitle(req.title());
         d.setType(req.type());
         d.setDate(req.date());

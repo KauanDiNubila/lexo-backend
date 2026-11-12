@@ -1,6 +1,6 @@
 package app.lexo.dto;
 
-import app.lexo.domain.Andamento;
+import app.lexo.domain.LegacyAndamento;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -23,7 +23,7 @@ public class AndamentoDtos {
             Instant date,
             Instant createdAt
     ) {
-        public static AndamentoResponse from(Andamento a) {
+        public static AndamentoResponse from(LegacyAndamento a) {
             return new AndamentoResponse(a.getId(), a.getCaseId(), a.getTitle(),
                     a.getDescription(), a.getDate(), a.getCreatedAt());
         }

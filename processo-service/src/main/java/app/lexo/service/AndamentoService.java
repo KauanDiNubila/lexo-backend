@@ -2,7 +2,7 @@ package app.lexo.service;
 
 import app.lexo.common.security.AuthUser;
 import app.lexo.common.web.ApiException;
-import app.lexo.domain.Andamento;
+import app.lexo.domain.LegacyAndamento;
 import app.lexo.dto.AndamentoDtos.AndamentoRequest;
 import app.lexo.dto.AndamentoDtos.AndamentoResponse;
 import app.lexo.repository.AndamentoRepository;
@@ -32,7 +32,7 @@ public class AndamentoService {
     @Transactional
     public AndamentoResponse criar(AuthUser me, String caseId, AndamentoRequest req) {
         exigirProcessoProprio(me, caseId);
-        Andamento a = new Andamento();
+        LegacyAndamento a = new LegacyAndamento();
         a.setOrganizationId(me.organizationId());
         a.setCaseId(caseId);
         a.setTitle(req.title());
@@ -44,7 +44,7 @@ public class AndamentoService {
     @Transactional
     public void excluir(AuthUser me, String caseId, String id) {
         exigirProcessoProprio(me, caseId);
-        Andamento a = repo.findByIdAndOrganizationId(id, me.organizationId())
+        LegacyAndamento a = repo.findByIdAndOrganizationId(id, me.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Andamento não encontrado"));
         repo.delete(a);
     }

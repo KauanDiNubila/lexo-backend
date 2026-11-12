@@ -3,8 +3,8 @@ package app.lexo.service;
 import app.lexo.client.ReferenciaGateway;
 import app.lexo.common.email.TarefaEmail;
 import app.lexo.common.user.InternalUser;
-import app.lexo.domain.Case;
-import app.lexo.domain.Deadline;
+import app.lexo.domain.LegacyCase;
+import app.lexo.domain.LegacyDeadline;
 import app.lexo.domain.enums.DeadlineStatus;
 import app.lexo.common.email.EnfileiradorEmail;
 import app.lexo.repository.CaseRepository;
@@ -67,7 +67,7 @@ public class NotificacaoPrazosService {
         Instant now = Instant.now();
         Instant limit = now.plus(3, ChronoUnit.DAYS);
 
-        List<Deadline> due = repo.findByStatusAndNotifiedAtIsNullAndDateBetween(
+        List<LegacyDeadline> due = repo.findByStatusAndNotifiedAtIsNullAndDateBetween(
                 DeadlineStatus.PENDENTE, now, limit);
 
         if (due.isEmpty()) {
@@ -75,11 +75,11 @@ public class NotificacaoPrazosService {
             return 0;
         }
 
-        Map<String, Case> casosPorId = casos.findAllById(
-                due.stream().map(Deadline::getCaseId).distinct().toList())
-                .stream().collect(Collectors.toMap(Case::getId, c -> c));
+        Map<String, LegacyCase> casosPorId = casos.findAllById(
+                due.stream().map(LegacyDeadline::getCaseId).distinct().toList())
+                .stream().collect(Collectors.toMap(LegacyCase::getId, c -> c));
 
-        List<Deadline> notificados = due.stream()
+        List<LegacyDeadline> notificados = due.stream()
                 .filter(d -> notificar(d, casosPorId.get(d.getCaseId())))
                 .peek(d -> d.setNotifiedAt(now))
                 .toList();
@@ -91,7 +91,7 @@ public class NotificacaoPrazosService {
         return notificados.size();
     }
 
-    private boolean notificar(Deadline d, Case c) {
+    private boolean notificar(LegacyDeadline d, LegacyCase c) {
         if (c == null || c.getResponsavelId() == null || c.getResponsavelId().isBlank()) {
             log.warn("[cron] prazo \"{}\" (caso {}) sem responsavel atribuido — pulando",
                     d.getTitle(), d.getCaseId());

@@ -1,6 +1,6 @@
 package app.lexo.repository;
 
-import app.lexo.domain.Deadline;
+import app.lexo.domain.LegacyDeadline;
 import app.lexo.domain.enums.DeadlineStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,13 +10,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-public interface DeadlineRepository extends JpaRepository<Deadline, String> {
+public interface DeadlineRepository extends JpaRepository<LegacyDeadline, String> {
 
-    List<Deadline> findByOrganizationIdOrderByDateAsc(String organizationId);
+    List<LegacyDeadline> findByOrganizationIdOrderByDateAsc(String organizationId);
 
-    Page<Deadline> findByOrganizationId(String organizationId, Pageable pageable);
+    Page<LegacyDeadline> findByOrganizationId(String organizationId, Pageable pageable);
 
-    Page<Deadline> findByOrganizationIdAndCaseId(
+    Page<LegacyDeadline> findByOrganizationIdAndCaseId(
             String organizationId, String caseId, Pageable pageable);
 
     long countByOrganizationIdAndStatusAndDateBetween(
@@ -25,16 +25,16 @@ public interface DeadlineRepository extends JpaRepository<Deadline, String> {
     long countByOrganizationIdAndStatusAndDateBefore(
             String organizationId, DeadlineStatus status, Instant limite);
 
-    List<Deadline> findTop5ByOrganizationIdAndStatusOrderByDateAsc(
+    List<LegacyDeadline> findTop5ByOrganizationIdAndStatusOrderByDateAsc(
             String organizationId, DeadlineStatus status);
 
-    List<Deadline> findByCaseIdInAndOrganizationIdOrderByDateAsc(List<String> caseIds, String organizationId);
+    List<LegacyDeadline> findByCaseIdInAndOrganizationIdOrderByDateAsc(List<String> caseIds, String organizationId);
 
-    Optional<Deadline> findByIdAndOrganizationId(String id, String organizationId);
+    Optional<LegacyDeadline> findByIdAndOrganizationId(String id, String organizationId);
 
     long deleteByIdAndOrganizationId(String id, String organizationId);
 
-    List<Deadline> findByStatusAndNotifiedAtIsNullAndDateBetween(
+    List<LegacyDeadline> findByStatusAndNotifiedAtIsNullAndDateBetween(
             DeadlineStatus status, Instant start, Instant end);
 
     long deleteByCaseIdAndOrganizationId(String caseId, String organizationId);

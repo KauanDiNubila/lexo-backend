@@ -1,6 +1,6 @@
 package app.lexo.dto;
 
-import app.lexo.domain.Deadline;
+import app.lexo.domain.LegacyDeadline;
 import app.lexo.domain.enums.DeadlineStatus;
 import app.lexo.domain.enums.DeadlineType;
 import app.lexo.util.RiskCalculator;
@@ -39,7 +39,7 @@ public final class DeadlineDtos {
             String description,
             String risk
     ) {
-        public static DeadlineResponse from(Deadline d) {
+        public static DeadlineResponse from(LegacyDeadline d) {
             RiskCalculator.RiskLevel level =
                     RiskCalculator.getRiskLevel(d.getDate(), d.getType(), d.getStatus());
             return new DeadlineResponse(

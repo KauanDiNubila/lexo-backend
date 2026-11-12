@@ -1,6 +1,6 @@
 package app.lexo.dto;
 
-import app.lexo.domain.Case;
+import app.lexo.domain.LegacyCase;
 import app.lexo.domain.enums.CaseStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -34,7 +34,7 @@ public final class CaseDtos {
             String responsavelId,
             Instant createdAt
     ) implements Serializable {
-        public static CaseResponse from(Case c) {
+        public static CaseResponse from(LegacyCase c) {
             return new CaseResponse(
                     c.getId(), c.getClientId(), c.getNumber(), c.getArea(),
                     c.getStatus(), c.getDescription(), c.getResponsavelId(), c.getCreatedAt());
@@ -42,7 +42,7 @@ public final class CaseDtos {
     }
 
     public record CaseOpcao(String id, String number, String clientId) implements Serializable {
-        public static CaseOpcao from(Case c) {
+        public static CaseOpcao from(LegacyCase c) {
             return new CaseOpcao(c.getId(), c.getNumber(), c.getClientId());
         }
     }

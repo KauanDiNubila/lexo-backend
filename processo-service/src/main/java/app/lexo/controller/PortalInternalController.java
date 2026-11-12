@@ -3,9 +3,9 @@ package app.lexo.controller;
 import app.lexo.common.portal.PortalDtos.PortalUpdate;
 import app.lexo.common.portal.PortalDtos.PortalDeadline;
 import app.lexo.common.portal.PortalDtos.PortalCase;
-import app.lexo.domain.Andamento;
-import app.lexo.domain.Case;
-import app.lexo.domain.Deadline;
+import app.lexo.domain.LegacyAndamento;
+import app.lexo.domain.LegacyCase;
+import app.lexo.domain.LegacyDeadline;
 import app.lexo.repository.AndamentoRepository;
 import app.lexo.repository.CaseRepository;
 import app.lexo.repository.DeadlineRepository;
@@ -32,20 +32,20 @@ public class PortalInternalController {
 
     @GetMapping("/internal/portal/processos")
     public List<PortalCase> porCliente(@RequestParam String clientId, @RequestParam String orgId) {
-        List<Case> lista = casos.findByClientIdAndOrganizationIdOrderByCreatedAtDesc(clientId, orgId);
+        List<LegacyCase> lista = casos.findByClientIdAndOrganizationIdOrderByCreatedAtDesc(clientId, orgId);
         if (lista.isEmpty()) {
             return List.of();
         }
-        List<String> ids = lista.stream().map(Case::getId).toList();
+        List<String> ids = lista.stream().map(LegacyCase::getId).toList();
 
         Map<String, List<PortalDeadline>> prazosPorCaso = prazos
                 .findByCaseIdInAndOrganizationIdOrderByDateAsc(ids, orgId).stream()
-                .collect(Collectors.groupingBy(Deadline::getCaseId,
+                .collect(Collectors.groupingBy(LegacyDeadline::getCaseId,
                         Collectors.mapping(this::paraPrazo, Collectors.toList())));
 
         Map<String, List<PortalUpdate>> andamentosPorCaso = andamentos
                 .findByCaseIdInAndOrganizationIdOrderByDateDesc(ids, orgId).stream()
-                .collect(Collectors.groupingBy(Andamento::getCaseId,
+                .collect(Collectors.groupingBy(LegacyAndamento::getCaseId,
                         Collectors.mapping(this::paraAndamento, Collectors.toList())));
 
         return lista.stream()
@@ -59,11 +59,11 @@ public class PortalInternalController {
                 .toList();
     }
 
-    private PortalDeadline paraPrazo(Deadline d) {
+    private PortalDeadline paraPrazo(LegacyDeadline d) {
         return new PortalDeadline(d.getTitle(), d.getType().name(), d.getStatus().name(), d.getDate());
     }
 
-    private PortalUpdate paraAndamento(Andamento a) {
+    private PortalUpdate paraAndamento(LegacyAndamento a) {
         return new PortalUpdate(a.getTitle(), a.getDescription(), a.getDate());
     }
 }

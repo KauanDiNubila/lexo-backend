@@ -1,6 +1,6 @@
 package app.lexo.repository;
 
-import app.lexo.domain.Case;
+import app.lexo.domain.LegacyCase;
 import app.lexo.domain.enums.CaseStatus;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -11,18 +11,18 @@ public final class CaseSpecs {
     private CaseSpecs() {
     }
 
-    public static Specification<Case> daOrganizacao(String organizationId) {
+    public static Specification<LegacyCase> daOrganizacao(String organizationId) {
         return (raiz, consulta, cb) -> cb.equal(raiz.get("organizationId"), organizationId);
     }
 
-    public static Specification<Case> comStatus(CaseStatus status) {
+    public static Specification<LegacyCase> comStatus(CaseStatus status) {
         if (status == null) {
             return null;
         }
         return (raiz, consulta, cb) -> cb.equal(raiz.get("status"), status);
     }
 
-    public static Specification<Case> busca(String termo) {
+    public static Specification<LegacyCase> busca(String termo) {
         if (termo == null || termo.isBlank()) {
             return null;
         }

@@ -22,7 +22,7 @@ import jakarta.persistence.UniqueConstraint;
                 @Index(name = "idx_case_status", columnList = "status")
         }
 )
-public class Case extends BaseEntity {
+public class LegacyCase extends BaseEntity {
 
     @Column(nullable = false)
     private String organizationId;
