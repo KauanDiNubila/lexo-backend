@@ -15,9 +15,9 @@ final class ClientMapper {
     static Client toDomain(ClientJpaEntity entity) {
         ClientData data = new ClientData(entity.name, TaxId.stored(entity.document),
                 entity.email, entity.phone, entity.notes);
-        PortalLink link = entity.portalToken == null
+        PortalLink link = entity.portalTokenHash == null
                 ? null
-                : new PortalLink(entity.portalToken, entity.portalTokenExpiresAt);
+                : new PortalLink(entity.portalTokenHash, entity.portalTokenExpiresAt);
         return Client.restore(new ClientId(entity.getId()), new OrganizationId(entity.organizationId),
                 data, link, entity.getCreatedAt());
     }
@@ -31,7 +31,7 @@ final class ClientMapper {
         entity.phone = data.phone();
         entity.notes = data.notes();
         PortalLink link = client.portalLink();
-        entity.portalToken = link == null ? null : link.token();
+        entity.portalTokenHash = link == null ? null : link.tokenHash();
         entity.portalTokenExpiresAt = link == null ? null : link.expiresAt();
     }
 }

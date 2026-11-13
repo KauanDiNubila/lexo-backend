@@ -17,6 +17,7 @@ import app.lexo.domain.ClientNotFoundException;
 import app.lexo.domain.TaxId;
 import app.lexo.domain.ClientData;
 import app.lexo.domain.OrganizationId;
+import app.lexo.domain.PortalToken;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +41,7 @@ class ClientUseCasesTest {
     private final InMemoryEvents events = new InMemoryEvents();
 
     private final CreateClientService create = new CreateClientService(clients, events, clock);
-    private final UpdateClientService update = new UpdateClientService(clients, clients, clock);
+    private final UpdateClientService update = new UpdateClientService(clients, clients, events, clock);
     private final DeleteClientService delete = new DeleteClientService(clients, clients, events);
     private final GeneratePortalLinkService generateLink =
             new GeneratePortalLinkService(clients, clients, clock, new PortalSettings(90));
@@ -81,7 +82,7 @@ class ClientUseCasesTest {
         assertThatThrownBy(() -> new CreateClientCommand(ORGANIZATION, ACTOR, data("A", null)))
                 .isInstanceOf(InvalidDataException.class)
                 .hasMessage("Nome muito curto");
-        assertThatThrownBy(() -> new UpdateClientCommand(ORGANIZATION, new ClientId("c1"), data("  ", null)))
+        assertThatThrownBy(() -> new UpdateClientCommand(ORGANIZATION, new ClientId("c1"), ACTOR, data("  ", null)))
                 .isInstanceOf(InvalidDataException.class);
 
         assertThat(clients.all()).isEmpty();
@@ -89,16 +90,22 @@ class ClientUseCasesTest {
     }
 
     @Test
-    @DisplayName("update replaces the data, publishes no event and returns the response")
+    @DisplayName("update replaces the data, publishes CLIENTE_ATUALIZADO and returns the response")
     void update() {
         ClientResponse created = cadastrar("Maria Souza");
 
         ClientResponse updated = update.update(new UpdateClientCommand(
-                ORGANIZATION, new ClientId(created.id()), data("Maria Souza Lima", null)));
+                ORGANIZATION, new ClientId(created.id()), ACTOR, data("Maria Souza Lima", null)));
 
         assertThat(updated.id()).isEqualTo(created.id());
         assertThat(updated.name()).isEqualTo("Maria Souza Lima");
-        assertThat(events.published).hasSize(1);
+        assertThat(events.published).hasSize(2);
+        ClientEvent event = events.published.get(1);
+        assertThat(event.type()).isEqualTo(ClientEvent.UPDATED);
+        assertThat(event.organizationId()).isEqualTo(ORGANIZATION);
+        assertThat(event.clientId().value()).isEqualTo(created.id());
+        assertThat(event.description()).isEqualTo("Cliente atualizado: Maria Souza Lima");
+        assertThat(event.actor()).isEqualTo(ACTOR);
     }
 
     @Test
@@ -107,9 +114,10 @@ class ClientUseCasesTest {
         ClientResponse created = cadastrar("Maria Souza");
 
         assertThatThrownBy(() -> update.update(new UpdateClientCommand(
-                OTHER_ORGANIZATION, new ClientId(created.id()), data("Invasor", null))))
+                OTHER_ORGANIZATION, new ClientId(created.id()), ACTOR, data("Invasor", null))))
                 .isInstanceOf(ClientNotFoundException.class)
                 .hasMessage("Cliente não encontrado");
+        assertThat(events.published).hasSize(1);
     }
 
     @Test
@@ -147,7 +155,8 @@ class ClientUseCasesTest {
         PortalLinkResponse link = generateLink.generate(new GeneratePortalLinkCommand(ORGANIZATION, new ClientId(created.id())));
 
         assertThat(link.token()).hasSize(64);
-        Client saved = clients.byPortalLink(link.token()).orElseThrow();
+        Client saved = clients.byPortalTokenHash(PortalToken.hash(link.token())).orElseThrow();
+        assertThat(saved.portalLink().tokenHash()).isNotEqualTo(link.token());
         assertThat(saved.portalLink().expiresAt()).isEqualTo(Instant.parse("2027-02-09T12:00:00Z"));
         assertThat(saved.portalActiveAt(NOW)).isTrue();
     }
@@ -162,8 +171,8 @@ class ClientUseCasesTest {
         String second = generateLink.generate(command).token();
 
         assertThat(second).isNotEqualTo(first);
-        assertThat(clients.byPortalLink(first)).isEmpty();
-        assertThat(clients.byPortalLink(second)).isPresent();
+        assertThat(clients.byPortalTokenHash(PortalToken.hash(first))).isEmpty();
+        assertThat(clients.byPortalTokenHash(PortalToken.hash(second))).isPresent();
     }
 
     @Test
@@ -175,7 +184,7 @@ class ClientUseCasesTest {
 
         revokeLink.revoke(new RevokePortalLinkCommand(ORGANIZATION, id));
 
-        assertThat(clients.byPortalLink(token)).isEmpty();
+        assertThat(clients.byPortalTokenHash(PortalToken.hash(token))).isEmpty();
     }
 
     @Test

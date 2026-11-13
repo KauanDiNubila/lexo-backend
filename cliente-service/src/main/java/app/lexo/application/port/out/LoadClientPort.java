@@ -9,5 +9,5 @@ public interface LoadClientPort {
 
     Optional<Client> byId(OrganizationId organizationId, ClientId clientId);
 
-    Optional<Client> byPortalLink(String token);
+    Optional<Client> byPortalTokenHash(String tokenHash);
 }

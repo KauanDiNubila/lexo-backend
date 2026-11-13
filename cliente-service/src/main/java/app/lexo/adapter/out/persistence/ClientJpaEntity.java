@@ -28,7 +28,7 @@ class ClientJpaEntity extends BaseEntity {
     String notes;
 
     @Column(unique = true)
-    String portalToken;
+    String portalTokenHash;
 
     Instant portalTokenExpiresAt;
 }

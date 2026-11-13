@@ -4,11 +4,13 @@ import app.lexo.application.port.in.PortalResponse;
 import app.lexo.application.port.out.LoadClientFeesPort;
 import app.lexo.application.port.out.LoadClientCasesPort;
 import app.lexo.common.error.ResourceNotFoundException;
+import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.common.portal.PortalDtos.PortalFee;
 import app.lexo.common.portal.PortalDtos.PortalCase;
 import app.lexo.domain.Client;
 import app.lexo.domain.ClientData;
 import app.lexo.domain.OrganizationId;
+import app.lexo.domain.PortalToken;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +43,7 @@ class GetPortalServiceTest {
         Client client = clients.save(Client.register(ORGANIZATION,
                 new ClientData("Helena Prado", null, null, null, null)));
         String token = "a".repeat(64);
-        client.generatePortalLink(token, NOW, validityDays);
+        client.generatePortalLink(PortalToken.hash(token), NOW, validityDays);
         clients.save(client);
         return token;
     }
@@ -66,19 +68,31 @@ class GetPortalServiceTest {
     }
 
     @Test
-    @DisplayName("if a service fails, its section comes back empty and the rest continues")
-    void degrades() {
+    @DisplayName("if the cases service fails, the portal fails instead of showing an empty section")
+    void casesFailure() {
         String token = clientWithLink(90);
 
-        PortalResponse response = service(
+        assertThatThrownBy(() -> service(
                 (e, c) -> {
                     throw new IllegalStateException("fora do ar");
                 },
-                (e, c) -> fees).get(token);
+                (e, c) -> fees).get(token))
+                .isInstanceOf(ServiceUnavailableException.class)
+                .hasMessage("Não foi possível carregar o portal agora. Tente novamente em instantes.");
+    }
 
-        assertThat(response.cases()).isEmpty();
-        assertThat(response.fees()).hasSize(3);
-        assertThat(response.summary().totalCases()).isZero();
+    @Test
+    @DisplayName("if the fees service fails, the portal fails instead of reporting nothing outstanding")
+    void feesFailure() {
+        String token = clientWithLink(90);
+
+        assertThatThrownBy(() -> service(
+                (e, c) -> cases,
+                (e, c) -> {
+                    throw new IllegalStateException("fora do ar");
+                }).get(token))
+                .isInstanceOf(ServiceUnavailableException.class)
+                .hasMessage("Não foi possível carregar o portal agora. Tente novamente em instantes.");
     }
 
     @Test

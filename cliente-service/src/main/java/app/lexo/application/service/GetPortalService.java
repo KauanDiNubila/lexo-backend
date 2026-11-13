@@ -7,9 +7,11 @@ import app.lexo.application.port.out.LoadClientPort;
 import app.lexo.application.port.out.LoadClientFeesPort;
 import app.lexo.application.port.out.LoadClientCasesPort;
 import app.lexo.common.error.ResourceNotFoundException;
+import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.common.portal.PortalDtos.PortalFee;
 import app.lexo.common.portal.PortalDtos.PortalCase;
 import app.lexo.domain.Client;
+import app.lexo.domain.PortalToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 @Service
 @Transactional(readOnly = true)
@@ -46,14 +47,19 @@ class GetPortalService implements GetPortalQuery {
     @Override
     public PortalResponse get(String token) {
         Instant now = clock.instant();
-        Client client = loadClientPort.byPortalLink(token)
+        Client client = loadClientPort.byPortalTokenHash(PortalToken.hash(token))
                 .filter(c -> c.portalActiveAt(now))
                 .orElseThrow(() -> new ResourceNotFoundException("Link inválido ou expirado"));
 
-        List<PortalCase> cases = orEmpty(
-                () -> loadCasesPort.load(client.organizationId(), client.id()), "cases");
-        List<PortalFee> fees = orEmpty(
-                () -> loadFeesPort.load(client.organizationId(), client.id()), "fees");
+        List<PortalCase> cases;
+        List<PortalFee> fees;
+        try {
+            cases = loadCasesPort.load(client.organizationId(), client.id());
+            fees = loadFeesPort.load(client.organizationId(), client.id());
+        } catch (RuntimeException e) {
+            log.warn("Portal: failed to load cases or fees ({})", e.toString());
+            throw new ServiceUnavailableException("Não foi possível carregar o portal agora. Tente novamente em instantes.");
+        }
 
         BigDecimal outstanding = fees.stream()
                 .filter(h -> OUTSTANDING_STATUSES.contains(h.status()))
@@ -62,14 +68,5 @@ class GetPortalService implements GetPortalQuery {
 
         return new PortalResponse(client.name(), cases, fees,
                 new PortalSummary(cases.size(), outstanding));
-    }
-
-    private <T> List<T> orEmpty(Supplier<List<T>> call, String name) {
-        try {
-            return call.get();
-        } catch (Exception e) {
-            log.warn("Portal: failed to load {} ({}). Returning empty.", name, e.toString());
-            return List.of();
-        }
     }
 }

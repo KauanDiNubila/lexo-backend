@@ -3,10 +3,13 @@ package app.lexo.controller;
 import app.lexo.IntegrationTestBase;
 import app.lexo.common.portal.PortalDtos.PortalFee;
 import app.lexo.common.portal.PortalDtos.PortalCase;
+import app.lexo.domain.PortalToken;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -86,7 +89,7 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("update changes the fields, publishes no event and another organization gets 404")
+    @DisplayName("update changes the fields, publishes CLIENTE_ATUALIZADO and another organization gets 404")
     void update() throws Exception {
         Identity id = Identity.create();
         Identity other = Identity.create();
@@ -101,12 +104,19 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
         getAs(id, "/api/clientes/" + clientId)
                 .andExpect(jsonPath("$.email").value("novo@escritorio.com"))
                 .andExpect(jsonPath("$.phone").value("11888880000"));
-        verify(events, times(1)).publish(any());
+        verify(events).publish(argThat(e -> "CLIENTE_ATUALIZADO".equals(e.type())
+                && id.orgId().equals(e.organizationId())
+                && "CLIENTE".equals(e.entityType())
+                && clientId.equals(e.entityId())
+                && "Cliente atualizado: Maria Souza Lima".equals(e.description())
+                && id.userId().equals(e.userId())
+                && "Ana Advogada".equals(e.userName())));
 
         putAs(other, "/api/clientes/" + clientId, data("Invasor", null, null, null))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Cliente não encontrado"))
                 .andExpect(jsonPath("$.code").value("NAO_ENCONTRADO"));
+        verify(events, times(2)).publish(any());
         getAs(other, "/api/clientes/" + clientId).andExpect(status().isNotFound());
     }
 
@@ -263,8 +273,8 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("if a portal service fails, its section comes back empty and the rest continues")
-    void portalWithServiceDown() throws Exception {
+    @DisplayName("if the cases service fails, the portal answers 503 instead of an empty section")
+    void portalWithCasesServiceDown() throws Exception {
         Identity id = Identity.create();
         String clientId = createClient(id, "Helena Prado");
         String token = bodyOf(postAs(id, "/api/clientes/" + clientId + "/portal", Map.of())).get("token").asText();
@@ -273,11 +283,67 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
                 new PortalFee("Consulta", new BigDecimal("80.00"), "PENDENTE", Instant.now())));
 
         mvc.perform(get("/api/portal/{token}", token))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("SERVICO_INDISPONIVEL"))
+                .andExpect(jsonPath("$.error").value("Não foi possível carregar o portal agora. Tente novamente em instantes."));
+    }
+
+    @Test
+    @DisplayName("if the finance service fails, the portal answers 503 instead of reporting nothing outstanding")
+    void portalWithFinanceServiceDown() throws Exception {
+        Identity id = Identity.create();
+        String clientId = createClient(id, "Helena Prado");
+        String token = bodyOf(postAs(id, "/api/clientes/" + clientId + "/portal", Map.of())).get("token").asText();
+        when(caseClient.casesOfClient(anyString(), anyString())).thenReturn(List.of());
+        when(financeClient.feesOfClient(anyString(), anyString())).thenThrow(new RuntimeException("fora do ar"));
+
+        mvc.perform(get("/api/portal/{token}", token))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("SERVICO_INDISPONIVEL"));
+    }
+
+    @Test
+    @DisplayName("the database keeps only the hash of the portal token")
+    void portalTokenIsStoredHashed() throws Exception {
+        Identity id = Identity.create();
+        String clientId = createClient(id, "Helena Prado");
+
+        String token = bodyOf(postAs(id, "/api/clientes/" + clientId + "/portal", Map.of())).get("token").asText();
+
+        String stored = jdbc.queryForObject("select portal_token_hash from clients where id = ?", String.class, clientId);
+        assertThat(stored).isEqualTo(PortalToken.hash(token)).isNotEqualTo(token);
+    }
+
+    @Test
+    @DisplayName("migration V3 hashes the tokens stored in plain text so old links keep working")
+    void legacyPlainTokenAfterMigration() throws Exception {
+        Identity id = Identity.create();
+        String clientId = createClient(id, "Helena Prado");
+        String plain = "legado".repeat(10);
+        String script = new String(new ClassPathResource("db/migration/V3__portal_token_hash.sql")
+                .getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+        jdbc.execute("alter table clients rename column portal_token_hash to portal_token");
+        try {
+            jdbc.update("update clients set portal_token = ?, portal_token_expires_at = now() + interval '1 day' where id = ?",
+                    plain, clientId);
+            jdbc.execute(script);
+        } finally {
+            Integer legacyColumns = jdbc.queryForObject(
+                    "select count(*) from information_schema.columns where table_name = 'clients' and column_name = 'portal_token'",
+                    Integer.class);
+            if (legacyColumns != null && legacyColumns > 0) {
+                jdbc.execute("alter table clients rename column portal_token to portal_token_hash");
+            }
+        }
+        when(caseClient.casesOfClient(anyString(), anyString())).thenReturn(List.of());
+        when(financeClient.feesOfClient(anyString(), anyString())).thenReturn(List.of());
+
+        mvc.perform(get("/api/portal/{token}", plain))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.processos.length()").value(0))
-                .andExpect(jsonPath("$.honorarios.length()").value(1))
-                .andExpect(jsonPath("$.resumo.totalProcessos").value(0))
-                .andExpect(jsonPath("$.resumo.emAberto").value(80.0));
+                .andExpect(jsonPath("$.cliente").value("Helena Prado"));
+        assertThat(jdbc.queryForObject("select portal_token_hash from clients where id = ?", String.class, clientId))
+                .isEqualTo(PortalToken.hash(plain));
     }
 
     @Test

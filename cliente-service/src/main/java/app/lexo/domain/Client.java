@@ -33,8 +33,8 @@ public class Client {
         this.data = newData;
     }
 
-    public PortalLink generatePortalLink(String token, Instant now, long validityDays) {
-        this.portalLink = new PortalLink(token, now.plus(validityDays, ChronoUnit.DAYS));
+    public PortalLink generatePortalLink(String tokenHash, Instant now, long validityDays) {
+        this.portalLink = new PortalLink(tokenHash, now.plus(validityDays, ChronoUnit.DAYS));
         return portalLink;
     }
 

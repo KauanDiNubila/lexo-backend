@@ -17,6 +17,7 @@ import app.lexo.domain.ClientId;
 import app.lexo.domain.TaxId;
 import app.lexo.domain.ClientData;
 import app.lexo.domain.OrganizationId;
+import app.lexo.domain.PortalToken;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,16 +112,16 @@ class ClientPersistenceAdapterIntegrationTest extends IntegrationTestBase {
         Client client = saveClient(organization, "Helena Prado", null, null);
         String token = UUID.randomUUID().toString().replace("-", "");
         Instant now = Instant.now();
-        client.generatePortalLink(token, now, 90);
+        client.generatePortalLink(PortalToken.hash(token), now, 90);
         save.save(client);
 
-        Client byToken = load.byPortalLink(token).orElseThrow();
+        Client byToken = load.byPortalTokenHash(PortalToken.hash(token)).orElseThrow();
         assertThat(byToken.id()).isEqualTo(client.id());
         assertThat(byToken.portalActiveAt(now)).isTrue();
 
         byToken.revokePortalLink();
         save.save(byToken);
-        assertThat(load.byPortalLink(token)).isEmpty();
+        assertThat(load.byPortalTokenHash(PortalToken.hash(token))).isEmpty();
     }
 
     @Test
