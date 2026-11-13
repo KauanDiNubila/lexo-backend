@@ -22,7 +22,7 @@ class InMemoryAuditEntries implements SaveAuditEntryPort, LoadLatestAuditEntries
     public AuditEntry save(AuditEntry entry) {
         AuditEntry saved = new AuditEntry(new AuditEntryId("entry-" + (stored.size() + 1)), entry.organizationId(),
                 entry.userId(), entry.userName(), entry.action(), entry.entityType(), entry.entityId(),
-                entry.description(), NOW.plusSeconds(stored.size()));
+                entry.description(), entry.occurredAt());
         stored.add(saved);
         return saved;
     }
@@ -32,7 +32,7 @@ class InMemoryAuditEntries implements SaveAuditEntryPort, LoadLatestAuditEntries
         lastLimit = limit;
         return stored.stream()
                 .filter(e -> e.organizationId().equals(organizationId))
-                .sorted(Comparator.comparing(AuditEntry::createdAt).reversed())
+                .sorted(Comparator.comparing(AuditEntry::occurredAt).reversed())
                 .limit(limit)
                 .toList();
     }

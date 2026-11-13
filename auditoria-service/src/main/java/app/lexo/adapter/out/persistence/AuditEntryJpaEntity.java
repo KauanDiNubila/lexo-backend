@@ -1,10 +1,14 @@
 package app.lexo.adapter.out.persistence;
 
-import app.lexo.common.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -14,7 +18,11 @@ import jakarta.persistence.Table;
                 @Index(name = "idx_audit_created", columnList = "createdAt")
         }
 )
-class AuditEntryJpaEntity extends BaseEntity {
+class AuditEntryJpaEntity {
+
+    @Id
+    @Column(length = 36, updatable = false, nullable = false)
+    String id;
 
     @Column(nullable = false)
     String organizationId;
@@ -33,4 +41,14 @@ class AuditEntryJpaEntity extends BaseEntity {
 
     @Column(nullable = false, columnDefinition = "text")
     String description;
+
+    @Column(updatable = false)
+    Instant createdAt;
+
+    @PrePersist
+    void assignId() {
+        if (id == null) {
+            id = UUID.randomUUID().toString();
+        }
+    }
 }

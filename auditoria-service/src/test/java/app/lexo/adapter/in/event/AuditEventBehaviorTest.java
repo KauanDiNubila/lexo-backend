@@ -11,15 +11,18 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("Audit event consumer: behavior pinned before the hexagonal migration")
 class AuditEventBehaviorTest extends IntegrationTestBase {
 
+    private static final Instant OCCURRED_AT = Instant.parse("2026-11-12T10:15:30.123456Z");
+
     private DomainEvent event(String orgId, String userName) {
         return new DomainEvent("CLIENTE_CRIADO", orgId, "CLIENTE", "c-42", "Cliente criado: Maria Souza",
-                "u-7", userName, Instant.now().minusSeconds(86400));
+                "u-7", userName, OCCURRED_AT);
     }
 
     @Test
@@ -48,16 +51,25 @@ class AuditEventBehaviorTest extends IntegrationTestBase {
         assertThat(row.get("description")).isEqualTo("Cliente criado: Maria Souza");
         assertThat(row.get("id")).isNotNull();
         assertThat(row.get("created_at")).isNotNull();
-        assertThat(row.get("updated_at")).isNotNull();
     }
 
     @Test
-    @DisplayName("the entry is dated when it is recorded, not when the event happened")
-    void datedWhenRecorded() throws Exception {
+    @DisplayName("the entry is dated when the event happened, not when it is recorded")
+    void datedWhenTheEventHappened() throws Exception {
+        String org = UUID.randomUUID().toString();
+
+        deliver(event(org, "Ana Advogada"));
+
+        assertThat(((Timestamp) entriesOf(org).get(0).get("created_at")).toInstant()).isEqualTo(OCCURRED_AT);
+    }
+
+    @Test
+    @DisplayName("an event without a date is dated when it is recorded")
+    void datedNowWhenTheEventHasNoDate() throws Exception {
         String org = UUID.randomUUID().toString();
         Instant before = Instant.now();
 
-        deliver(event(org, "Ana Advogada"));
+        deliver(new DomainEvent("CLIENTE_CRIADO", org, "CLIENTE", "c-1", "d", "u-1", "Ana", null));
 
         Instant createdAt = ((Timestamp) entriesOf(org).get(0).get("created_at")).toInstant();
         assertThat(createdAt).isAfterOrEqualTo(before.minusSeconds(1)).isBeforeOrEqualTo(Instant.now().plusSeconds(1));
@@ -89,13 +101,15 @@ class AuditEventBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("an event that cannot be stored is dropped without failing the consumer")
-    void failureIsSwallowed() throws Exception {
+    @DisplayName("an event that cannot be stored fails the consumer, so the error handler can retry it and dead-letter it")
+    void failureIsNotSwallowed() {
         String org = UUID.randomUUID().toString();
 
-        deliver(event(org, null));
-        deliver(new DomainEvent("CLIENTE_CRIADO", null, "CLIENTE", "c-1", "sem escritorio", "u-1", "Ana", Instant.now()));
-        deliver(new DomainEvent("CLIENTE_CRIADO", org, "CLIENTE", "c-1", null, "u-1", "Ana", Instant.now()));
+        assertThatThrownBy(() -> deliver(event(org, null))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> deliver(new DomainEvent("CLIENTE_CRIADO", null, "CLIENTE", "c-1", "sem escritorio",
+                "u-1", "Ana", Instant.now()))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> deliver(new DomainEvent("CLIENTE_CRIADO", org, "CLIENTE", "c-1", null, "u-1", "Ana",
+                Instant.now()))).isInstanceOf(IllegalArgumentException.class);
 
         assertThat(entriesOf(org)).isEmpty();
         assertThat(jdbc.queryForObject("select count(*) from audit_logs where description = 'sem escritorio'",

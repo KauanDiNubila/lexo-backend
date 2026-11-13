@@ -2,6 +2,8 @@ package app.lexo.application.port.in;
 
 import app.lexo.domain.OrganizationId;
 
+import java.time.Instant;
+
 public record RegisterAuditEntryCommand(
         OrganizationId organizationId,
         String userId,
@@ -9,6 +11,7 @@ public record RegisterAuditEntryCommand(
         String action,
         String entityType,
         String entityId,
-        String description
+        String description,
+        Instant occurredAt
 ) {
 }
