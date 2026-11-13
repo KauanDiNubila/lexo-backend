@@ -24,12 +24,8 @@ class AuditEventListener {
     @KafkaListener(topics = TOPIC, groupId = "lexo-auditoria")
     void onEvent(DomainEvent event) {
         log.info("[kafka] event received: {} ({})", event.type(), event.entityId());
-        try {
-            registerAuditEntry.register(new RegisterAuditEntryCommand(
-                    new OrganizationId(event.organizationId()), event.userId(), event.userName(), event.type(),
-                    event.entityType(), event.entityId(), event.description()));
-        } catch (Exception e) {
-            log.error("[audit] failed to register action \"{}\" (org {})", event.type(), event.organizationId(), e);
-        }
+        registerAuditEntry.register(new RegisterAuditEntryCommand(
+                new OrganizationId(event.organizationId()), event.userId(), event.userName(), event.type(),
+                event.entityType(), event.entityId(), event.description(), event.occurredAt()));
     }
 }

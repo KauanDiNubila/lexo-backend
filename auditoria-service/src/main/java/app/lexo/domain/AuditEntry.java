@@ -11,7 +11,7 @@ public record AuditEntry(
         String entityType,
         String entityId,
         String description,
-        Instant createdAt
+        Instant occurredAt
 ) {
 
     public AuditEntry {
@@ -19,11 +19,13 @@ public record AuditEntry(
         require(userName, "userName");
         require(action, "action");
         require(description, "description");
+        require(occurredAt, "occurredAt");
     }
 
     public static AuditEntry register(OrganizationId organizationId, String userId, String userName, String action,
-                                      String entityType, String entityId, String description) {
-        return new AuditEntry(null, organizationId, userId, userName, action, entityType, entityId, description, null);
+                                      String entityType, String entityId, String description, Instant occurredAt) {
+        return new AuditEntry(null, organizationId, userId, userName, action, entityType, entityId, description,
+                occurredAt);
     }
 
     private static void require(Object value, String name) {

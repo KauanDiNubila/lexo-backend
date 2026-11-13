@@ -10,9 +10,9 @@ final class AuditEntryMapper {
     }
 
     static AuditEntry toDomain(AuditEntryJpaEntity entity) {
-        return new AuditEntry(new AuditEntryId(entity.getId()), new OrganizationId(entity.organizationId),
+        return new AuditEntry(new AuditEntryId(entity.id), new OrganizationId(entity.organizationId),
                 entity.userId, entity.userName, entity.action, entity.entityType, entity.entityId,
-                entity.description, entity.getCreatedAt());
+                entity.description, entity.createdAt);
     }
 
     static AuditEntryJpaEntity toNewEntity(AuditEntry entry) {
@@ -24,6 +24,7 @@ final class AuditEntryMapper {
         entity.entityType = entry.entityType();
         entity.entityId = entry.entityId();
         entity.description = entry.description();
+        entity.createdAt = entry.occurredAt();
         return entity;
     }
 }

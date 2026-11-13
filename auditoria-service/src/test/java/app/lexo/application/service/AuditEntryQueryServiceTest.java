@@ -19,8 +19,11 @@ class AuditEntryQueryServiceTest {
     private final InMemoryAuditEntries entries = new InMemoryAuditEntries();
     private final AuditEntryQueryService service = new AuditEntryQueryService(entries);
 
+    private int seconds;
+
     private void store(OrganizationId organization, String description) {
-        entries.save(AuditEntry.register(organization, "u-1", "Ana", "CLIENTE_CRIADO", "CLIENTE", "c-1", description));
+        entries.save(AuditEntry.register(organization, "u-1", "Ana", "CLIENTE_CRIADO", "CLIENTE", "c-1", description,
+                InMemoryAuditEntries.NOW.plusSeconds(seconds++)));
     }
 
     @Test
@@ -47,7 +50,7 @@ class AuditEntryQueryServiceTest {
         assertThat(first.action()).isEqualTo("CLIENTE_CRIADO");
         assertThat(first.entityType()).isEqualTo("CLIENTE");
         assertThat(first.entityId()).isEqualTo("c-1");
-        assertThat(first.createdAt()).isEqualTo(InMemoryAuditEntries.NOW.plusSeconds(2));
+        assertThat(first.occurredAt()).isEqualTo(InMemoryAuditEntries.NOW.plusSeconds(2));
     }
 
     @Test

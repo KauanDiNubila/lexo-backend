@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("AuditEventListener")
 class AuditEventListenerTest {
@@ -26,30 +26,32 @@ class AuditEventListenerTest {
         registered.add(command);
     });
 
+    private static final Instant OCCURRED_AT = Instant.parse("2026-11-12T10:15:30Z");
+
     @Test
-    @DisplayName("turns the event into a command, using the event type as the action")
+    @DisplayName("turns the event into a command, using the event type as the action and the event date")
     void mapsTheEvent() {
         listener.onEvent(new DomainEvent("CLIENTE_CRIADO", "escritorio-1", "CLIENTE", "c-1", "Cliente criado: Maria",
-                "u-1", "Ana", Instant.now()));
+                "u-1", "Ana", OCCURRED_AT));
 
         assertThat(registered).containsExactly(new RegisterAuditEntryCommand(new OrganizationId("escritorio-1"),
-                "u-1", "Ana", "CLIENTE_CRIADO", "CLIENTE", "c-1", "Cliente criado: Maria"));
+                "u-1", "Ana", "CLIENTE_CRIADO", "CLIENTE", "c-1", "Cliente criado: Maria", OCCURRED_AT));
     }
 
     @Test
-    @DisplayName("does not fail the consumer when the entry cannot be registered")
-    void swallowsFailures() {
+    @DisplayName("lets a failure to register reach the error handler")
+    void propagatesFailures() {
         failure = new IllegalStateException("banco fora do ar");
 
-        assertThatCode(() -> listener.onEvent(new DomainEvent("CLIENTE_CRIADO", "escritorio-1", "CLIENTE", "c-1",
-                "d", "u-1", "Ana", Instant.now()))).doesNotThrowAnyException();
+        assertThatThrownBy(() -> listener.onEvent(new DomainEvent("CLIENTE_CRIADO", "escritorio-1", "CLIENTE", "c-1",
+                "d", "u-1", "Ana", Instant.now()))).isSameAs(failure);
     }
 
     @Test
-    @DisplayName("does not fail the consumer when the event has no organization, and registers nothing")
-    void swallowsAnEventWithoutOrganization() {
-        assertThatCode(() -> listener.onEvent(new DomainEvent("CLIENTE_CRIADO", null, "CLIENTE", "c-1", "d", "u-1",
-                "Ana", Instant.now()))).doesNotThrowAnyException();
+    @DisplayName("lets an event without organization reach the error handler, and registers nothing")
+    void propagatesAnEventWithoutOrganization() {
+        assertThatThrownBy(() -> listener.onEvent(new DomainEvent("CLIENTE_CRIADO", null, "CLIENTE", "c-1", "d", "u-1",
+                "Ana", Instant.now()))).isInstanceOf(IllegalArgumentException.class);
 
         assertThat(registered).isEmpty();
     }
