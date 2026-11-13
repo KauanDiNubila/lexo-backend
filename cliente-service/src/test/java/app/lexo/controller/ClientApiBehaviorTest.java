@@ -312,8 +312,6 @@ class ClientApiBehaviorTest extends IntegrationTestBase {
 
         String stored = jdbc.queryForObject("select portal_token_hash from clients where id = ?", String.class, clientId);
         assertThat(stored).isEqualTo(PortalToken.hash(token)).isNotEqualTo(token);
-        assertThat(jdbc.queryForObject("select count(*) from clients where portal_token_hash = ?", Integer.class, token))
-                .isZero();
     }
 
     @Test

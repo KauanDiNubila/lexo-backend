@@ -4,6 +4,7 @@ import app.lexo.application.port.in.PortalResponse;
 import app.lexo.application.port.out.LoadClientFeesPort;
 import app.lexo.application.port.out.LoadClientCasesPort;
 import app.lexo.common.error.ResourceNotFoundException;
+import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.common.portal.PortalDtos.PortalFee;
 import app.lexo.common.portal.PortalDtos.PortalCase;
 import app.lexo.domain.Client;
@@ -76,7 +77,8 @@ class GetPortalServiceTest {
                     throw new IllegalStateException("fora do ar");
                 },
                 (e, c) -> fees).get(token))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(ServiceUnavailableException.class)
+                .hasMessage("Não foi possível carregar o portal agora. Tente novamente em instantes.");
     }
 
     @Test
@@ -89,7 +91,8 @@ class GetPortalServiceTest {
                 (e, c) -> {
                     throw new IllegalStateException("fora do ar");
                 }).get(token))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(ServiceUnavailableException.class)
+                .hasMessage("Não foi possível carregar o portal agora. Tente novamente em instantes.");
     }
 
     @Test
