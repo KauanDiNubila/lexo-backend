@@ -1,5 +1,6 @@
 package app.lexo.adapter.out.persistence;
 
+import app.lexo.application.port.out.DeleteExpiredRefreshTokensPort;
 import app.lexo.application.port.out.LoadRefreshTokenPort;
 import app.lexo.application.port.out.RevokeUserRefreshTokensPort;
 import app.lexo.application.port.out.SaveRefreshTokenPort;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 @Component
 class RefreshTokenPersistenceAdapter implements SaveRefreshTokenPort, LoadRefreshTokenPort,
-        RevokeUserRefreshTokensPort {
+        RevokeUserRefreshTokensPort, DeleteExpiredRefreshTokensPort {
 
     private final SpringDataRefreshTokenRepository repository;
 
@@ -41,6 +42,11 @@ class RefreshTokenPersistenceAdapter implements SaveRefreshTokenPort, LoadRefres
     @Override
     public int revokeAll(UserId userId, Instant now) {
         return repository.revokeAllOfUser(userId.value(), now);
+    }
+
+    @Override
+    public int deleteExpiredBefore(Instant cutoff) {
+        return repository.deleteExpiredBefore(cutoff);
     }
 
     private static RefreshToken toDomain(RefreshTokenJpaEntity entity) {

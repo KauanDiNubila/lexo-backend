@@ -6,11 +6,14 @@ import app.lexo.application.port.out.IssueAccessTokenPort;
 import app.lexo.application.port.out.LoginAttemptsPort;
 import app.lexo.application.port.out.PasswordHasher;
 import app.lexo.application.port.out.PublishEventPort;
+import app.lexo.application.port.out.RevokeAccessTokensPort;
 import app.lexo.application.port.out.SecretCipherPort;
 import app.lexo.application.port.out.SendInviteEmailPort;
 import app.lexo.application.port.out.TotpPort;
+import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.domain.EmailAddress;
 import app.lexo.domain.User;
+import app.lexo.domain.UserId;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -18,6 +21,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -121,6 +125,28 @@ final class Fakes {
         @Override
         public void publish(AccountEvent event) {
             published.add(event);
+        }
+    }
+
+    static class AccessCutoffs implements RevokeAccessTokensPort {
+
+        final Map<UserId, Instant> revoked = new LinkedHashMap<>();
+        boolean failing;
+
+        @Override
+        public void revokeIssuedUpTo(UserId userId, Instant now) {
+            if (failing) {
+                throw new ServiceUnavailableException("redis down");
+            }
+            revoked.put(userId, now);
+        }
+    }
+
+    static class FailingInviteEmails implements SendInviteEmailPort {
+
+        @Override
+        public boolean send(InviteEmail email) {
+            return false;
         }
     }
 

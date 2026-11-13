@@ -11,9 +11,11 @@ import app.lexo.application.port.out.AccountEvent;
 import app.lexo.application.port.out.InviteEmail;
 import app.lexo.common.error.ConflictException;
 import app.lexo.common.error.InvalidDataException;
+import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.common.event.EventType;
 import app.lexo.common.security.Role;
 import app.lexo.domain.EmailAddress;
+import app.lexo.domain.EmailAlreadyInUseException;
 import app.lexo.domain.InviteId;
 import app.lexo.domain.Organization;
 import app.lexo.domain.OrganizationId;
@@ -51,8 +53,8 @@ class TeamUseCasesTest {
         h = new AuthHarness();
         invite = new InviteUserService(h.store, h.store, h.store, h.store, h.emails, h.events, Fakes.CLOCK);
         revoke = new RevokeInviteService(h.store, h.store, h.events);
-        changeRole = new ChangeUserRoleService(h.store, h.store, h.store, h.events, Fakes.CLOCK);
-        remove = new RemoveUserService(h.store, h.store, h.store, h.events, Fakes.CLOCK);
+        changeRole = new ChangeUserRoleService(h.store, h.store, h.store, h.cutoffs, h.events, Fakes.CLOCK);
+        remove = new RemoveUserService(h.store, h.store, h.store, h.cutoffs, h.events, Fakes.CLOCK);
         accept = new AcceptInviteService(h.store, h.store, h.store, h.store, h.hasher, Fakes.CLOCK);
         organization = h.addOrganization("Escritorio Silva");
         admin = h.addUser(organization.id(), "Ana Admin", "ana@escritorio.com", Role.ADMIN);
@@ -184,6 +186,30 @@ class TeamUseCasesTest {
     }
 
     @Test
+    @DisplayName("changing a role cuts off the access tokens issued so far for that user only")
+    void changingRoleCutsOffAccessTokens() {
+        User member = h.addUser(organization.id(), "Bruno", "bruno@escritorio.com", Role.ADVOGADO);
+
+        changeRole.changeRole(new ChangeUserRoleCommand(organization.id(), actor, member.id(), Role.SECRETARIA));
+
+        assertThat(h.cutoffs.revoked).containsOnlyKeys(member.id());
+        assertThat(h.cutoffs.revoked.get(member.id())).isEqualTo(Fakes.NOW);
+    }
+
+    @Test
+    @DisplayName("a role change that cannot cut off the access tokens fails before recording the event")
+    void roleChangeFailsWhenTheCutoffFails() {
+        User member = h.addUser(organization.id(), "Bruno", "bruno@escritorio.com", Role.ADVOGADO);
+        h.cutoffs.failing = true;
+
+        assertThatThrownBy(() -> changeRole.changeRole(
+                new ChangeUserRoleCommand(organization.id(), actor, member.id(), Role.SECRETARIA)))
+                .isInstanceOf(ServiceUnavailableException.class);
+
+        assertThat(h.events.published).isEmpty();
+    }
+
+    @Test
     @DisplayName("sessions of other users are not touched when a role changes")
     void changingRoleKeepsOtherSessions() {
         User member = h.addUser(organization.id(), "Bruno", "bruno@escritorio.com", Role.ADVOGADO);
@@ -229,6 +255,50 @@ class TeamUseCasesTest {
         assertThat(event.type()).isEqualTo(EventType.USER_REMOVED);
         assertThat(event.entityId()).isEqualTo(member.id().value());
         assertThat(event.description()).isEqualTo("Removeu Bruno (bruno@escritorio.com)");
+    }
+
+    @Test
+    @DisplayName("removing a user cuts off the access tokens issued so far, and fails if it cannot")
+    void removingCutsOffAccessTokens() {
+        User member = h.addUser(organization.id(), "Bruno", "bruno@escritorio.com", Role.ADVOGADO);
+        User other = h.addUser(organization.id(), "Carlos", "carlos@escritorio.com", Role.ADVOGADO);
+
+        remove.remove(new RemoveUserCommand(organization.id(), actor, member.id()));
+
+        assertThat(h.cutoffs.revoked).containsOnlyKeys(member.id());
+        assertThat(h.cutoffs.revoked.get(member.id())).isEqualTo(Fakes.NOW);
+
+        h.cutoffs.failing = true;
+        h.events.published.clear();
+        assertThatThrownBy(() -> remove.remove(new RemoveUserCommand(organization.id(), actor, other.id())))
+                .isInstanceOf(ServiceUnavailableException.class);
+        assertThat(h.events.published).isEmpty();
+    }
+
+    @Test
+    @DisplayName("inviting fails when the invitation email cannot be queued, without recording the event")
+    void invitingFailsWhenTheEmailCannotBeQueued() {
+        InviteUserService failing = new InviteUserService(h.store, h.store, h.store, h.store,
+                new Fakes.FailingInviteEmails(), h.events, Fakes.CLOCK);
+
+        assertThatThrownBy(() -> failing.invite(new InviteUserCommand(organization.id(), actor, "Carla Nova",
+                NEW_EMAIL, Role.SECRETARIA))).isInstanceOf(ServiceUnavailableException.class)
+                .hasMessage("Não foi possível enviar o convite agora. Tente novamente em instantes.");
+
+        assertThat(h.events.published).isEmpty();
+    }
+
+    @Test
+    @DisplayName("accepting an invite that loses the race for the email is a conflict")
+    void acceptLosingTheRaceIsAConflict() {
+        String token = pendingToken();
+        AcceptInviteService racing = new AcceptInviteService(h.store, h.store, h.store, user -> {
+            throw new EmailAlreadyInUseException();
+        }, h.hasher, Fakes.CLOCK);
+
+        assertThatThrownBy(() -> racing.accept(new AcceptInviteCommand(token, "new-password-1", "new-password-1")))
+                .isInstanceOf(ConflictException.class).hasMessage("Já existe uma conta com este email");
+        assertThat(h.store.byToken(token).orElseThrow().acceptedAt()).isNull();
     }
 
     @Test

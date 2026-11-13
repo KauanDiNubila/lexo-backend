@@ -16,4 +16,8 @@ interface SpringDataRefreshTokenRepository extends JpaRepository<RefreshTokenJpa
     @Query("update RefreshTokenJpaEntity t set t.revokedAt = :now "
             + "where t.userId = :userId and t.revokedAt is null")
     int revokeAllOfUser(@Param("userId") String userId, @Param("now") Instant now);
+
+    @Modifying
+    @Query("delete from RefreshTokenJpaEntity t where t.expiresAt < :cutoff")
+    int deleteExpiredBefore(@Param("cutoff") Instant cutoff);
 }

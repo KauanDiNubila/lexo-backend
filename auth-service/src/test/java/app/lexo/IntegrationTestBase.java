@@ -8,12 +8,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.samstevens.totp.code.DefaultCodeGenerator;
 import dev.samstevens.totp.time.SystemTimeProvider;
 import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -35,7 +37,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -86,6 +90,14 @@ public abstract class IntegrationTestBase {
 
     @MockitoBean
     protected StringRedisTemplate redis;
+
+    @SuppressWarnings("unchecked")
+    protected final ValueOperations<String, String> redisValues = mock(ValueOperations.class);
+
+    @BeforeEach
+    void stubRedisValues() {
+        when(redis.opsForValue()).thenReturn(redisValues);
+    }
 
     protected record Account(String userId, String orgId, String name, String email, String role,
                              String accessToken, String refreshToken) {

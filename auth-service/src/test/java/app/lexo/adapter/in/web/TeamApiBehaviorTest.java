@@ -10,10 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
@@ -143,18 +146,20 @@ class TeamApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("inviting still succeeds when the email queue is down")
-    void invitingSurvivesQueueFailure() throws Exception {
+    @DisplayName("inviting fails and leaves nothing behind when the email queue is down")
+    void invitingFailsWhenTheQueueIsDown() throws Exception {
         Account admin = registerAdmin();
         doThrow(new IllegalStateException("rabbit down")).when(rabbit)
                 .convertAndSend(eq(RabbitConfig.EXCHANGE), eq(RabbitConfig.ROUTING_KEY), ArgumentMatchers.<Object>any());
 
         postAs(admin, "/api/usuarios/convites", invitation(uniqueEmail(), "ADVOGADO"))
-                .andExpect(status().isCreated());
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("SERVICO_INDISPONIVEL"))
+                .andExpect(jsonPath("$.error").value("Não foi possível enviar o convite agora. Tente novamente em instantes."));
 
         assertThat(jdbc.queryForObject("select count(*) from user_invites where organization_id = ?",
-                Integer.class, admin.orgId())).isEqualTo(1);
-        assertThat(onlyPublishedEvent().type()).isEqualTo("CONVIDOU_USUARIO");
+                Integer.class, admin.orgId())).isZero();
+        assertThat(publishedEvents()).isEmpty();
     }
 
     @Test
@@ -282,12 +287,32 @@ class TeamApiBehaviorTest extends IntegrationTestBase {
         assertThat(jdbc.queryForObject("select role from users where id = ?", String.class, member.userId()))
                 .isEqualTo("SECRETARIA");
         assertThat(refreshTokensAreRevoked(member.userId())).isTrue();
+        verify(redisValues).set(eq("session-cutoff:" + member.userId()), anyString(), eq(Duration.ofMinutes(16)));
         DomainEvent event = onlyPublishedEvent();
         assertThat(event.type()).isEqualTo("ALTEROU_PAPEL");
         assertThat(event.entityType()).isEqualTo("USUARIO");
         assertThat(event.entityId()).isEqualTo(member.userId());
         assertThat(event.description()).isEqualTo("Alterou papel do usuário para SECRETARIA");
         assertThat(event.userId()).isEqualTo(admin.userId());
+    }
+
+    @Test
+    @DisplayName("changing a role is refused and undone when the session cutoff cannot be recorded")
+    void changingRoleFailsClosedWithoutRedis() throws Exception {
+        Account admin = registerAdmin();
+        Account member = insertMember(admin, "ADVOGADO");
+        login(member.email(), PASSWORD, null).andExpect(status().isOk());
+        doThrow(new IllegalStateException("redis down")).when(redisValues)
+                .set(anyString(), anyString(), any(Duration.class));
+
+        patchAs(admin, "/api/usuarios/papel", Map.of("userId", member.userId(), "role", "SECRETARIA"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("SERVICO_INDISPONIVEL"));
+
+        assertThat(jdbc.queryForObject("select role from users where id = ?", String.class, member.userId()))
+                .isEqualTo("ADVOGADO");
+        assertThat(refreshTokensAreRevoked(member.userId())).isFalse();
+        assertThat(publishedEvents()).isEmpty();
     }
 
     @Test
@@ -343,12 +368,30 @@ class TeamApiBehaviorTest extends IntegrationTestBase {
         assertThat(refreshTokensAreRevoked(member.userId())).isTrue();
         assertThat(jdbc.queryForObject("select count(*) from refresh_tokens where user_id = ?", Integer.class,
                 member.userId())).isEqualTo(1);
+        verify(redisValues).set(eq("session-cutoff:" + member.userId()), anyString(), eq(Duration.ofMinutes(16)));
         DomainEvent event = onlyPublishedEvent();
         assertThat(event.type()).isEqualTo("REMOVEU_USUARIO");
         assertThat(event.entityType()).isEqualTo("USUARIO");
         assertThat(event.entityId()).isEqualTo(member.userId());
         assertThat(event.description()).isEqualTo("Removeu " + member.name() + " (" + member.email() + ")");
         login(member.email(), PASSWORD, null).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("removing a user is refused and undone when the session cutoff cannot be recorded")
+    void removingFailsClosedWithoutRedis() throws Exception {
+        Account admin = registerAdmin();
+        Account member = insertMember(admin, "ADVOGADO");
+        login(member.email(), PASSWORD, null).andExpect(status().isOk());
+        doThrow(new IllegalStateException("redis down")).when(redisValues)
+                .set(anyString(), anyString(), any(Duration.class));
+
+        deleteAs(admin, "/api/usuarios/" + member.userId()).andExpect(status().isServiceUnavailable());
+
+        assertThat(jdbc.queryForObject("select count(*) from users where id = ?", Integer.class, member.userId()))
+                .isEqualTo(1);
+        assertThat(refreshTokensAreRevoked(member.userId())).isFalse();
+        assertThat(publishedEvents()).isEmpty();
     }
 
     @Test

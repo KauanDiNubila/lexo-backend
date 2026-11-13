@@ -3,6 +3,7 @@ package app.lexo.adapter.out.persistence;
 import app.lexo.IntegrationTestBase;
 import app.lexo.common.security.Role;
 import app.lexo.domain.EmailAddress;
+import app.lexo.domain.EmailAlreadyInUseException;
 import app.lexo.domain.InviteId;
 import app.lexo.domain.Organization;
 import app.lexo.domain.OrganizationId;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Transactional
 @DisplayName("Persistence adapters")
@@ -100,6 +102,16 @@ class PersistenceAdaptersIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("saving a second user with the same email is reported as an email already in use")
+    void duplicateEmailIsTranslated() {
+        Organization organization = newOrganization();
+        User first = newUser(organization.id(), "Ana", Role.ADMIN);
+
+        assertThatThrownBy(() -> users.save(User.register(organization.id(), "Outra Ana", first.email(), "hash",
+                Role.ADVOGADO))).isInstanceOf(EmailAlreadyInUseException.class);
+    }
+
+    @Test
     @DisplayName("lookups by email and by organization are exact")
     void userLookups() {
         Organization organization = newOrganization();
@@ -170,6 +182,27 @@ class PersistenceAdaptersIntegrationTest extends IntegrationTestBase {
         assertThat(tokens.byHash(alreadyRevoked.tokenHash()).orElseThrow().revokedAt())
                 .isEqualTo(NOW.minusSeconds(100));
         assertThat(tokens.byHash(ofOther.tokenHash()).orElseThrow().isRevoked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("purging removes only the tokens that expired before the cutoff")
+    void tokenPurge() {
+        UserId user = new UserId(UUID.randomUUID().toString());
+        RefreshToken longExpired = tokens.save(RefreshToken.issue(user, "hash-" + UUID.randomUUID(),
+                NOW.minusSeconds(10L * 86400)));
+        RefreshToken justExpired = tokens.save(RefreshToken.issue(user, "hash-" + UUID.randomUUID(),
+                NOW.minusSeconds(86400)));
+        RefreshToken active = tokens.save(RefreshToken.issue(user, "hash-" + UUID.randomUUID(),
+                NOW.plusSeconds(86400)));
+        entityManager.flush();
+
+        int purged = tokens.deleteExpiredBefore(NOW.minusSeconds(7L * 86400));
+        entityManager.clear();
+
+        assertThat(purged).isEqualTo(1);
+        assertThat(tokens.byHash(longExpired.tokenHash())).isEmpty();
+        assertThat(tokens.byHash(justExpired.tokenHash())).isPresent();
+        assertThat(tokens.byHash(active.tokenHash())).isPresent();
     }
 
     @Test

@@ -19,6 +19,7 @@ class AuthHarness {
     final Fakes.Totp totp = new Fakes.Totp();
     final Fakes.Attempts attempts = new Fakes.Attempts();
     final Fakes.Events events = new Fakes.Events();
+    final Fakes.AccessCutoffs cutoffs = new Fakes.AccessCutoffs();
     final Fakes.InviteEmails emails = new Fakes.InviteEmails();
     final SessionIssuer sessions = new SessionIssuer(store, accessTokens, Fakes.CLOCK, 30);
 

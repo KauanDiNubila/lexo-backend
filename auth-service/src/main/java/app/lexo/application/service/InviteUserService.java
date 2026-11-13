@@ -12,6 +12,7 @@ import app.lexo.application.port.out.SaveInvitePort;
 import app.lexo.application.port.out.SendInviteEmailPort;
 import app.lexo.application.port.out.UserExistsPort;
 import app.lexo.common.error.ConflictException;
+import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.domain.Organization;
 import app.lexo.domain.OrganizationNotFoundException;
 import app.lexo.domain.UserInvite;
@@ -60,8 +61,11 @@ class InviteUserService implements InviteUserUseCase {
 
         String organizationName = loadOrganizationPort.byId(command.organizationId())
                 .map(Organization::name).orElseThrow(OrganizationNotFoundException::new);
-        sendInviteEmailPort.send(new InviteEmail(command.email(), command.name(), organizationName,
+        boolean sent = sendInviteEmailPort.send(new InviteEmail(command.email(), command.name(), organizationName,
                 invite.token()));
+        if (!sent) {
+            throw new ServiceUnavailableException("Não foi possível enviar o convite agora. Tente novamente em instantes.");
+        }
         publishEventPort.publish(AccountEvent.userInvited(command.organizationId(), command.actor(),
                 command.name(), command.email(), command.role()));
         return InviteResponse.of(invite);
