@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class GeminiStub implements AutoCloseable {
 
-    public record Received(String path, String query, JsonNode body) {
+    public record Received(String path, String query, String apiKey, JsonNode body) {
     }
 
     private record Reply(int status, String body) {
@@ -34,6 +34,7 @@ public final class GeminiStub implements AutoCloseable {
         server.createContext("/", exchange -> {
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             received.add(new Received(exchange.getRequestURI().getPath(), exchange.getRequestURI().getQuery(),
+                    exchange.getRequestHeaders().getFirst("x-goog-api-key"),
                     body.isBlank() ? null : JSON.readTree(body)));
             byte[] bytes = reply.body().getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");

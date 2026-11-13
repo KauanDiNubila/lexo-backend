@@ -72,7 +72,7 @@ class IaApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("summarize sends the prompt to Gemini with the key in the query and returns the trimmed answer")
+    @DisplayName("summarize sends the prompt to Gemini with the key in a header and returns the trimmed answer")
     void summarizeWithGemini() throws Exception {
         GEMINI.answers("  O processo segue em andamento.  \n");
 
@@ -83,7 +83,8 @@ class IaApiBehaviorTest extends IntegrationTestBase {
 
         Received request = GEMINI.onlyRequest();
         assertThat(request.path()).isEqualTo("/v1beta/models/gemini-test:generateContent");
-        assertThat(request.query()).isEqualTo("key=test-key");
+        assertThat(request.query()).isNull();
+        assertThat(request.apiKey()).isEqualTo("test-key");
         assertThat(request.body().has("system_instruction")).isFalse();
         assertThat(request.body().path("contents")).hasSize(1);
         assertThat(promptSentToGemini()).isEqualTo(Texts.SUMMARY_INTRO
@@ -185,7 +186,8 @@ class IaApiBehaviorTest extends IntegrationTestBase {
 
         Received request = GEMINI.onlyRequest();
         assertThat(request.path()).isEqualTo("/v1beta/models/gemini-test:generateContent");
-        assertThat(request.query()).isEqualTo("key=test-key");
+        assertThat(request.query()).isNull();
+        assertThat(request.apiKey()).isEqualTo("test-key");
         assertThat(request.body().path("system_instruction").path("parts").path(0).path("text").asText())
                 .isEqualTo(Texts.PERSONA + "\n\nA conversa é sobre o seguinte processo (use como contexto):\n"
                         + Texts.caseLines("0001234-56.2024.8.26.0100", "Cível", "ATIVO", "Helena Prado"));
@@ -230,15 +232,46 @@ class IaApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("chat with only blank messages still calls Gemini, with no conversation turns")
+    @DisplayName("chat with only blank messages answers 400, without spending the limit or calling Gemini")
     void chatWithOnlyBlankMessages() throws Exception {
-        GEMINI.answers("ok");
+        postAs(Identity.create(), CHAT, Map.of("mensagens", List.of(message("user", " "), message("user", null))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Envie ao menos uma mensagem"));
 
-        postAs(Identity.create(), CHAT, Map.of("mensagens", List.of(message("user", " "))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.fonte").value("gemini"));
+        assertThat(GEMINI.requests()).isEmpty();
+        verifyNoInteractions(redis);
+    }
 
-        assertThat(GEMINI.onlyRequest().body().path("contents")).isEmpty();
+    @Test
+    @DisplayName("the automatic summary counts only open deadlines and names the first open one as the next")
+    void automaticSummaryIgnoresClosedDeadlines() throws Exception {
+        GEMINI.answersWith(500, "");
+        Map<String, Object> body = new HashMap<>();
+        body.put("numero", "123");
+        body.put("prazos", List.of(deadline("Recurso", "01/12/2026", "CONCLUIDO"),
+                deadline("Contestação", "05/12/2026", "PENDENTE"),
+                deadline("Réplica", "09/12/2026", "PERDIDO"),
+                deadline("Audiência", "15/12/2026", "PENDENTE")));
+
+        postAs(Identity.create(), SUMMARIZE, body)
+                .andExpect(jsonPath("$.resumo").value(
+                        "O processo 123 do cliente não informado encontra-se em andamento. "
+                                + "Há 2 prazo(s) em aberto; o próximo é \"Contestação\" em 05/12/2026."
+                                + Texts.SUMMARY_MOCK_TAIL));
+    }
+
+    @Test
+    @DisplayName("the automatic summary says there are no open deadlines when all are closed")
+    void automaticSummaryWithAllDeadlinesClosed() throws Exception {
+        GEMINI.answersWith(500, "");
+        Map<String, Object> body = new HashMap<>();
+        body.put("numero", "123");
+        body.put("prazos", List.of(deadline("Recurso", "01/12/2026", "CONCLUIDO")));
+
+        postAs(Identity.create(), SUMMARIZE, body)
+                .andExpect(jsonPath("$.resumo").value(
+                        "O processo 123 do cliente não informado encontra-se em andamento. "
+                                + "Não há prazos em aberto no momento." + Texts.SUMMARY_MOCK_TAIL));
     }
 
     @Test

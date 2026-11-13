@@ -92,6 +92,29 @@ class SummarizeCaseServiceTest {
     }
 
     @Test
+    @DisplayName("the automatic summary counts only open deadlines and names the first open one as the next")
+    void automaticSummaryIgnoresClosedDeadlines() {
+        SummaryResponse response = service.summarize(new SummarizeCaseCommand(ORGANIZATION,
+                new CaseContext("123", null, null, null), List.of(
+                new Deadline("Recurso", "01/12/2026", "CONCLUIDO"),
+                new Deadline("Contestação", "05/12/2026", "PENDENTE"),
+                new Deadline("Réplica", "09/12/2026", "PERDIDO"),
+                new Deadline("Audiência", "15/12/2026", "pendente"))));
+
+        assertThat(response.summary()).contains("Há 2 prazo(s) em aberto; o próximo é \"Contestação\" em 05/12/2026.");
+    }
+
+    @Test
+    @DisplayName("the automatic summary says there are no open deadlines when all are closed")
+    void automaticSummaryWithAllDeadlinesClosed() {
+        SummaryResponse response = service.summarize(new SummarizeCaseCommand(ORGANIZATION,
+                new CaseContext("123", null, null, null), List.of(new Deadline("Recurso", "01/12/2026", "CONCLUIDO"))));
+
+        assertThat(response.summary()).contains("Não há prazos em aberto no momento.")
+                .doesNotContain("Não há prazos cadastrados");
+    }
+
+    @Test
     @DisplayName("spends the organization limit before asking the model")
     void spendsTheLimitFirst() {
         service.summarize(new SummarizeCaseCommand(ORGANIZATION, fullContext, deadlines));
