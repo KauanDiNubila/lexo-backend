@@ -1,7 +1,7 @@
-package app.lexo.controller;
+package app.lexo.adapter.in.web;
 
-import app.lexo.dto.AuditLogResponse;
-import app.lexo.repository.AuditLogRepository;
+import app.lexo.application.port.in.AuditEntryResponse;
+import app.lexo.application.port.in.ListAuditEntriesQuery;
 import app.lexo.common.security.AuthUser;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,17 +14,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/auditoria")
 @PreAuthorize("hasRole('ADMIN')")
-public class AuditoriaController {
+class AuditController {
 
-    private final AuditLogRepository repo;
+    private final ListAuditEntriesQuery listAuditEntries;
 
-    public AuditoriaController(AuditLogRepository repo) {
-        this.repo = repo;
+    AuditController(ListAuditEntriesQuery listAuditEntries) {
+        this.listAuditEntries = listAuditEntries;
     }
 
     @GetMapping
-    public List<AuditLogResponse> list(@AuthenticationPrincipal AuthUser me) {
-        return repo.findTop200ByOrganizationIdOrderByCreatedAtDesc(me.organizationId())
-                .stream().map(AuditLogResponse::from).toList();
+    List<AuditEntryResponse> list(@AuthenticationPrincipal AuthUser me) {
+        return listAuditEntries.latest(Identity.organization(me));
     }
 }
