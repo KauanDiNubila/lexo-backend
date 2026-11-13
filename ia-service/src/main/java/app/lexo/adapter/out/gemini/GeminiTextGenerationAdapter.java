@@ -1,5 +1,8 @@
-package app.lexo.service;
+package app.lexo.adapter.out.gemini;
 
+import app.lexo.application.port.out.TextGenerationPort;
+import app.lexo.domain.ChatMessage;
+import app.lexo.domain.ChatRole;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,16 +19,16 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
-public class GeminiClient {
+class GeminiTextGenerationAdapter implements TextGenerationPort {
 
-    private static final Logger log = LoggerFactory.getLogger(GeminiClient.class);
+    private static final Logger log = LoggerFactory.getLogger(GeminiTextGenerationAdapter.class);
 
     private final String apiKey;
     private final String model;
     private final String baseUrl;
     private final RestClient http;
 
-    public GeminiClient(
+    GeminiTextGenerationAdapter(
             @Value("${lexo.ia.gemini.api-key}") String apiKey,
             @Value("${lexo.ia.gemini.model}") String model,
             @Value("${lexo.ia.gemini.base-url}") String baseUrl,
@@ -41,21 +44,29 @@ public class GeminiClient {
         this.http = RestClient.builder().requestFactory(factory).build();
     }
 
-    public boolean isConfigured() {
+    @Override
+    public Optional<String> generate(String prompt) {
+        List<Map<String, Object>> contents = List.of(
+                Map.of("parts", List.of(Map.of("text", prompt))));
+        return call(null, contents);
+    }
+
+    @Override
+    public Optional<String> converse(String systemInstruction, List<ChatMessage> messages) {
+        List<Map<String, Object>> contents = messages.stream().map(GeminiTextGenerationAdapter::content).toList();
+        return call(systemInstruction, contents);
+    }
+
+    private static Map<String, Object> content(ChatMessage message) {
+        String role = message.role() == ChatRole.ASSISTANT ? "model" : "user";
+        return Map.of("role", role, "parts", List.of(Map.of("text", message.text())));
+    }
+
+    private boolean isConfigured() {
         return apiKey != null && !apiKey.isBlank();
     }
 
-    public Optional<String> gerar(String prompt) {
-        List<Map<String, Object>> contents = List.of(
-                Map.of("parts", List.of(Map.of("text", prompt))));
-        return chamar(null, contents);
-    }
-
-    public Optional<String> conversar(String systemInstruction, List<Map<String, Object>> contents) {
-        return chamar(systemInstruction, contents);
-    }
-
-    private Optional<String> chamar(String systemInstruction, List<Map<String, Object>> contents) {
+    private Optional<String> call(String systemInstruction, List<Map<String, Object>> contents) {
         if (!isConfigured()) {
             return Optional.empty();
         }
@@ -65,17 +76,17 @@ public class GeminiClient {
             if (systemInstruction != null && !systemInstruction.isBlank()) {
                 body.put("system_instruction", Map.of("parts", List.of(Map.of("text", systemInstruction))));
             }
-            JsonNode resp = http.post()
+            JsonNode response = http.post()
                     .uri(baseUrl + "/models/" + model + ":generateContent?key=" + apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()
                     .body(JsonNode.class);
-            String texto = resp == null ? null
-                    : resp.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null);
-            return Optional.ofNullable(texto).filter(t -> !t.isBlank());
+            String text = response == null ? null
+                    : response.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null);
+            return Optional.ofNullable(text).filter(t -> !t.isBlank());
         } catch (Exception e) {
-            log.warn("Chamada ao Gemini falhou, usando fallback: {}", e.toString());
+            log.warn("Gemini call failed, using the fallback: {}", e.toString());
             return Optional.empty();
         }
     }
