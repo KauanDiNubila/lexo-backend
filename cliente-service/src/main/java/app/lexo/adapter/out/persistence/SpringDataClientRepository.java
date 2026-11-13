@@ -15,7 +15,7 @@ interface SpringDataClientRepository
 
     Optional<ClientJpaEntity> findByIdAndOrganizationId(String id, String organizationId);
 
-    Optional<ClientJpaEntity> findByPortalToken(String portalToken);
+    Optional<ClientJpaEntity> findByPortalTokenHash(String portalTokenHash);
 
     boolean existsByIdAndOrganizationId(String id, String organizationId);
 }

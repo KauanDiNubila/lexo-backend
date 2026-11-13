@@ -10,8 +10,7 @@ import app.lexo.common.error.ResourceNotFoundException;
 import app.lexo.common.portal.PortalDtos.PortalFee;
 import app.lexo.common.portal.PortalDtos.PortalCase;
 import app.lexo.domain.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import app.lexo.domain.PortalToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +19,11 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 @Service
 @Transactional(readOnly = true)
 class GetPortalService implements GetPortalQuery {
 
-    private static final Logger log = LoggerFactory.getLogger(GetPortalService.class);
     private static final Set<String> OUTSTANDING_STATUSES = Set.of("PENDENTE", "ATRASADO");
 
     private final LoadClientPort loadClientPort;
@@ -46,14 +43,12 @@ class GetPortalService implements GetPortalQuery {
     @Override
     public PortalResponse get(String token) {
         Instant now = clock.instant();
-        Client client = loadClientPort.byPortalLink(token)
+        Client client = loadClientPort.byPortalTokenHash(PortalToken.hash(token))
                 .filter(c -> c.portalActiveAt(now))
                 .orElseThrow(() -> new ResourceNotFoundException("Link inválido ou expirado"));
 
-        List<PortalCase> cases = orEmpty(
-                () -> loadCasesPort.load(client.organizationId(), client.id()), "cases");
-        List<PortalFee> fees = orEmpty(
-                () -> loadFeesPort.load(client.organizationId(), client.id()), "fees");
+        List<PortalCase> cases = loadCasesPort.load(client.organizationId(), client.id());
+        List<PortalFee> fees = loadFeesPort.load(client.organizationId(), client.id());
 
         BigDecimal outstanding = fees.stream()
                 .filter(h -> OUTSTANDING_STATUSES.contains(h.status()))
@@ -62,14 +57,5 @@ class GetPortalService implements GetPortalQuery {
 
         return new PortalResponse(client.name(), cases, fees,
                 new PortalSummary(cases.size(), outstanding));
-    }
-
-    private <T> List<T> orEmpty(Supplier<List<T>> call, String name) {
-        try {
-            return call.get();
-        } catch (Exception e) {
-            log.warn("Portal: failed to load {} ({}). Returning empty.", name, e.toString());
-            return List.of();
-        }
     }
 }

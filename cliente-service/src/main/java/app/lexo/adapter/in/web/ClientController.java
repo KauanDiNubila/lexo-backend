@@ -95,7 +95,7 @@ class ClientController {
     ClientResponse update(@AuthenticationPrincipal AuthUser me, @PathVariable String id,
                            @Valid @RequestBody ClientRequest req) {
         return updateClient.update(
-                new UpdateClientCommand(Identity.organization(me), new ClientId(id), req.toData()));
+                new UpdateClientCommand(Identity.organization(me), new ClientId(id), Identity.actor(me), req.toData()));
     }
 
     @DeleteMapping("/{id}")

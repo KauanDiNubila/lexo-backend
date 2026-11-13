@@ -2,11 +2,11 @@ package app.lexo.domain;
 
 import java.time.Instant;
 
-public record PortalLink(String token, Instant expiresAt) {
+public record PortalLink(String tokenHash, Instant expiresAt) {
 
     public PortalLink {
-        if (token == null || token.isBlank()) {
-            throw new IllegalArgumentException("portal token is empty");
+        if (tokenHash == null || tokenHash.isBlank()) {
+            throw new IllegalArgumentException("portal token hash is empty");
         }
     }
 

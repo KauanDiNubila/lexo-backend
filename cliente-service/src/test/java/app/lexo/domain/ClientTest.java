@@ -48,7 +48,7 @@ class ClientTest {
         client.update(data("Maria Souza Lima"));
 
         assertThat(client.name()).isEqualTo("Maria Souza Lima");
-        assertThat(client.portalLink().token()).isEqualTo("abc");
+        assertThat(client.portalLink().tokenHash()).isEqualTo("abc");
     }
 
     @Test
@@ -73,7 +73,7 @@ class ClientTest {
 
         client.generatePortalLink("segundo", NOW, 90);
 
-        assertThat(client.portalLink().token()).isEqualTo("segundo");
+        assertThat(client.portalLink().tokenHash()).isEqualTo("segundo");
     }
 
     @Test

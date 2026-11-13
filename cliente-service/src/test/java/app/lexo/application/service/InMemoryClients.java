@@ -38,9 +38,9 @@ class InMemoryClients implements SaveClientPort, LoadClientPort, DeleteClientPor
     }
 
     @Override
-    public Optional<Client> byPortalLink(String token) {
+    public Optional<Client> byPortalTokenHash(String tokenHash) {
         return clients.values().stream()
-                .filter(c -> c.portalLink() != null && c.portalLink().token().equals(token))
+                .filter(c -> c.portalLink() != null && c.portalLink().tokenHash().equals(tokenHash))
                 .findFirst();
     }
 

@@ -8,12 +8,11 @@ import app.lexo.application.port.out.LoadClientPort;
 import app.lexo.application.port.out.SaveClientPort;
 import app.lexo.domain.Client;
 import app.lexo.domain.ClientNotFoundException;
-import app.lexo.domain.PortalLink;
+import app.lexo.domain.PortalToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -36,12 +35,9 @@ class GeneratePortalLinkService implements GeneratePortalLinkUseCase {
     public PortalLinkResponse generate(GeneratePortalLinkCommand command) {
         Client client = loadClientPort.byId(command.organizationId(), command.clientId())
                 .orElseThrow(ClientNotFoundException::new);
-        PortalLink link = client.generatePortalLink(newToken(), clock.instant(), settings.validityDays());
+        String token = PortalToken.generate();
+        client.generatePortalLink(PortalToken.hash(token), clock.instant(), settings.validityDays());
         saveClientPort.save(client);
-        return new PortalLinkResponse(link.token());
-    }
-
-    private String newToken() {
-        return UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
+        return new PortalLinkResponse(token);
     }
 }

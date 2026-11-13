@@ -52,8 +52,8 @@ class ClientPersistenceAdapter implements SaveClientPort, LoadClientPort, Delete
     }
 
     @Override
-    public Optional<Client> byPortalLink(String token) {
-        return repository.findByPortalToken(token).map(ClientMapper::toDomain);
+    public Optional<Client> byPortalTokenHash(String tokenHash) {
+        return repository.findByPortalTokenHash(tokenHash).map(ClientMapper::toDomain);
     }
 
     @Override
