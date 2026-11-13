@@ -3,9 +3,12 @@ package app.lexo.gateway;
 import app.lexo.common.signing.GatewaySignature;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import app.lexo.common.signing.SessionCutoff;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
+import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.env.MockEnvironment;
@@ -23,6 +26,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @DisplayName("AutenticacaoGatewayFilter")
 class AutenticacaoGatewayFilterTest {
@@ -32,8 +38,20 @@ class AutenticacaoGatewayFilterTest {
 
     private final SecretKey chaveJwt = Keys.hmacShaKeyFor(AUTH_SECRET.getBytes(StandardCharsets.UTF_8));
 
+    @SuppressWarnings("unchecked")
+    private final ReactiveValueOperations<String, String> cutoffs = mock(ReactiveValueOperations.class);
+
+    private final ReactiveStringRedisTemplate redis = redisBackedBy(cutoffs);
+
     private final AutenticacaoGatewayFilter filter =
-            new AutenticacaoGatewayFilter(AUTH_SECRET, CHAVE_ASSINATURA, new MockEnvironment());
+            new AutenticacaoGatewayFilter(AUTH_SECRET, CHAVE_ASSINATURA, new MockEnvironment(), redis);
+
+    private static ReactiveStringRedisTemplate redisBackedBy(ReactiveValueOperations<String, String> values) {
+        ReactiveStringRedisTemplate template = mock(ReactiveStringRedisTemplate.class);
+        when(template.opsForValue()).thenReturn(values);
+        when(values.get(anyString())).thenReturn(Mono.empty());
+        return template;
+    }
 
     private String token(String userId, String orgId, String role, String nome, String email, Instant exp) {
         return Jwts.builder()
@@ -71,7 +89,7 @@ class AutenticacaoGatewayFilterTest {
     @DisplayName("construtor recusa a chave de assinatura default fora do profile dev")
     void construtorRecusaChaveDefaultForaDeDev() {
         assertThatThrownBy(() ->
-                new AutenticacaoGatewayFilter(AUTH_SECRET, GatewaySignature.CHAVE_DEV, new MockEnvironment()))
+                new AutenticacaoGatewayFilter(AUTH_SECRET, GatewaySignature.CHAVE_DEV, new MockEnvironment(), redis))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -235,6 +253,97 @@ class AutenticacaoGatewayFilterTest {
 
         assertThat(chain.exchange()).isNotNull();
         assertThat(exchange.getResponse().getStatusCode()).isNotEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    private Mono<Void> callWithValidToken(ChainCaptor chain, MockServerWebExchange exchange) {
+        return filter.filter(exchange, chain);
+    }
+
+    private MockServerWebExchange privateRequest() {
+        return MockServerWebExchange.from(MockServerHttpRequest.get("/api/clientes")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenValido()));
+    }
+
+    @Test
+    @DisplayName("a token issued before the user's session cutoff is refused")
+    void tokenIssuedBeforeTheCutoffIsRefused() {
+        long cutoff = Instant.now().getEpochSecond();
+        when(cutoffs.get(SessionCutoff.key("user-1"))).thenReturn(Mono.just(Long.toString(cutoff)));
+        MockServerWebExchange exchange = privateRequest();
+        ChainCaptor chain = new ChainCaptor();
+
+        callWithValidToken(chain, exchange).block();
+
+        assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(chain.exchange()).isNull();
+    }
+
+    @Test
+    @DisplayName("a token issued after the cutoff goes through")
+    void tokenIssuedAfterTheCutoffGoesThrough() {
+        long cutoff = Instant.now().minus(10, ChronoUnit.MINUTES).getEpochSecond();
+        when(cutoffs.get(SessionCutoff.key("user-1"))).thenReturn(Mono.just(Long.toString(cutoff)));
+        ChainCaptor chain = new ChainCaptor();
+
+        callWithValidToken(chain, privateRequest()).block();
+
+        assertThat(chain.exchange()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("the cutoff of another user does not affect this one")
+    void cutoffIsPerUser() {
+        when(cutoffs.get(SessionCutoff.key("user-2")))
+                .thenReturn(Mono.just(Long.toString(Instant.now().getEpochSecond())));
+        ChainCaptor chain = new ChainCaptor();
+
+        callWithValidToken(chain, privateRequest()).block();
+
+        assertThat(chain.exchange()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("when Redis fails the request goes through, as it did before the cutoff existed")
+    void redisFailureLetsTheRequestThrough() {
+        when(cutoffs.get(SessionCutoff.key("user-1"))).thenReturn(Mono.error(new IllegalStateException("redis down")));
+        ChainCaptor chain = new ChainCaptor();
+
+        callWithValidToken(chain, privateRequest()).block();
+
+        assertThat(chain.exchange()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("a token without issue time is refused when the user has a cutoff")
+    void tokenWithoutIssueTimeIsRefusedUnderCutoff() {
+        when(cutoffs.get(SessionCutoff.key("user-1")))
+                .thenReturn(Mono.just(Long.toString(Instant.now().getEpochSecond())));
+        String withoutIssuedAt = Jwts.builder()
+                .subject("user-1")
+                .claim("organizationId", "org-1")
+                .claim("role", "ADMIN")
+                .expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
+                .signWith(chaveJwt)
+                .compact();
+        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/clientes")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + withoutIssuedAt));
+        ChainCaptor chain = new ChainCaptor();
+
+        callWithValidToken(chain, exchange).block();
+
+        assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(chain.exchange()).isNull();
+    }
+
+    @Test
+    @DisplayName("public routes never ask Redis")
+    void publicRoutesSkipTheCutoff() {
+        when(cutoffs.get(anyString())).thenThrow(new AssertionError("Redis must not be asked"));
+        ChainCaptor chain = new ChainCaptor();
+
+        filter.filter(MockServerWebExchange.from(MockServerHttpRequest.post("/api/auth/login")), chain).block();
+
+        assertThat(chain.exchange()).isNotNull();
     }
 
     @Test

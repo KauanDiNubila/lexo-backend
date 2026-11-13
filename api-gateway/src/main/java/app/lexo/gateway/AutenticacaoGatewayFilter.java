@@ -1,15 +1,19 @@
 package app.lexo.gateway;
 
 import app.lexo.common.signing.GatewaySignature;
+import app.lexo.common.signing.SessionCutoff;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -26,6 +30,8 @@ import java.util.List;
 
 @Component
 public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
+
+    private static final Logger log = LoggerFactory.getLogger(AutenticacaoGatewayFilter.class);
 
     public static final String H_USER_ID = "X-User-Id";
     public static final String H_ORG_ID = "X-Org-Id";
@@ -49,10 +55,11 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
 
     private final JwtParser parser;
     private final String chaveAssinatura;
+    private final ReactiveStringRedisTemplate redis;
 
     public AutenticacaoGatewayFilter(@Value("${lexo.auth-secret}") String secret,
                                      @Value("${lexo.gateway.signing-key}") String chaveAssinatura,
-                                     Environment env) {
+                                     Environment env, ReactiveStringRedisTemplate redis) {
         var perfis = Arrays.asList(env.getActiveProfiles());
         GatewaySignature.exigirChaveSegura(chaveAssinatura,
                 perfis.contains("dev") || perfis.contains("test"));
@@ -60,6 +67,7 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.parser = Jwts.parser().verifyWith(key).build();
         this.chaveAssinatura = chaveAssinatura;
+        this.redis = redis;
     }
 
     @Override
@@ -116,10 +124,23 @@ public class AutenticacaoGatewayFilter implements GlobalFilter, Ordered {
                     .header(GatewaySignature.H_ASSINATURA,
                             GatewaySignature.sign(chaveAssinatura, payload));
 
-            return chain.filter(exchange.mutate().request(mutada.build()).build());
+            ServerWebExchange encaminhada = exchange.mutate().request(mutada.build()).build();
+            long issuedAt = c.getIssuedAt() == null ? 0 : c.getIssuedAt().toInstant().getEpochSecond();
+            return isRevoked(userId, issuedAt)
+                    .flatMap(revoked -> revoked ? naoAutorizado(exchange) : chain.filter(encaminhada));
         } catch (Exception e) {
             return naoAutorizado(exchange);
         }
+    }
+
+    private Mono<Boolean> isRevoked(String userId, long issuedAtSeconds) {
+        return redis.opsForValue().get(SessionCutoff.key(userId))
+                .map(cutoff -> issuedAtSeconds <= Long.parseLong(cutoff))
+                .defaultIfEmpty(false)
+                .onErrorResume(e -> {
+                    log.warn("[auth] could not check the session cutoff, letting the request through", e);
+                    return Mono.just(false);
+                });
     }
 
     private boolean isPublica(String path) {
