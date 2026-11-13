@@ -1,5 +1,6 @@
 package app.lexo.application.port.in;
 
+import app.lexo.common.error.InvalidDataException;
 import app.lexo.domain.CaseContext;
 import app.lexo.domain.ChatMessage;
 import app.lexo.domain.OrganizationId;
@@ -11,6 +12,9 @@ public record ChatCommand(OrganizationId organizationId, List<ChatMessage> messa
                           Optional<CaseContext> caseContext) {
 
     public ChatCommand {
+        if (messages.isEmpty()) {
+            throw new InvalidDataException("Envie ao menos uma mensagem");
+        }
         messages = List.copyOf(messages);
     }
 }

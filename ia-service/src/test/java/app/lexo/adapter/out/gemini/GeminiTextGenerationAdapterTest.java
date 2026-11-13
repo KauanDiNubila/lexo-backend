@@ -4,10 +4,14 @@ import app.lexo.GeminiStub;
 import app.lexo.GeminiStub.Received;
 import app.lexo.domain.ChatMessage;
 import app.lexo.domain.ChatRole;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +46,8 @@ class GeminiTextGenerationAdapterTest {
         assertThat(result).contains("texto gerado");
         Received request = GEMINI.onlyRequest();
         assertThat(request.path()).isEqualTo("/v1beta/models/modelo-x:generateContent");
-        assertThat(request.query()).isEqualTo("key=chave");
+        assertThat(request.query()).isNull();
+        assertThat(request.apiKey()).isEqualTo("chave");
         assertThat(request.body().has("system_instruction")).isFalse();
         assertThat(request.body().at("/contents/0/parts/0/text").asText()).isEqualTo("escreva");
         assertThat(request.body().at("/contents/0").has("role")).isFalse();
@@ -108,5 +113,25 @@ class GeminiTextGenerationAdapterTest {
                 new GeminiTextGenerationAdapter("chave", "m", "http://127.0.0.1:1/v1beta", 1, 1);
 
         assertThat(unreachable.generate("x")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("never writes the API key to the log when the call fails")
+    void keyStaysOutOfTheLog() {
+        Logger logger = (Logger) LoggerFactory.getLogger(GeminiTextGenerationAdapter.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            new GeminiTextGenerationAdapter("segredo-da-chave", "m", "http://127.0.0.1:1/v1beta", 1, 1)
+                    .generate("x");
+            GEMINI.answersWith(500, "{}");
+            adapter.generate("x");
+        } finally {
+            logger.detachAppender(appender);
+        }
+
+        assertThat(appender.list).isNotEmpty();
+        assertThat(appender.list).noneMatch(event -> event.getFormattedMessage().contains("segredo-da-chave"));
     }
 }

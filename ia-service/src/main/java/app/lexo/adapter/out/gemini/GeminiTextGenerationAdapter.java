@@ -77,7 +77,8 @@ class GeminiTextGenerationAdapter implements TextGenerationPort {
                 body.put("system_instruction", Map.of("parts", List.of(Map.of("text", systemInstruction))));
             }
             JsonNode response = http.post()
-                    .uri(baseUrl + "/models/" + model + ":generateContent?key=" + apiKey)
+                    .uri(baseUrl + "/models/" + model + ":generateContent")
+                    .header("x-goog-api-key", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()

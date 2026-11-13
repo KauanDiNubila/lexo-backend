@@ -62,18 +62,24 @@ class SummarizeCaseService implements SummarizeCaseUseCase {
         summary.append(" do cliente ").append(orDefault(context.client(), "não informado"))
                 .append(" encontra-se ")
                 .append(orDefault(context.status(), "em andamento").toLowerCase(Locale.ROOT)).append(". ");
-        List<Deadline> deadlines = command.deadlines();
+        return summary.append(deadlinesSentence(command.deadlines()))
+                .append(" (Resumo automático — configure a Lexo IA para análises mais ricas.)").toString();
+    }
+
+    private String deadlinesSentence(List<Deadline> deadlines) {
         if (deadlines.isEmpty()) {
-            summary.append("Não há prazos cadastrados no momento.");
-        } else {
-            Deadline next = deadlines.get(0);
-            summary.append("Há ").append(deadlines.size()).append(" prazo(s) em aberto; o próximo é \"")
-                    .append(orDefault(next.title(), "prazo")).append("\"");
-            if (next.date() != null && !next.date().isBlank()) {
-                summary.append(" em ").append(next.date());
-            }
-            summary.append(".");
+            return "Não há prazos cadastrados no momento.";
         }
-        return summary.append(" (Resumo automático — configure a Lexo IA para análises mais ricas.)").toString();
+        List<Deadline> open = deadlines.stream().filter(Deadline::isOpen).toList();
+        if (open.isEmpty()) {
+            return "Não há prazos em aberto no momento.";
+        }
+        Deadline next = open.get(0);
+        StringBuilder sentence = new StringBuilder("Há ").append(open.size())
+                .append(" prazo(s) em aberto; o próximo é \"").append(orDefault(next.title(), "prazo")).append("\"");
+        if (next.date() != null && !next.date().isBlank()) {
+            sentence.append(" em ").append(next.date());
+        }
+        return sentence.append(".").toString();
     }
 }
