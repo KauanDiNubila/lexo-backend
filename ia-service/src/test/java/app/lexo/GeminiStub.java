@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public final class GeminiStub {
+public final class GeminiStub implements AutoCloseable {
 
     public record Received(String path, String query, JsonNode body) {
     }
@@ -25,7 +25,7 @@ public final class GeminiStub {
     private final List<Received> received = new CopyOnWriteArrayList<>();
     private volatile Reply reply = new Reply(200, "{}");
 
-    GeminiStub() {
+    public GeminiStub() {
         try {
             server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         } catch (IOException e) {
@@ -48,6 +48,11 @@ public final class GeminiStub {
 
     public String baseUrl() {
         return "http://127.0.0.1:" + server.getAddress().getPort() + "/v1beta";
+    }
+
+    @Override
+    public void close() {
+        server.stop(0);
     }
 
     public void reset() {
