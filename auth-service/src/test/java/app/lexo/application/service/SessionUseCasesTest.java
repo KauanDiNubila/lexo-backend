@@ -120,6 +120,18 @@ class SessionUseCasesTest {
     }
 
     @Test
+    @DisplayName("register that loses the race for the email is reported as an email already in use")
+    void registerLosingTheRace() {
+        RegisterOrganizationService racing = new RegisterOrganizationService(h.store, h.store, user -> {
+            throw new EmailAlreadyInUseException();
+        }, h.hasher, h.sessions, Fakes.CLOCK);
+
+        assertThatThrownBy(() -> racing.register(registration("ana@escritorio.com", AuthHarness.PASSWORD,
+                AuthHarness.PASSWORD))).isInstanceOf(EmailAlreadyInUseException.class);
+        assertThat(h.store.tokens).isEmpty();
+    }
+
+    @Test
     @DisplayName("login returns a session and clears both attempt counters")
     void logsIn() {
         User user = h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);

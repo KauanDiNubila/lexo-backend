@@ -9,6 +9,7 @@ import app.lexo.application.port.out.SaveUserPort;
 import app.lexo.application.port.out.UserExistsPort;
 import app.lexo.common.error.ConflictException;
 import app.lexo.common.error.InvalidDataException;
+import app.lexo.domain.EmailAlreadyInUseException;
 import app.lexo.domain.InviteStatus;
 import app.lexo.domain.User;
 import app.lexo.domain.UserInvite;
@@ -58,8 +59,12 @@ class AcceptInviteService implements AcceptInviteUseCase {
             throw new ConflictException("Já existe uma conta com este email");
         }
 
-        saveUserPort.save(User.register(invite.organizationId(), invite.name(), invite.email(),
-                passwordHasher.hash(command.password()), invite.role()));
+        try {
+            saveUserPort.save(User.register(invite.organizationId(), invite.name(), invite.email(),
+                    passwordHasher.hash(command.password()), invite.role()));
+        } catch (EmailAlreadyInUseException e) {
+            throw new ConflictException("Já existe uma conta com este email");
+        }
         invite.accept(now);
         saveInvitePort.save(invite);
     }

@@ -1,6 +1,7 @@
 package app.lexo.application.service;
 
 import app.lexo.application.port.out.CountUsersPort;
+import app.lexo.application.port.out.DeleteExpiredRefreshTokensPort;
 import app.lexo.application.port.out.DeleteInvitePort;
 import app.lexo.application.port.out.DeleteUserPort;
 import app.lexo.application.port.out.ListPendingInvitesPort;
@@ -35,7 +36,7 @@ import java.util.Optional;
 class InMemoryAuth implements SaveUserPort, LoadUserPort, UserExistsPort, ListUsersPort, CountUsersPort,
         DeleteUserPort, SaveOrganizationPort, LoadOrganizationPort, SaveRefreshTokenPort, LoadRefreshTokenPort,
         RevokeUserRefreshTokensPort, SaveInvitePort, LoadInvitePort, ListPendingInvitesPort,
-        PendingInviteExistsPort, DeleteInvitePort {
+        PendingInviteExistsPort, DeleteInvitePort, DeleteExpiredRefreshTokensPort {
 
     static final Instant CREATED = Instant.parse("2026-01-01T00:00:00Z");
 
@@ -145,6 +146,13 @@ class InMemoryAuth implements SaveUserPort, LoadUserPort, UserExistsPort, ListUs
             }
         }
         return revoked;
+    }
+
+    @Override
+    public int deleteExpiredBefore(Instant cutoff) {
+        int before = tokens.size();
+        tokens.values().removeIf(token -> token.expiresAt().isBefore(cutoff));
+        return before - tokens.size();
     }
 
     @Override

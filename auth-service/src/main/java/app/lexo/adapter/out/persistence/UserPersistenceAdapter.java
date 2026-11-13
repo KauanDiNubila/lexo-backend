@@ -7,17 +7,23 @@ import app.lexo.application.port.out.LoadUserPort;
 import app.lexo.application.port.out.SaveUserPort;
 import app.lexo.application.port.out.UserExistsPort;
 import app.lexo.domain.EmailAddress;
+import app.lexo.domain.EmailAlreadyInUseException;
 import app.lexo.domain.OrganizationId;
 import app.lexo.domain.User;
 import app.lexo.domain.UserId;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 class UserPersistenceAdapter implements SaveUserPort, LoadUserPort, UserExistsPort, ListUsersPort,
         CountUsersPort, DeleteUserPort {
+
+    private static final Set<String> EMAIL_CONSTRAINTS = Set.of("users_email_key", "uq_users_email_lower");
 
     private final SpringDataUserRepository repository;
 
@@ -32,7 +38,24 @@ class UserPersistenceAdapter implements SaveUserPort, LoadUserPort, UserExistsPo
                 : repository.findById(user.id().value()).orElseThrow(
                         () -> new IllegalStateException("User " + user.id().value() + " does not exist to update"));
         UserMapper.copyTo(user, entity);
-        return UserMapper.toDomain(repository.save(entity));
+        try {
+            return UserMapper.toDomain(repository.saveAndFlush(entity));
+        } catch (DataIntegrityViolationException e) {
+            if (isEmailConflict(e)) {
+                throw new EmailAlreadyInUseException();
+            }
+            throw e;
+        }
+    }
+
+    private static boolean isEmailConflict(Throwable error) {
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException violation
+                    && EMAIL_CONSTRAINTS.contains(violation.getConstraintName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
