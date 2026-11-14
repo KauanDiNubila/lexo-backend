@@ -1,65 +1,61 @@
 package app.lexo.domain;
 
-import app.lexo.common.domain.BaseEntity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-
 import java.time.Instant;
 
-@Entity
-@Table(
-        name = "refresh_tokens",
-        indexes = @Index(name = "idx_refresh_token_user", columnList = "userId")
-)
-public class RefreshToken extends BaseEntity {
+public class RefreshToken {
 
-    @Column(nullable = false)
-    private String userId;
-
-    @Column(nullable = false, unique = true, length = 64)
-    private String tokenHash;
-
-    @Column(nullable = false)
-    private Instant expiresAt;
-
+    private final String id;
+    private final UserId userId;
+    private final String tokenHash;
+    private final Instant expiresAt;
     private Instant revokedAt;
 
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
+    private RefreshToken(String id, UserId userId, String tokenHash, Instant expiresAt, Instant revokedAt) {
+        this.id = id;
         this.userId = userId;
-    }
-
-    public String getTokenHash() {
-        return tokenHash;
-    }
-
-    public void setTokenHash(String tokenHash) {
         this.tokenHash = tokenHash;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(Instant expiresAt) {
         this.expiresAt = expiresAt;
-    }
-
-    public Instant getRevokedAt() {
-        return revokedAt;
-    }
-
-    public void setRevokedAt(Instant revokedAt) {
         this.revokedAt = revokedAt;
     }
 
-    public boolean estaValido() {
-        return revokedAt == null && expiresAt.isAfter(Instant.now());
+    public static RefreshToken issue(UserId userId, String tokenHash, Instant expiresAt) {
+        return new RefreshToken(null, userId, tokenHash, expiresAt, null);
+    }
+
+    public static RefreshToken restore(String id, UserId userId, String tokenHash, Instant expiresAt,
+                                       Instant revokedAt) {
+        return new RefreshToken(id, userId, tokenHash, expiresAt, revokedAt);
+    }
+
+    public void revoke(Instant now) {
+        this.revokedAt = now;
+    }
+
+    public boolean isRevoked() {
+        return revokedAt != null;
+    }
+
+    public boolean isExpiredAt(Instant now) {
+        return !expiresAt.isAfter(now);
+    }
+
+    public String id() {
+        return id;
+    }
+
+    public UserId userId() {
+        return userId;
+    }
+
+    public String tokenHash() {
+        return tokenHash;
+    }
+
+    public Instant expiresAt() {
+        return expiresAt;
+    }
+
+    public Instant revokedAt() {
+        return revokedAt;
     }
 }

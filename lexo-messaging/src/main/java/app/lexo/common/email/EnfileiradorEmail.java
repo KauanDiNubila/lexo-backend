@@ -18,12 +18,14 @@ public class EnfileiradorEmail {
         this.rabbit = rabbit;
     }
 
-    public void enfileirar(TarefaEmail tarefa) {
+    public boolean enfileirar(TarefaEmail tarefa) {
         try {
             rabbit.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.ROUTING_KEY, tarefa);
             log.info("[rabbit] e-mail enfileirado: {} para {}", tarefa.tipo(), tarefa.destinatario());
+            return true;
         } catch (Exception e) {
             log.error("[rabbit] falha ao enfileirar e-mail {} — seguindo sem bloquear", tarefa.tipo(), e);
+            return false;
         }
     }
 }

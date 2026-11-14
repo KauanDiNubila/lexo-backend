@@ -1,5 +1,9 @@
 package app.lexo.common.web;
 
+import app.lexo.common.error.ConflictException;
+import app.lexo.common.error.InvalidDataException;
+import app.lexo.common.error.ServiceUnavailableException;
+import app.lexo.common.error.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -21,6 +26,36 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApi(ApiException ex, HttpServletRequest req) {
         return build(ex.getStatus(), ex.getCode(), ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex,
+                                                              HttpServletRequest req) {
+        return build(HttpStatus.NOT_FOUND, ErrorCode.paraStatus(HttpStatus.NOT_FOUND), ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(InvalidDataException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidData(InvalidDataException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.paraStatus(HttpStatus.BAD_REQUEST), ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleServiceUnavailable(ServiceUnavailableException ex,
+                                                                   HttpServletRequest req) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.paraStatus(HttpStatus.SERVICE_UNAVAILABLE),
+                ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ErrorCode.CONFLITO, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+                                                            HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.REQUISICAO_INVALIDA,
+                "Par\u00e2metro inv\u00e1lido: " + ex.getName(), req);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -1,114 +1,65 @@
 package app.lexo.domain;
 
-import app.lexo.common.domain.BaseEntity;
-
-import app.lexo.domain.enums.InvoiceStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-
-import java.math.BigDecimal;
 import java.time.Instant;
 
-@Entity
-@Table(
-        name = "invoices",
-        indexes = {
-                @Index(name = "idx_invoice_org", columnList = "organizationId"),
-                @Index(name = "idx_invoice_client", columnList = "clientId"),
-                @Index(name = "idx_invoice_due", columnList = "dueDate"),
-                @Index(name = "idx_invoice_status", columnList = "status")
-        }
-)
-public class Invoice extends BaseEntity {
+public class Invoice {
 
-    @Column(nullable = false)
-    private String organizationId;
-
-    @Column(nullable = false)
-    private String clientId;
-
-    private String caseId;
-
-    @Column(nullable = false)
-    private String description;
-
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal amount;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private InvoiceStatus status = InvoiceStatus.PENDENTE;
-
-    @Column(nullable = false)
-    private Instant dueDate;
-
+    private final InvoiceId id;
+    private final OrganizationId organizationId;
+    private InvoiceData data;
     private Instant paidAt;
 
-    public String getOrganizationId() {
+    private Invoice(InvoiceId id, OrganizationId organizationId, InvoiceData data, Instant paidAt) {
+        this.id = id;
+        this.organizationId = organizationId;
+        this.data = data;
+        this.paidAt = paidAt;
+    }
+
+    public static Invoice issue(OrganizationId organizationId, InvoiceData data, Instant now) {
+        return new Invoice(null, organizationId, data, data.status() == InvoiceStatus.PAID ? now : null);
+    }
+
+    public static Invoice restore(InvoiceId id, OrganizationId organizationId, InvoiceData data, Instant paidAt) {
+        return new Invoice(id, organizationId, data, paidAt);
+    }
+
+    public void update(InvoiceData newData, Instant now) {
+        moveTo(newData.status(), now);
+        this.data = newData;
+    }
+
+    public void changeStatus(InvoiceStatus newStatus, Instant now) {
+        moveTo(newStatus, now);
+        this.data = data.withStatus(newStatus);
+    }
+
+    public InvoiceStatus statusAt(Instant now) {
+        boolean pastDue = data.status() == InvoiceStatus.PENDING && data.dueDate().isBefore(now);
+        return pastDue ? InvoiceStatus.OVERDUE : data.status();
+    }
+
+    private void moveTo(InvoiceStatus newStatus, Instant now) {
+        if (newStatus != InvoiceStatus.PAID) {
+            this.paidAt = null;
+        } else if (data.status() != InvoiceStatus.PAID) {
+            this.paidAt = now;
+        }
+    }
+
+    public InvoiceId id() {
+        return id;
+    }
+
+    public OrganizationId organizationId() {
         return organizationId;
     }
 
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
+    public InvoiceData data() {
+        return data;
     }
 
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getCaseId() {
-        return caseId;
-    }
-
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public InvoiceStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(InvoiceStatus status) {
-        this.status = status;
-    }
-
-    public Instant getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(Instant dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public Instant getPaidAt() {
+    public Instant paidAt() {
         return paidAt;
-    }
-
-    public void setPaidAt(Instant paidAt) {
-        this.paidAt = paidAt;
     }
 }
