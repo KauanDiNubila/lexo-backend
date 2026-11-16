@@ -7,13 +7,10 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.GenericContainer;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestPropertySource(properties = {
-        "lexo.rate-limit.replenish-rate=1", "lexo.rate-limit.burst-capacity=2", "lexo.rate-limit.requested-tokens=1"})
+        "lexo.rate-limit.replenish-rate=1", "lexo.rate-limit.burst-capacity=2", "lexo.rate-limit.requested-tokens=2"})
 @DisplayName("Gateway rate limit over HTTP")
 class GatewayRateLimitBehaviorTest extends GatewayHttpTestBase {
 
@@ -31,15 +28,12 @@ class GatewayRateLimitBehaviorTest extends GatewayHttpTestBase {
     @Test
     @DisplayName("requests above the burst from the same client get 429 and never reach the service")
     void limitsTheClient() {
-        List<Integer> statuses = new ArrayList<>();
-        for (int i = 0; i < 6; i++) {
-            statuses.add(web.get().uri("/api/portal/x").exchange().returnResult(String.class)
-                    .getStatus().value());
-        }
+        int before = DOWNSTREAM.hits();
 
-        assertThat(statuses.get(0)).isEqualTo(200);
-        assertThat(statuses).contains(429);
-        assertThat(statuses.stream().filter(s -> s == 200).count()).isLessThanOrEqualTo(3);
+        web.get().uri("/api/portal/x").exchange().expectStatus().isOk();
+        web.get().uri("/api/portal/x").exchange().expectStatus().isEqualTo(429);
+
+        assertThat(DOWNSTREAM.hits()).isEqualTo(before + 1);
     }
 
     @Test

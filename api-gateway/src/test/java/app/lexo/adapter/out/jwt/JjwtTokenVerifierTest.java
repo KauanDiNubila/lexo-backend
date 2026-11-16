@@ -42,7 +42,7 @@ class JjwtTokenVerifierTest {
         assertThat(session.get().identity().role()).isEqualTo("ADMIN");
         assertThat(session.get().identity().name()).isEqualTo("Ana");
         assertThat(session.get().identity().email()).isEqualTo("ana@x.com");
-        assertThat(session.get().issuedAtSeconds()).isEqualTo(issuedAt.getEpochSecond());
+        assertThat(session.get().issuedAtSeconds()).hasValue(issuedAt.getEpochSecond());
     }
 
     @Test
@@ -70,11 +70,11 @@ class JjwtTokenVerifierTest {
     }
 
     @Test
-    @DisplayName("a token without an issue time gets zero")
+    @DisplayName("a token without an issue time gives a session without one")
     void noIssueTime() {
         String token = claims().issuedAt(null).signWith(key).compact();
 
-        assertThat(verifier.verify(token).orElseThrow().issuedAtSeconds()).isZero();
+        assertThat(verifier.verify(token).orElseThrow().issuedAtSeconds()).isEmpty();
     }
 
     @Test

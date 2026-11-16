@@ -1,8 +1,10 @@
 package app.lexo.domain;
 
-public record Session(Identity identity, long issuedAtSeconds) {
+import java.util.OptionalLong;
+
+public record Session(Identity identity, OptionalLong issuedAtSeconds) {
 
     public boolean isEndedBy(long cutoffSeconds) {
-        return issuedAtSeconds <= cutoffSeconds;
+        return issuedAtSeconds.isEmpty() || issuedAtSeconds.getAsLong() <= cutoffSeconds;
     }
 }

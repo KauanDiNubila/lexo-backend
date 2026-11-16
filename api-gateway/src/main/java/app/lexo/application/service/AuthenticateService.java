@@ -27,14 +27,14 @@ class AuthenticateService implements AuthenticateUseCase {
     @Override
     public Mono<Access> authenticate(String path, String authorization) {
         if (PublicPaths.isPublic(path)) {
-            return Mono.just(new Access.Public());
+            return Mono.just(Access.PUBLIC);
         }
         if (authorization == null || !authorization.startsWith(BEARER)) {
-            return Mono.just(new Access.Denied());
+            return Mono.just(Access.DENIED);
         }
         return tokens.verify(authorization.substring(BEARER.length()))
                 .map(this::checkCutoff)
-                .orElseGet(() -> Mono.just(new Access.Denied()));
+                .orElseGet(() -> Mono.just(Access.DENIED));
     }
 
     private Mono<Access> checkCutoff(Session session) {
@@ -45,6 +45,6 @@ class AuthenticateService implements AuthenticateUseCase {
                     log.warn("[auth] could not check the session cutoff, letting the request through", e);
                     return Mono.just(false);
                 })
-                .map(ended -> ended ? new Access.Denied() : new Access.Granted(session.identity()));
+                .map(ended -> ended ? Access.DENIED : new Access.Granted(session.identity()));
     }
 }

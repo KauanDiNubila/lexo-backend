@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,7 +21,7 @@ class AuthenticateServiceTest {
 
     private static final Identity ANA = new Identity("u-1", "org-1", "ADMIN", "Ana", "ana@x.com");
 
-    private Optional<Session> verified = Optional.of(new Session(ANA, 1_000));
+    private Optional<Session> verified = Optional.of(new Session(ANA, OptionalLong.of(1_000)));
     private Mono<Long> cutoff = Mono.empty();
     private final List<String> verifiedTokens = new ArrayList<>();
     private final List<String> cutoffLookups = new ArrayList<>();
@@ -97,7 +98,7 @@ class AuthenticateServiceTest {
     @Test
     @DisplayName("a token without an issue time is denied when the user has a cutoff")
     void noIssueTimeUnderCutoff() {
-        verified = Optional.of(new Session(ANA, 0));
+        verified = Optional.of(new Session(ANA, OptionalLong.empty()));
         cutoff = Mono.just(1L);
 
         assertThat(authenticate("/api/clientes", "Bearer bom")).isInstanceOf(Access.Denied.class);

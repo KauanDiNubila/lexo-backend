@@ -3,6 +3,8 @@ package app.lexo.domain;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.OptionalLong;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Session and identity")
@@ -13,20 +15,20 @@ class SessionTest {
     @Test
     @DisplayName("a session issued at or before the cutoff has ended")
     void endedAtOrBeforeTheCutoff() {
-        assertThat(new Session(identity, 100).isEndedBy(100)).isTrue();
-        assertThat(new Session(identity, 99).isEndedBy(100)).isTrue();
+        assertThat(new Session(identity, OptionalLong.of(100)).isEndedBy(100)).isTrue();
+        assertThat(new Session(identity, OptionalLong.of(99)).isEndedBy(100)).isTrue();
     }
 
     @Test
     @DisplayName("a session issued after the cutoff is still valid")
     void validAfterTheCutoff() {
-        assertThat(new Session(identity, 101).isEndedBy(100)).isFalse();
+        assertThat(new Session(identity, OptionalLong.of(101)).isEndedBy(100)).isFalse();
     }
 
     @Test
-    @DisplayName("a session without an issue time (zero) ends under any cutoff")
+    @DisplayName("a session without an issue time ends under any cutoff")
     void noIssueTime() {
-        assertThat(new Session(identity, 0).isEndedBy(1)).isTrue();
+        assertThat(new Session(identity, OptionalLong.empty()).isEndedBy(1)).isTrue();
     }
 
     @Test

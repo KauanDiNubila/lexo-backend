@@ -9,6 +9,9 @@ public interface AuthenticateUseCase {
 
     sealed interface Access {
 
+        Access PUBLIC = new Public();
+        Access DENIED = new Denied();
+
         record Public() implements Access {
         }
 

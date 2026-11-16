@@ -27,6 +27,8 @@ Os testes existentes montavam os filtros pelo construtor, então qualquer mudan�
 
 - `CheckRateLimitService` só repassa a chamada para a porta. Fica por manter a mesma forma nos dois fluxos e porque a escolha da chave (o IP) é do adaptador de entrada; se o limite ganhar regra (por usuário, por rota), ela entra ali.
 - Um token assinado, mas sem a declaração de escritório ou de papel, é aceito e segue sem esses cabeçalhos. Preservado de propósito e listado para as correções.
+- O filtro antigo tinha um `catch (Exception)` em volta de tudo, então qualquer falha ao montar ou assinar os cabeçalhos virava 401. Agora só o token inválido vira 401 (`JjwtTokenVerifier` captura `JwtException` e `IllegalArgumentException`); uma falha de assinatura sobe como erro do servidor. Ela só acontece com chave de assinatura vazia ou curta, e o `SecretsValidator` já recusa subir assim, então o caminho não é alcançável em execução normal.
+- `Session` guarda a data de emissão como `OptionalLong`: um token sem a data tem a sessão encerrada por qualquer corte, como antes.
 - O preflight de CORS é respondido antes do filtro de autenticação, pelo `CorsWebFilter`. O `WebTestClient` rejeita essas requisições por causa do endereço da requisição; o teste usa o cliente HTTP do JDK.
 
 ## Referências

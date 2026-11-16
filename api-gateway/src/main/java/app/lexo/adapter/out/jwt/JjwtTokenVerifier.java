@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 @Component
 class JjwtTokenVerifier implements TokenVerifierPort {
@@ -30,7 +31,9 @@ class JjwtTokenVerifier implements TokenVerifierPort {
             Identity identity = new Identity(claims.getSubject(), claims.get("organizationId", String.class),
                     claims.get("role", String.class), claims.get("name", String.class),
                     claims.get("email", String.class));
-            long issuedAt = claims.getIssuedAt() == null ? 0 : claims.getIssuedAt().toInstant().getEpochSecond();
+            OptionalLong issuedAt = claims.getIssuedAt() == null
+                    ? OptionalLong.empty()
+                    : OptionalLong.of(claims.getIssuedAt().toInstant().getEpochSecond());
             return Optional.of(new Session(identity, issuedAt));
         } catch (JwtException | IllegalArgumentException e) {
             return Optional.empty();
