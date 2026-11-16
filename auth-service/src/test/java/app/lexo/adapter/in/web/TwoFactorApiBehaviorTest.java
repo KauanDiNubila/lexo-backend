@@ -7,11 +7,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.Duration;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,6 +29,11 @@ class TwoFactorApiBehaviorTest extends IntegrationTestBase {
     private Map<String, Object> userRow(String userId) {
         return jdbc.queryForMap("select totp_secret, totp_enabled, totp_pending_secret from users where id = ?",
                 userId);
+    }
+
+    private boolean refreshTokensAreRevoked(String userId) {
+        return jdbc.queryForObject("select count(*) from refresh_tokens where user_id = ? and revoked_at is null",
+                Integer.class, userId) == 0;
     }
 
     @Test
@@ -202,5 +215,62 @@ class TwoFactorApiBehaviorTest extends IntegrationTestBase {
         Account secretary = insertMember(admin, "SECRETARIA");
 
         postAs(secretary, "/api/2fa/iniciar", Map.of()).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("turning two factor on ends every open session")
+    void enablingEndsTheSessions() throws Exception {
+        Account account = registerAdmin();
+        assertThat(refreshTokensAreRevoked(account.userId())).isFalse();
+        String secret = bodyOf(postAs(account, "/api/2fa/iniciar", Map.of())).get("secret").asText();
+
+        postAs(account, "/api/2fa/confirmar", Map.of("code", totpCodeFor(secret))).andExpect(status().isNoContent());
+
+        assertThat(refreshTokensAreRevoked(account.userId())).isTrue();
+        verify(redisValues).set(eq("session-cutoff:" + account.userId()), anyString(), eq(Duration.ofMinutes(16)));
+    }
+
+    @Test
+    @DisplayName("turning two factor off ends every open session")
+    void disablingEndsTheSessions() throws Exception {
+        Account account = registerAdmin();
+        String secret = enableTwoFactor(account);
+        login(account.email(), PASSWORD, totpCodeFor(secret)).andExpect(status().isOk());
+        assertThat(refreshTokensAreRevoked(account.userId())).isFalse();
+        Mockito.clearInvocations(redisValues);
+
+        postAs(account, "/api/2fa/desativar", Map.of("code", totpCodeFor(secret))).andExpect(status().isNoContent());
+
+        assertThat(refreshTokensAreRevoked(account.userId())).isTrue();
+        verify(redisValues).set(eq("session-cutoff:" + account.userId()), anyString(), eq(Duration.ofMinutes(16)));
+    }
+
+    @Test
+    @DisplayName("a refused confirmation or a refused disable does not end any session")
+    void refusalsKeepTheSessions() throws Exception {
+        Account account = registerAdmin();
+        postAs(account, "/api/2fa/iniciar", Map.of());
+
+        postAs(account, "/api/2fa/confirmar", Map.of("code", "000000")).andExpect(status().isBadRequest());
+        postAs(account, "/api/2fa/desativar", Map.of("code", "000000")).andExpect(status().isBadRequest());
+
+        assertThat(refreshTokensAreRevoked(account.userId())).isFalse();
+        verify(redisValues, never()).set(anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    @DisplayName("turning two factor on is refused and undone when the session cutoff cannot be recorded")
+    void enablingFailsClosedWithoutRedis() throws Exception {
+        Account account = registerAdmin();
+        String secret = bodyOf(postAs(account, "/api/2fa/iniciar", Map.of())).get("secret").asText();
+        doThrow(new IllegalStateException("redis down")).when(redisValues)
+                .set(anyString(), anyString(), any(Duration.class));
+
+        postAs(account, "/api/2fa/confirmar", Map.of("code", totpCodeFor(secret)))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("SERVICO_INDISPONIVEL"));
+
+        assertThat(userRow(account.userId()).get("totp_enabled")).isEqualTo(false);
+        assertThat(refreshTokensAreRevoked(account.userId())).isFalse();
     }
 }

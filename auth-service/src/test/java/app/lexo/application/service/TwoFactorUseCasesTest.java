@@ -5,6 +5,7 @@ import app.lexo.application.port.in.DisableTwoFactorCommand;
 import app.lexo.application.port.in.StartTwoFactorCommand;
 import app.lexo.application.port.in.TwoFactorSetup;
 import app.lexo.common.error.InvalidDataException;
+import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.common.event.EventType;
 import app.lexo.common.security.Role;
 import app.lexo.domain.Organization;
@@ -31,8 +32,8 @@ class TwoFactorUseCasesTest {
     void wire() {
         h = new AuthHarness();
         start = new StartTwoFactorService(h.store, h.store, h.cipher, h.totp);
-        confirm = new ConfirmTwoFactorService(h.store, h.store, h.cipher, h.totp, h.events);
-        disable = new DisableTwoFactorService(h.store, h.store, h.cipher, h.totp, h.events);
+        confirm = new ConfirmTwoFactorService(h.store, h.store, h.cipher, h.totp, h.store, h.cutoffs, h.events, Fakes.CLOCK);
+        disable = new DisableTwoFactorService(h.store, h.store, h.cipher, h.totp, h.store, h.cutoffs, h.events, Fakes.CLOCK);
         organization = h.addOrganization("Escritorio");
         user = h.addUser(organization.id(), "Ana", "ana@escritorio.com", Role.ADVOGADO);
     }
@@ -109,6 +110,52 @@ class TwoFactorUseCasesTest {
         assertThat(stored.twoFactorSecret()).isNull();
         assertThat(h.events.published.get(0).type()).isEqualTo(EventType.TWO_FACTOR_DISABLED);
         assertThat(h.events.published.get(0).description()).isEqualTo("Desativou verificação em dois fatores");
+    }
+
+    @Test
+    @DisplayName("confirming ends the sessions of the user, who has to sign in again with the code")
+    void confirmingEndsTheSessions() {
+        begin();
+
+        confirmWith(Fakes.Totp.VALID_CODE);
+
+        assertThat(h.cutoffs.revoked).containsOnlyKeys(user.id());
+        assertThat(h.cutoffs.revoked.get(user.id())).isEqualTo(Fakes.NOW);
+    }
+
+    @Test
+    @DisplayName("disabling ends the sessions of the user")
+    void disablingEndsTheSessions() {
+        begin();
+        confirmWith(Fakes.Totp.VALID_CODE);
+        h.cutoffs.revoked.clear();
+
+        disableWith(Fakes.Totp.VALID_CODE);
+
+        assertThat(h.cutoffs.revoked).containsOnlyKeys(user.id());
+        assertThat(h.cutoffs.revoked.get(user.id())).isEqualTo(Fakes.NOW);
+    }
+
+    @Test
+    @DisplayName("a refused confirmation or disable ends no session")
+    void refusalsEndNoSession() {
+        begin();
+        assertThatThrownBy(() -> confirmWith("000000")).isInstanceOf(InvalidDataException.class);
+        confirmWith(Fakes.Totp.VALID_CODE);
+        h.cutoffs.revoked.clear();
+
+        assertThatThrownBy(() -> disableWith("000000")).isInstanceOf(InvalidDataException.class);
+
+        assertThat(h.cutoffs.revoked).isEmpty();
+    }
+
+    @Test
+    @DisplayName("when the session cutoff cannot be recorded the change fails instead of looking done")
+    void cutoffFailureFailsTheChange() {
+        begin();
+        h.cutoffs.failing = true;
+
+        assertThatThrownBy(() -> confirmWith(Fakes.Totp.VALID_CODE)).isInstanceOf(ServiceUnavailableException.class);
     }
 
     @Test
