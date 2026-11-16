@@ -1,5 +1,6 @@
 package app.lexo.common;
 
+import app.lexo.common.email.TarefaEmail;
 import app.lexo.common.event.DomainEvent;
 import app.lexo.common.event.EventType;
 import app.lexo.common.portal.PortalDtos.PortalCase;
@@ -77,5 +78,26 @@ class WireContractTest {
         assertThat(node.has("prazos")).isTrue();
         assertThat(node.has("andamentos")).isTrue();
         assertThat(node.has("deadlines")).isFalse();
+    }
+
+    @Test
+    @DisplayName("an e-mail task keeps the Portuguese field names the queued messages use")
+    void emailTaskFieldNames() throws Exception {
+        TarefaEmail task = new TarefaEmail("CONVITE", "ana@x.com", "Assunto", "Corpo");
+
+        JsonNode node = json.readTree(json.writeValueAsString(task));
+
+        assertThat(node.fieldNames()).toIterable().containsExactlyInAnyOrder("tipo", "destinatario", "assunto", "corpo");
+        assertThat(node.get("destinatario").asText()).isEqualTo("ana@x.com");
+    }
+
+    @Test
+    @DisplayName("an e-mail task already on the queue is still read")
+    void readsAQueuedEmailTask() throws Exception {
+        String queued = "{\"tipo\":\"LEMBRETE_PRAZO\",\"destinatario\":\"ana@x.com\",\"assunto\":\"Prazo\",\"corpo\":\"Vence amanha\"}";
+
+        TarefaEmail task = json.readValue(queued, TarefaEmail.class);
+
+        assertThat(task).isEqualTo(new TarefaEmail("LEMBRETE_PRAZO", "ana@x.com", "Prazo", "Vence amanha"));
     }
 }
