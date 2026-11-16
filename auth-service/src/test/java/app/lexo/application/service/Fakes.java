@@ -102,11 +102,13 @@ final class Fakes {
         final List<String> registered = new ArrayList<>();
         final List<String> reset = new ArrayList<>();
         final Map<String, Duration> windows = new HashMap<>();
+        final Map<String, Integer> limits = new HashMap<>();
 
         @Override
         public boolean register(String key, int max, Duration window) {
             registered.add(key);
             windows.put(key, window);
+            limits.put(key, max);
             int count = counters.merge(key, 1, Integer::sum);
             return count <= max;
         }

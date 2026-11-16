@@ -16,14 +16,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.List;
 
 @Service
 @Transactional
 class LoginService implements LoginUseCase {
 
-    private static final int ATTEMPTS_PER_EMAIL = 10;
+    private static final int ATTEMPTS_PER_EMAIL_AND_ADDRESS = 10;
+    private static final int ATTEMPTS_PER_EMAIL = 50;
+    private static final int ATTEMPTS_PER_EMAIL_WITHOUT_ADDRESS = 10;
     private static final int ATTEMPTS_PER_ADDRESS = 30;
     private static final Duration WINDOW = Duration.ofMinutes(15);
+
+    private record Limit(String key, int max) {
+    }
 
     private final LoadUserPort loadUserPort;
     private final LoginAttemptsPort loginAttemptsPort;
@@ -44,13 +50,13 @@ class LoginService implements LoginUseCase {
 
     @Override
     public SessionResponse login(LoginCommand command) {
-        String emailKey = "login:email:" + command.email().value();
-        String addressKey = command.clientAddress() == null ? null : "login:ip:" + command.clientAddress();
+        List<Limit> limits = limitsFor(command.email().value(), command.clientAddress());
 
-        boolean emailWithinLimit = loginAttemptsPort.register(emailKey, ATTEMPTS_PER_EMAIL, WINDOW);
-        boolean addressWithinLimit = addressKey == null
-                || loginAttemptsPort.register(addressKey, ATTEMPTS_PER_ADDRESS, WINDOW);
-        if (!emailWithinLimit || !addressWithinLimit) {
+        boolean withinLimits = true;
+        for (Limit limit : limits) {
+            withinLimits &= loginAttemptsPort.register(limit.key(), limit.max(), WINDOW);
+        }
+        if (!withinLimits) {
             throw new InvalidCredentialsException();
         }
 
@@ -66,11 +72,19 @@ class LoginService implements LoginUseCase {
             requireValidTwoFactorCode(user, command.totpCode());
         }
 
-        loginAttemptsPort.reset(emailKey);
-        if (addressKey != null) {
-            loginAttemptsPort.reset(addressKey);
-        }
+        limits.forEach(limit -> loginAttemptsPort.reset(limit.key()));
         return sessions.start(user);
+    }
+
+    private List<Limit> limitsFor(String email, String address) {
+        String emailKey = "login:email:" + email;
+        if (address == null) {
+            return List.of(new Limit(emailKey, ATTEMPTS_PER_EMAIL_WITHOUT_ADDRESS));
+        }
+        return List.of(
+                new Limit("login:email-ip:" + email + "|" + address, ATTEMPTS_PER_EMAIL_AND_ADDRESS),
+                new Limit(emailKey, ATTEMPTS_PER_EMAIL),
+                new Limit("login:ip:" + address, ATTEMPTS_PER_ADDRESS));
     }
 
     private void requireValidTwoFactorCode(User user, String code) {

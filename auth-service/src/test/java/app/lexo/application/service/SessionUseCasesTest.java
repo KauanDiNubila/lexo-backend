@@ -131,8 +131,12 @@ class SessionUseCasesTest {
         assertThat(h.store.tokens).isEmpty();
     }
 
+    private static final String PAIR_KEY = "login:email-ip:ana@escritorio.com|203.0.113.10";
+    private static final String EMAIL_KEY = "login:email:ana@escritorio.com";
+    private static final String ADDRESS_KEY = "login:ip:203.0.113.10";
+
     @Test
-    @DisplayName("login returns a session and clears both attempt counters")
+    @DisplayName("login returns a session and clears the three attempt counters")
     void logsIn() {
         User user = h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
 
@@ -140,59 +144,77 @@ class SessionUseCasesTest {
 
         assertThat(session.user().id()).isEqualTo(user.id().value());
         assertThat(session.user().role()).isEqualTo(Role.ADVOGADO);
-        assertThat(h.attempts.reset).containsExactly("login:email:ana@escritorio.com", "login:ip:203.0.113.10");
+        assertThat(h.attempts.reset).containsExactly(PAIR_KEY, EMAIL_KEY, ADDRESS_KEY);
         assertThat(h.store.tokens).hasSize(1);
     }
 
     @Test
-    @DisplayName("attempts are counted per email and per address in a 15 minute window")
+    @DisplayName("attempts are counted per email and address together, per email and per address in a 15 minute window")
     void countsAttempts() {
         h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
 
         login.login(loginAs(AuthHarness.PASSWORD, null, "203.0.113.10"));
 
-        assertThat(h.attempts.registered).containsExactly("login:email:ana@escritorio.com", "login:ip:203.0.113.10");
+        assertThat(h.attempts.registered).containsExactly(PAIR_KEY, EMAIL_KEY, ADDRESS_KEY);
         assertThat(h.attempts.windows.values()).containsOnly(Duration.ofMinutes(15));
     }
 
     @Test
-    @DisplayName("without a client address only the email is counted")
+    @DisplayName("without a client address only the email is counted, with the strict limit of 10")
     void withoutAddress() {
         h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
 
         login.login(loginAs(AuthHarness.PASSWORD, null, null));
 
-        assertThat(h.attempts.registered).containsExactly("login:email:ana@escritorio.com");
-        assertThat(h.attempts.reset).containsExactly("login:email:ana@escritorio.com");
+        assertThat(h.attempts.registered).containsExactly(EMAIL_KEY);
+        assertThat(h.attempts.limits).containsEntry(EMAIL_KEY, 10);
+        assertThat(h.attempts.reset).containsExactly(EMAIL_KEY);
     }
 
     @Test
-    @DisplayName("the email allows 10 attempts and the address 30")
+    @DisplayName("the limits are 10 per email and address together, 50 per email and 30 per address")
     void attemptLimits() {
         h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
-        h.attempts.counters.put("login:email:ana@escritorio.com", 9);
-        h.attempts.counters.put("login:ip:203.0.113.10", 29);
+        h.attempts.counters.put(PAIR_KEY, 9);
+        h.attempts.counters.put(EMAIL_KEY, 49);
+        h.attempts.counters.put(ADDRESS_KEY, 29);
         login.login(loginAs(AuthHarness.PASSWORD, null, "203.0.113.10"));
 
-        h.attempts.counters.put("login:email:ana@escritorio.com", 10);
+        h.attempts.counters.clear();
+        h.attempts.counters.put(PAIR_KEY, 10);
         assertThatThrownBy(() -> login.login(loginAs(AuthHarness.PASSWORD, null, "203.0.113.10")))
                 .isInstanceOf(InvalidCredentialsException.class);
-        h.attempts.counters.put("login:email:ana@escritorio.com", 0);
-        h.attempts.counters.put("login:ip:203.0.113.10", 30);
+        h.attempts.counters.clear();
+        h.attempts.counters.put(EMAIL_KEY, 50);
+        assertThatThrownBy(() -> login.login(loginAs(AuthHarness.PASSWORD, null, "203.0.113.10")))
+                .isInstanceOf(InvalidCredentialsException.class);
+        h.attempts.counters.clear();
+        h.attempts.counters.put(ADDRESS_KEY, 30);
         assertThatThrownBy(() -> login.login(loginAs(AuthHarness.PASSWORD, null, "203.0.113.10")))
                 .isInstanceOf(InvalidCredentialsException.class);
     }
 
     @Test
-    @DisplayName("over the limit is refused before the password is looked at, but both counters still count")
+    @DisplayName("someone failing against an email from another address cannot lock its owner out")
+    void strangerCannotLockTheOwner() {
+        h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
+        h.attempts.counters.put("login:email-ip:ana@escritorio.com|198.51.100.99", 10);
+        h.attempts.counters.put(EMAIL_KEY, 10);
+        h.attempts.counters.put("login:ip:198.51.100.99", 10);
+
+        assertThat(login.login(loginAs(AuthHarness.PASSWORD, null, "203.0.113.10")).accessToken()).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("over the limit is refused before the password is looked at, but every counter still counts")
     void overTheLimit() {
         h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
-        h.attempts.counters.put("login:email:ana@escritorio.com", 10);
+        h.attempts.counters.put(PAIR_KEY, 10);
 
         assertThatThrownBy(() -> login.login(loginAs(AuthHarness.PASSWORD, null, "203.0.113.10")))
                 .isInstanceOf(InvalidCredentialsException.class);
 
-        assertThat(h.attempts.registered).containsExactly("login:email:ana@escritorio.com", "login:ip:203.0.113.10");
+        assertThat(h.attempts.registered).containsExactly(PAIR_KEY, EMAIL_KEY, ADDRESS_KEY);
         assertThat(h.attempts.reset).isEmpty();
         assertThat(h.store.tokens).isEmpty();
     }

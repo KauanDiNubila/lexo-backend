@@ -9,8 +9,6 @@ import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -22,14 +20,10 @@ class RateLimitFilterTest {
 
     private boolean allowed = true;
     private final List<String> clients = new ArrayList<>();
-    private final RateLimitFilter filter = filterBehind(1);
-
-    private RateLimitFilter filterBehind(int trustedProxies) {
-        return new RateLimitFilter(client -> {
-            clients.add(client);
-            return Mono.just(allowed);
-        }, trustedProxies);
-    }
+    private final RateLimitFilter filter = new RateLimitFilter(client -> {
+        clients.add(client);
+        return Mono.just(allowed);
+    });
 
     private static final class Chain implements GatewayFilterChain {
         final AtomicReference<ServerWebExchange> reached = new AtomicReference<>();
@@ -41,15 +35,18 @@ class RateLimitFilterTest {
         }
     }
 
-    private static MockServerHttpRequest.BaseBuilder<?> from(String address) throws Exception {
-        return MockServerHttpRequest.get("/api/clientes")
-                .remoteAddress(new InetSocketAddress(InetAddress.getByName(address), 5000));
+    private static MockServerWebExchange requestFrom(String address) {
+        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/clientes"));
+        if (address != null) {
+            exchange.getAttributes().put(ClientAddressFilter.ATTRIBUTE, address);
+        }
+        return exchange;
     }
 
     @Test
     @DisplayName("a request within the limit goes on")
-    void within() throws Exception {
-        var exchange = MockServerWebExchange.from(from("10.1.2.3"));
+    void within() {
+        var exchange = requestFrom("10.1.2.3");
         Chain chain = new Chain();
 
         filter.filter(exchange, chain).block();
@@ -59,9 +56,9 @@ class RateLimitFilterTest {
 
     @Test
     @DisplayName("a request above the limit gets 429 and never reaches the chain")
-    void above() throws Exception {
+    void above() {
         allowed = false;
-        var exchange = MockServerWebExchange.from(from("10.1.2.3"));
+        var exchange = requestFrom("10.1.2.3");
         Chain chain = new Chain();
 
         filter.filter(exchange, chain).block();
@@ -71,37 +68,17 @@ class RateLimitFilterTest {
     }
 
     @Test
-    @DisplayName("the client is identified by its remote address")
-    void keyedByAddress() throws Exception {
-        filter.filter(MockServerWebExchange.from(from("10.1.2.3")), new Chain()).block();
-
-        assertThat(clients).containsExactly("10.1.2.3");
-    }
-
-    @Test
-    @DisplayName("behind a trusted proxy the client is the address the proxy appended, not what the client invented")
-    void forwardedAddress() throws Exception {
-        var exchange = MockServerWebExchange.from(from("10.0.0.5").header("X-Forwarded-For", "6.6.6.6, 198.51.100.9"));
-
-        filter.filter(exchange, new Chain()).block();
+    @DisplayName("the client is the address resolved earlier in the chain")
+    void keyedByTheResolvedAddress() {
+        filter.filter(requestFrom("198.51.100.9"), new Chain()).block();
 
         assertThat(clients).containsExactly("198.51.100.9");
     }
 
     @Test
-    @DisplayName("without trusted proxies the forwarded header is ignored")
-    void noTrustedProxies() throws Exception {
-        var exchange = MockServerWebExchange.from(from("10.0.0.5").header("X-Forwarded-For", "198.51.100.9"));
-
-        filterBehind(0).filter(exchange, new Chain()).block();
-
-        assertThat(clients).containsExactly("10.0.0.5");
-    }
-
-    @Test
-    @DisplayName("an unknown remote address shares one anonymous key")
+    @DisplayName("a request without a resolved address shares one anonymous key")
     void unknownAddress() {
-        filter.filter(MockServerWebExchange.from(MockServerHttpRequest.get("/api/clientes")), new Chain()).block();
+        filter.filter(requestFrom(null), new Chain()).block();
 
         assertThat(clients).containsExactly("desconhecido");
     }
