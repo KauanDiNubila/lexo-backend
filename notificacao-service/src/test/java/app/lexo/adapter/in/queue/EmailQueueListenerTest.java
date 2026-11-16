@@ -1,7 +1,7 @@
 package app.lexo.adapter.in.queue;
 
 import app.lexo.application.port.in.SendEmailUseCase.SendEmailCommand;
-import app.lexo.common.email.TarefaEmail;
+import app.lexo.common.email.EmailTask;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +20,7 @@ class EmailQueueListenerTest {
         List<SendEmailCommand> received = new ArrayList<>();
         EmailQueueListener listener = new EmailQueueListener(received::add);
 
-        listener.onTask(new TarefaEmail("CONVITE", "ana@cliente.com", "Convite", "Entre no Lexo"));
+        listener.onTask(new EmailTask("CONVITE", "ana@cliente.com", "Convite", "Entre no Lexo"));
 
         assertThat(received).containsExactly(
                 new SendEmailCommand("CONVITE", "ana@cliente.com", "Convite", "Entre no Lexo"));
@@ -34,7 +34,7 @@ class EmailQueueListenerTest {
             throw failure;
         });
 
-        assertThatThrownBy(() -> listener.onTask(new TarefaEmail("CONVITE", "ana@cliente.com", "Convite", "Corpo")))
+        assertThatThrownBy(() -> listener.onTask(new EmailTask("CONVITE", "ana@cliente.com", "Convite", "Corpo")))
                 .isSameAs(failure);
     }
 }

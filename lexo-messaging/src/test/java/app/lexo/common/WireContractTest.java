@@ -1,16 +1,20 @@
 package app.lexo.common;
 
-import app.lexo.common.email.TarefaEmail;
+import app.lexo.common.email.EmailTask;
 import app.lexo.common.event.DomainEvent;
 import app.lexo.common.event.EventType;
 import app.lexo.common.portal.PortalDtos.PortalCase;
 import app.lexo.common.reference.ExistsResponse;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 
@@ -83,7 +87,7 @@ class WireContractTest {
     @Test
     @DisplayName("an e-mail task keeps the Portuguese field names the queued messages use")
     void emailTaskFieldNames() throws Exception {
-        TarefaEmail task = new TarefaEmail("CONVITE", "ana@x.com", "Assunto", "Corpo");
+        EmailTask task = new EmailTask("CONVITE", "ana@x.com", "Assunto", "Corpo");
 
         JsonNode node = json.readTree(json.writeValueAsString(task));
 
@@ -96,8 +100,23 @@ class WireContractTest {
     void readsAQueuedEmailTask() throws Exception {
         String queued = "{\"tipo\":\"LEMBRETE_PRAZO\",\"destinatario\":\"ana@x.com\",\"assunto\":\"Prazo\",\"corpo\":\"Vence amanha\"}";
 
-        TarefaEmail task = json.readValue(queued, TarefaEmail.class);
+        EmailTask task = json.readValue(queued, EmailTask.class);
 
-        assertThat(task).isEqualTo(new TarefaEmail("LEMBRETE_PRAZO", "ana@x.com", "Prazo", "Vence amanha"));
+        assertThat(task).isEqualTo(new EmailTask("LEMBRETE_PRAZO", "ana@x.com", "Prazo", "Vence amanha"));
+    }
+
+    @Test
+    @DisplayName("a message queued before the rename, with the old class in its type header, is still read as the task")
+    void readsAMessageQueuedWithTheOldTypeHeader() {
+        String queued = "{\"tipo\":\"CONVITE\",\"destinatario\":\"ana@x.com\",\"assunto\":\"Convite\",\"corpo\":\"Entre\"}";
+        MessageProperties properties = new MessageProperties();
+        properties.setContentType(MessageProperties.CONTENT_TYPE_JSON);
+        properties.setHeader("__TypeId__", "app.lexo.common.email.TarefaEmail");
+        properties.setInferredArgumentType(EmailTask.class);
+
+        Object read = new Jackson2JsonMessageConverter().fromMessage(
+                new Message(queued.getBytes(StandardCharsets.UTF_8), properties));
+
+        assertThat(read).isEqualTo(new EmailTask("CONVITE", "ana@x.com", "Convite", "Entre"));
     }
 }

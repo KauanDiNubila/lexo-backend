@@ -2,7 +2,7 @@ package app.lexo.adapter.in.web;
 
 import app.lexo.IntegrationTestBase;
 import app.lexo.common.email.RabbitConfig;
-import app.lexo.common.email.TarefaEmail;
+import app.lexo.common.email.EmailTask;
 import app.lexo.common.event.DomainEvent;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.DisplayName;
@@ -128,11 +128,11 @@ class TeamApiBehaviorTest extends IntegrationTestBase {
         String token = jdbc.queryForObject("select token from user_invites where id = ?", String.class, id);
         ArgumentCaptor<Object> message = ArgumentCaptor.forClass(Object.class);
         verify(rabbit).convertAndSend(eq(RabbitConfig.EXCHANGE), eq(RabbitConfig.ROUTING_KEY), message.capture());
-        TarefaEmail task = (TarefaEmail) message.getValue();
-        assertThat(task.tipo()).isEqualTo("CONVITE");
-        assertThat(task.destinatario()).isEqualTo(email);
-        assertThat(task.assunto()).isEqualTo("Convite para Escritorio Teste no Lexo");
-        assertThat(task.corpo()).isEqualTo("Olá Carla Nova, você foi convidado para Escritorio Teste. "
+        EmailTask task = (EmailTask) message.getValue();
+        assertThat(task.type()).isEqualTo("CONVITE");
+        assertThat(task.recipient()).isEqualTo(email);
+        assertThat(task.subject()).isEqualTo("Convite para Escritorio Teste no Lexo");
+        assertThat(task.body()).isEqualTo("Olá Carla Nova, você foi convidado para Escritorio Teste. "
                 + "Acesse: http://localhost:8090/convite/" + token);
 
         DomainEvent event = onlyPublishedEvent();

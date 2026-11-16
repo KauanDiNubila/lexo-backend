@@ -32,7 +32,7 @@ class SecretsValidator implements InitializingBean {
     public void afterPropertiesSet() {
         var profiles = Arrays.asList(env.getActiveProfiles());
         boolean dev = profiles.contains("dev") || profiles.contains("test");
-        GatewaySignature.exigirChaveSegura(signingKey, dev);
+        GatewaySignature.requireSecureKey(signingKey, dev);
         checkAuthSecret(dev);
     }
 

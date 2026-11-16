@@ -68,7 +68,7 @@ class ClientApiIntegrationTest {
         h.set("X-User-Name", name);
         h.set("X-User-Email", "");
         h.add(GatewaySignature.H_TIMESTAMP, Long.toString(timestamp));
-        h.add(GatewaySignature.H_ASSINATURA, GatewaySignature.sign(key, payload));
+        h.add(GatewaySignature.H_SIGNATURE, GatewaySignature.sign(key, payload));
         return h;
     }
 

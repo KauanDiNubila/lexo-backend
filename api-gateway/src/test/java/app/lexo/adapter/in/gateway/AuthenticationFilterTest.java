@@ -100,7 +100,7 @@ class AuthenticationFilterTest {
         long timestamp = Long.parseLong(forwarded.getFirst(GatewaySignature.H_TIMESTAMP));
         assertThat(Math.abs(Instant.now().getEpochSecond() - timestamp)).isLessThan(30);
         String payload = GatewaySignature.payload("u-1", "org-1", "ADMIN", name, "ana@x.com", timestamp);
-        assertThat(GatewaySignature.verify(SIGNING_KEY, payload, forwarded.getFirst(GatewaySignature.H_ASSINATURA)))
+        assertThat(GatewaySignature.verify(SIGNING_KEY, payload, forwarded.getFirst(GatewaySignature.H_SIGNATURE)))
                 .isTrue();
     }
 
@@ -110,7 +110,7 @@ class AuthenticationFilterTest {
         answer = new Access.Granted(new Identity("u-real", "org-1", "ADMIN", "Ana", "ana@x.com"));
         var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/clientes")
                 .header("X-User-Id", "u-falso").header("X-User-Role", "OWNER")
-                .header(GatewaySignature.H_ASSINATURA, "forjada"));
+                .header(GatewaySignature.H_SIGNATURE, "forjada"));
         Chain chain = new Chain();
 
         filter.filter(exchange, chain).block();
@@ -118,7 +118,7 @@ class AuthenticationFilterTest {
         HttpHeaders forwarded = chain.reached.get().getRequest().getHeaders();
         assertThat(forwarded.get("X-User-Id")).containsExactly("u-real");
         assertThat(forwarded.get("X-User-Role")).containsExactly("ADMIN");
-        assertThat(forwarded.get(GatewaySignature.H_ASSINATURA)).hasSize(1).doesNotContain("forjada");
+        assertThat(forwarded.get(GatewaySignature.H_SIGNATURE)).hasSize(1).doesNotContain("forjada");
     }
 
     @Test
@@ -128,13 +128,13 @@ class AuthenticationFilterTest {
         var exchange = MockServerWebExchange.from(MockServerHttpRequest.post("/api/auth/login")
                 .header("X-User-Id", "u-falso").header("X-Org-Id", "org-falso").header("X-User-Name", "x")
                 .header("X-User-Email", "x").header(GatewaySignature.H_TIMESTAMP, "1")
-                .header(GatewaySignature.H_ASSINATURA, "forjada"));
+                .header(GatewaySignature.H_SIGNATURE, "forjada"));
         Chain chain = new Chain();
 
         filter.filter(exchange, chain).block();
 
         HttpHeaders forwarded = chain.reached.get().getRequest().getHeaders();
         assertThat(forwarded.keySet()).doesNotContain("X-User-Id", "X-Org-Id", "X-User-Name", "X-User-Email",
-                GatewaySignature.H_TIMESTAMP, GatewaySignature.H_ASSINATURA);
+                GatewaySignature.H_TIMESTAMP, GatewaySignature.H_SIGNATURE);
     }
 }

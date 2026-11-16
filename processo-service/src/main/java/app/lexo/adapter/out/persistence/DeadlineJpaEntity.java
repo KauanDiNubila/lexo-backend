@@ -1,6 +1,6 @@
 package app.lexo.adapter.out.persistence;
 
-import app.lexo.common.domain.BaseEntity;
+import app.lexo.common.persistence.BaseEntity;
 import app.lexo.domain.DeadlineStatus;
 import app.lexo.domain.DeadlineType;
 import jakarta.persistence.Column;

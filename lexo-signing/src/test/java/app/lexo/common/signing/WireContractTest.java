@@ -15,7 +15,7 @@ class WireContractTest {
     @DisplayName("the headers keep their names")
     void headerNames() {
         assertEquals("X-Gateway-Ts", GatewaySignature.H_TIMESTAMP);
-        assertEquals("X-Gateway-Sig", GatewaySignature.H_ASSINATURA);
+        assertEquals("X-Gateway-Sig", GatewaySignature.H_SIGNATURE);
     }
 
     @Test

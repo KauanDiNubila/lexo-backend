@@ -56,9 +56,9 @@ class SecretsValidatorTest {
     @Test
     @DisplayName("the default signing key outside dev refuses to start")
     void defaultSigningKey() {
-        assertThatThrownBy(() -> validate(SECRET, GatewaySignature.CHAVE_DEV, profile()))
+        assertThatThrownBy(() -> validate(SECRET, GatewaySignature.DEV_KEY, profile()))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("GATEWAY_SIGNING_KEY");
-        assertThatCode(() -> validate(SECRET, GatewaySignature.CHAVE_DEV, profile("dev"))).doesNotThrowAnyException();
+        assertThatCode(() -> validate(SECRET, GatewaySignature.DEV_KEY, profile("dev"))).doesNotThrowAnyException();
     }
 
     @Test

@@ -153,7 +153,7 @@ public abstract class IntegrationTestBase {
         String payload = GatewaySignature.payload(account.userId(), account.orgId(), account.role(), name,
                 account.email(), timestamp);
         headers.add(GatewaySignature.H_TIMESTAMP, Long.toString(timestamp));
-        headers.add(GatewaySignature.H_ASSINATURA, GatewaySignature.sign(key, payload));
+        headers.add(GatewaySignature.H_SIGNATURE, GatewaySignature.sign(key, payload));
         return headers;
     }
 

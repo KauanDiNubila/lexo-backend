@@ -21,36 +21,36 @@ import static org.mockito.Mockito.verify;
 @DisplayName("HeaderAuthenticationFilter")
 class HeaderAuthenticationFilterTest {
 
-    private static final String CHAVE = "chave-de-teste-com-no-minimo-32-bytes-aqui";
-    private static final String OUTRA_CHAVE = "outra-chave-de-teste-com-no-minimo-32-bytes";
+    private static final String KEY = "key-de-teste-com-no-minimo-32-bytes-aqui";
+    private static final String OTHER_KEY = "outra-key-de-teste-com-no-minimo-32-bytes";
 
     private final HeaderAuthenticationFilter filter =
-            new HeaderAuthenticationFilter(CHAVE, 60, new MockEnvironment());
+            new HeaderAuthenticationFilter(KEY, 60, new MockEnvironment());
 
     @AfterEach
-    void limpar() {
+    void clear() {
         SecurityContextHolder.clearContext();
     }
 
-    private MockHttpServletRequest requisicaoAssinada(String userId, String orgId, String role,
-                                                       String chave, long timestamp) {
+    private MockHttpServletRequest signedRequest(String userId, String orgId, String role,
+                                                       String key, long timestamp) {
         MockHttpServletRequest req = new MockHttpServletRequest();
-        String nome = URLEncoder.encode("Ana", StandardCharsets.UTF_8);
+        String name = URLEncoder.encode("Ana", StandardCharsets.UTF_8);
         req.addHeader("X-User-Id", userId);
         req.addHeader("X-Org-Id", orgId);
         req.addHeader("X-User-Role", role);
-        req.addHeader("X-User-Name", nome);
+        req.addHeader("X-User-Name", name);
         req.addHeader("X-User-Email", "ana@x.com");
 
-        String payload = GatewaySignature.payload(userId, orgId, role, nome, "ana@x.com", timestamp);
+        String payload = GatewaySignature.payload(userId, orgId, role, name, "ana@x.com", timestamp);
         req.addHeader(GatewaySignature.H_TIMESTAMP, Long.toString(timestamp));
-        req.addHeader(GatewaySignature.H_ASSINATURA, GatewaySignature.sign(chave, payload));
+        req.addHeader(GatewaySignature.H_SIGNATURE, GatewaySignature.sign(key, payload));
         return req;
     }
 
     @Test
-    @DisplayName("sem headers de identidade, segue sem autenticar (rota publica)")
-    void semIdentidadeSegueSemAutenticar() throws Exception {
+    @DisplayName("without identity headers it goes on unauthenticated (public route)")
+    void withoutIdentityGoesOnUnauthenticated() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = Mockito.mock(FilterChain.class);
@@ -62,8 +62,8 @@ class HeaderAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("identidade sem assinatura nao autentica")
-    void semAssinaturaNaoAutentica() throws Exception {
+    @DisplayName("an identity without a signature does not authenticate")
+    void withoutSignatureDoesNotAuthenticate() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
         req.addHeader("X-User-Id", "u1");
         req.addHeader("X-Org-Id", "o1");
@@ -78,10 +78,10 @@ class HeaderAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("identidade com assinatura valida autentica com o AuthUser certo")
-    void assinaturaValidaAutentica() throws Exception {
-        long agora = Instant.now().getEpochSecond();
-        MockHttpServletRequest req = requisicaoAssinada("u1", "o1", "ADMIN", CHAVE, agora);
+    @DisplayName("an identity with a valid signature authenticates with the right AuthUser")
+    void validSignatureAuthenticates() throws Exception {
+        long now = Instant.now().getEpochSecond();
+        MockHttpServletRequest req = signedRequest("u1", "o1", "ADMIN", KEY, now);
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = Mockito.mock(FilterChain.class);
 
@@ -97,10 +97,10 @@ class HeaderAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("assinatura feita com outra chave nao autentica")
-    void assinaturaDeOutraChaveNaoAutentica() throws Exception {
-        long agora = Instant.now().getEpochSecond();
-        MockHttpServletRequest req = requisicaoAssinada("u1", "o1", "ADMIN", OUTRA_CHAVE, agora);
+    @DisplayName("a signature made with another key does not authenticate")
+    void otherKeySignatureDoesNotAuthenticate() throws Exception {
+        long now = Instant.now().getEpochSecond();
+        MockHttpServletRequest req = signedRequest("u1", "o1", "ADMIN", OTHER_KEY, now);
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = Mockito.mock(FilterChain.class);
 
@@ -110,10 +110,10 @@ class HeaderAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("trocar o papel depois de assinar invalida a assinatura")
-    void papelAdulteradoNaoAutentica() throws Exception {
-        long agora = Instant.now().getEpochSecond();
-        MockHttpServletRequest req = requisicaoAssinada("u1", "o1", "ADMIN", CHAVE, agora);
+    @DisplayName("changing the role after signing invalidates the signature")
+    void tamperedRoleDoesNotAuthenticate() throws Exception {
+        long now = Instant.now().getEpochSecond();
+        MockHttpServletRequest req = signedRequest("u1", "o1", "ADMIN", KEY, now);
         req.removeHeader("X-User-Role");
         req.addHeader("X-User-Role", "SECRETARIA");
         MockHttpServletResponse res = new MockHttpServletResponse();
@@ -125,10 +125,10 @@ class HeaderAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("assinatura fora da janela de tempo nao autentica")
-    void assinaturaExpiradaNaoAutentica() throws Exception {
-        long antigo = Instant.now().getEpochSecond() - 600;
-        MockHttpServletRequest req = requisicaoAssinada("u1", "o1", "ADMIN", CHAVE, antigo);
+    @DisplayName("a signature outside the time window does not authenticate")
+    void expiredSignatureDoesNotAuthenticate() throws Exception {
+        long old = Instant.now().getEpochSecond() - 600;
+        MockHttpServletRequest req = signedRequest("u1", "o1", "ADMIN", KEY, old);
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = Mockito.mock(FilterChain.class);
 
@@ -138,10 +138,10 @@ class HeaderAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("papel invalido (fora do enum Role) nao autentica e nao propaga excecao")
-    void papelInvalidoNaoAutentica() throws Exception {
-        long agora = Instant.now().getEpochSecond();
-        MockHttpServletRequest req = requisicaoAssinada("u1", "o1", "SUPER_ADMIN", CHAVE, agora);
+    @DisplayName("an invalid role (not in the Role enum) does not authenticate and does not throw")
+    void invalidRoleDoesNotAuthenticate() throws Exception {
+        long now = Instant.now().getEpochSecond();
+        MockHttpServletRequest req = signedRequest("u1", "o1", "SUPER_ADMIN", KEY, now);
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = Mockito.mock(FilterChain.class);
 
@@ -152,8 +152,8 @@ class HeaderAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("contexto ja autenticado (ex.: pelo InternalKeyFilter) nao e sobrescrito")
-    void contextoJaAutenticadoNaoSobrescreve() throws Exception {
+    @DisplayName("an already authenticated context (for example by the InternalKeyFilter) is not overwritten")
+    void alreadyAuthenticatedContextIsKept() throws Exception {
         var existente = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                 "servico-interno", null, java.util.List.of());
         SecurityContextHolder.getContext().setAuthentication(existente);

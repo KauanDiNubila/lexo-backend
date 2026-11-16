@@ -2,7 +2,7 @@ package app.lexo.controller;
 
 import app.lexo.IntegrationTestBase;
 import app.lexo.common.email.RabbitConfig;
-import app.lexo.common.email.TarefaEmail;
+import app.lexo.common.email.EmailTask;
 import app.lexo.common.user.InternalUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +68,7 @@ class DeadlineReminderBehaviorTest extends IntegrationTestBase {
 
     private void verifyEmails(String address, int times) {
         verify(rabbit, times(times)).convertAndSend(eq(RabbitConfig.EXCHANGE), eq(RabbitConfig.ROUTING_KEY),
-                argThat((Object task) -> task instanceof TarefaEmail email && address.equals(email.destinatario())));
+                argThat((Object task) -> task instanceof EmailTask email && address.equals(email.recipient())));
     }
 
     private boolean wasNotified(String deadlineId) {
@@ -94,8 +94,8 @@ class DeadlineReminderBehaviorTest extends IntegrationTestBase {
 
         verifyEmails(address, 1);
         verify(rabbit).convertAndSend(eq(RabbitConfig.EXCHANGE), eq(RabbitConfig.ROUTING_KEY),
-                argThat((Object task) -> task instanceof TarefaEmail email
-                        && "LEMBRETE_PRAZO".equals(email.tipo()) && email.assunto().startsWith("Prazo próximo: ")));
+                argThat((Object task) -> task instanceof EmailTask email
+                        && "LEMBRETE_PRAZO".equals(email.type()) && email.subject().startsWith("Prazo próximo: ")));
         assertThat(wasNotified(inside)).isTrue();
         assertThat(wasNotified(far)).isFalse();
         assertThat(wasNotified(past)).isFalse();

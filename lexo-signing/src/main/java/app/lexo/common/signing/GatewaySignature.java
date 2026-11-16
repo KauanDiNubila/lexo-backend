@@ -9,27 +9,27 @@ import java.util.Base64;
 public final class GatewaySignature {
 
     public static final String H_TIMESTAMP = "X-Gateway-Ts";
-    public static final String H_ASSINATURA = "X-Gateway-Sig";
+    public static final String H_SIGNATURE = "X-Gateway-Sig";
 
-    public static final String CHAVE_DEV = "lexo-gateway-dev-signing-key-com-mais-de-32-bytes";
+    public static final String DEV_KEY = "lexo-gateway-dev-signing-key-com-mais-de-32-bytes";
 
-    private static final String ALGORITMO = "HmacSHA256";
-    private static final String SEPARADOR = "|";
-    private static final int TAMANHO_MINIMO = 32;
+    private static final String ALGORITHM = "HmacSHA256";
+    private static final String SEPARATOR = "|";
+    private static final int MIN_LENGTH = 32;
 
     private GatewaySignature() {
     }
 
     public static String payload(String userId, String orgId, String role,
-                                 String nome, String email, long timestamp) {
-        return String.join(SEPARADOR,
-                nvl(userId), nvl(orgId), nvl(role), nvl(nome), nvl(email), Long.toString(timestamp));
+                                 String name, String email, long timestamp) {
+        return String.join(SEPARATOR,
+                orEmpty(userId), orEmpty(orgId), orEmpty(role), orEmpty(name), orEmpty(email), Long.toString(timestamp));
     }
 
-    public static String sign(String chave, String payload) {
+    public static String sign(String key, String payload) {
         try {
-            Mac mac = Mac.getInstance(ALGORITMO);
-            mac.init(new SecretKeySpec(chave.getBytes(StandardCharsets.UTF_8), ALGORITMO));
+            Mac mac = Mac.getInstance(ALGORITHM);
+            mac.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), ALGORITHM));
             return Base64.getUrlEncoder().withoutPadding()
                     .encodeToString(mac.doFinal(payload.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
@@ -37,30 +37,30 @@ public final class GatewaySignature {
         }
     }
 
-    public static boolean verify(String chave, String payload, String assinatura) {
-        if (assinatura == null || assinatura.isBlank()) {
+    public static boolean verify(String key, String payload, String signature) {
+        if (signature == null || signature.isBlank()) {
             return false;
         }
-        byte[] esperada = sign(chave, payload).getBytes(StandardCharsets.UTF_8);
-        byte[] recebida = assinatura.getBytes(StandardCharsets.UTF_8);
-        return MessageDigest.isEqual(esperada, recebida);
+        byte[] expected = sign(key, payload).getBytes(StandardCharsets.UTF_8);
+        byte[] received = signature.getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(expected, received);
     }
 
-    public static boolean dentroDaJanela(long timestamp, long agora, long toleranciaSegundos) {
-        return Math.abs(agora - timestamp) <= toleranciaSegundos;
+    public static boolean withinWindow(long timestamp, long now, long toleranceSeconds) {
+        return Math.abs(now - timestamp) <= toleranceSeconds;
     }
 
-    public static void exigirChaveSegura(String chave, boolean perfilDev) {
-        if (chave == null || chave.isBlank()) {
+    public static void requireSecureKey(String key, boolean devProfile) {
+        if (key == null || key.isBlank()) {
             throw new IllegalStateException(
                     "GATEWAY_SIGNING_KEY ausente. Defina a variavel de ambiente GATEWAY_SIGNING_KEY "
-                    + "(>= " + TAMANHO_MINIMO + " bytes) para o gateway e para todos os servicos.");
+                    + "(>= " + MIN_LENGTH + " bytes) para o gateway e para todos os servicos.");
         }
-        if (chave.getBytes(StandardCharsets.UTF_8).length < TAMANHO_MINIMO) {
+        if (key.getBytes(StandardCharsets.UTF_8).length < MIN_LENGTH) {
             throw new IllegalStateException(
-                    "GATEWAY_SIGNING_KEY precisa ter ao menos " + TAMANHO_MINIMO + " bytes.");
+                    "GATEWAY_SIGNING_KEY precisa ter ao menos " + MIN_LENGTH + " bytes.");
         }
-        if (CHAVE_DEV.equals(chave) && !perfilDev) {
+        if (DEV_KEY.equals(key) && !devProfile) {
             throw new IllegalStateException(
                     "GATEWAY_SIGNING_KEY inseguro. Defina a variavel de ambiente GATEWAY_SIGNING_KEY, "
                     + "ou rode com o profile 'dev' para desenvolvimento local. "
@@ -68,7 +68,7 @@ public final class GatewaySignature {
         }
     }
 
-    private static String nvl(String valor) {
-        return valor == null ? "" : valor;
+    private static String orEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

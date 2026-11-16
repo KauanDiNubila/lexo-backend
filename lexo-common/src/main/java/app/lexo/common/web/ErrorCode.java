@@ -25,7 +25,7 @@ public final class ErrorCode {
     private ErrorCode() {
     }
 
-    public static String paraStatus(HttpStatus status) {
+    public static String forStatus(HttpStatus status) {
         return switch (status) {
             case BAD_REQUEST -> REQUISICAO_INVALIDA;
             case UNAUTHORIZED -> NAO_AUTORIZADO;

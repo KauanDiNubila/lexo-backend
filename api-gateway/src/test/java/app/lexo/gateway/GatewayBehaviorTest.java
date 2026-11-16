@@ -100,7 +100,7 @@ class GatewayBehaviorTest extends GatewayHttpTestBase {
         long timestamp = Long.parseLong(DOWNSTREAM.header(GatewaySignature.H_TIMESTAMP));
         assertThat(Math.abs(Instant.now().getEpochSecond() - timestamp)).isLessThan(30);
         String payload = GatewaySignature.payload(userId, "org-1", "ADMIN", name, "ana@x.com", timestamp);
-        assertThat(GatewaySignature.verify(SIGNING_KEY, payload, DOWNSTREAM.header(GatewaySignature.H_ASSINATURA)))
+        assertThat(GatewaySignature.verify(SIGNING_KEY, payload, DOWNSTREAM.header(GatewaySignature.H_SIGNATURE)))
                 .isTrue();
     }
 
@@ -109,13 +109,13 @@ class GatewayBehaviorTest extends GatewayHttpTestBase {
     void forgedHeadersAreReplaced() {
         get("/api/clientes", validToken("u-real"))
                 .header("X-User-Id", "u-falso").header("X-Org-Id", "org-falso").header("X-User-Role", "OWNER")
-                .header(GatewaySignature.H_ASSINATURA, "forjada")
+                .header(GatewaySignature.H_SIGNATURE, "forjada")
                 .exchange().expectStatus().isOk();
 
         assertThat(DOWNSTREAM.header("X-User-Id")).isEqualTo("u-real");
         assertThat(DOWNSTREAM.header("X-Org-Id")).isEqualTo("org-1");
         assertThat(DOWNSTREAM.header("X-User-Role")).isEqualTo("ADMIN");
-        assertThat(DOWNSTREAM.header(GatewaySignature.H_ASSINATURA)).isNotEqualTo("forjada");
+        assertThat(DOWNSTREAM.header(GatewaySignature.H_SIGNATURE)).isNotEqualTo("forjada");
     }
 
     @Test
@@ -148,11 +148,11 @@ class GatewayBehaviorTest extends GatewayHttpTestBase {
     @DisplayName("an exact public route needs no token and arrives without identity headers")
     void publicExactRoute() {
         web.post().uri("/api/auth/login")
-                .header("X-User-Id", "u-falso").header(GatewaySignature.H_ASSINATURA, "forjada")
+                .header("X-User-Id", "u-falso").header(GatewaySignature.H_SIGNATURE, "forjada")
                 .exchange().expectStatus().isOk();
 
         assertThat(DOWNSTREAM.header("X-User-Id")).isNull();
-        assertThat(DOWNSTREAM.header(GatewaySignature.H_ASSINATURA)).isNull();
+        assertThat(DOWNSTREAM.header(GatewaySignature.H_SIGNATURE)).isNull();
     }
 
     @Test
