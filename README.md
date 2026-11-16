@@ -378,6 +378,8 @@ lexo-backend/
 
 ## Roadmap
 
+O que ficou para trás da migração (testes, segurança, operação e arquitetura), com prioridade e tamanho, está em [`docs/proximos-passos.md`](docs/proximos-passos.md). O que vem de produto:
+
 - Config Server centralizado.
 - Captura de publicações (DJe) → geração automática de prazos.
 - Jurimetria (relatórios/BI) e integração de cobrança (PIX/boleto).
