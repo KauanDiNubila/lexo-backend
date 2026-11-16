@@ -114,7 +114,7 @@ public abstract class IntegrationTestBase {
         String name = URLEncoder.encode(id.name(), StandardCharsets.UTF_8);
         String payload = GatewaySignature.payload(id.userId(), id.orgId(), id.role(), name, "", timestamp);
         headers.add(GatewaySignature.H_TIMESTAMP, Long.toString(timestamp));
-        headers.add(GatewaySignature.H_ASSINATURA, GatewaySignature.sign(key, payload));
+        headers.add(GatewaySignature.H_SIGNATURE, GatewaySignature.sign(key, payload));
         return headers;
     }
 

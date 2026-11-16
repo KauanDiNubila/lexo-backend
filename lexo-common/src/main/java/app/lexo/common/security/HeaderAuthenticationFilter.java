@@ -31,18 +31,18 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
     public static final String H_NAME = "X-User-Name";
     public static final String H_EMAIL = "X-User-Email";
 
-    private final String chaveAssinatura;
-    private final long toleranciaSegundos;
+    private final String signingKey;
+    private final long toleranceSeconds;
 
     public HeaderAuthenticationFilter(
-            @Value("${lexo.gateway.signing-key}") String chaveAssinatura,
-            @Value("${lexo.gateway.signature-tolerance-seconds:60}") long toleranciaSegundos,
+            @Value("${lexo.gateway.signing-key}") String signingKey,
+            @Value("${lexo.gateway.signature-tolerance-seconds:60}") long toleranceSeconds,
             Environment env) {
-        var perfis = Arrays.asList(env.getActiveProfiles());
-        GatewaySignature.exigirChaveSegura(chaveAssinatura,
-                perfis.contains("dev") || perfis.contains("test"));
-        this.chaveAssinatura = chaveAssinatura;
-        this.toleranciaSegundos = toleranciaSegundos;
+        var profiles = Arrays.asList(env.getActiveProfiles());
+        GatewaySignature.requireSecureKey(signingKey,
+                profiles.contains("dev") || profiles.contains("test"));
+        this.signingKey = signingKey;
+        this.toleranceSeconds = toleranceSeconds;
     }
 
     @Override
@@ -65,18 +65,18 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String nome = request.getHeader(H_NAME);
+        String name = request.getHeader(H_NAME);
         String email = request.getHeader(H_EMAIL);
 
-        if (!assinaturaValida(request, userId, orgId, role, nome, email)) {
+        if (!hasValidSignature(request, userId, orgId, role, name, email)) {
             SecurityContextHolder.clearContext();
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            String nomeDecodificado = nome == null ? null : URLDecoder.decode(nome, StandardCharsets.UTF_8);
-            AuthUser user = new AuthUser(userId, orgId, nomeDecodificado, email, Role.valueOf(role));
+            String decodedName = name == null ? null : URLDecoder.decode(name, StandardCharsets.UTF_8);
+            AuthUser user = new AuthUser(userId, orgId, decodedName, email, Role.valueOf(role));
             var authority = new SimpleGrantedAuthority("ROLE_" + user.role().name());
             var authentication = new UsernamePasswordAuthenticationToken(user, null, List.of(authority));
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -88,26 +88,26 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private boolean assinaturaValida(HttpServletRequest request, String userId, String orgId,
-                                     String role, String nome, String email) {
-        String timestampBruto = request.getHeader(GatewaySignature.H_TIMESTAMP);
-        String assinatura = request.getHeader(GatewaySignature.H_ASSINATURA);
-        if (timestampBruto == null || assinatura == null) {
+    private boolean hasValidSignature(HttpServletRequest request, String userId, String orgId,
+                                     String role, String name, String email) {
+        String rawTimestamp = request.getHeader(GatewaySignature.H_TIMESTAMP);
+        String signature = request.getHeader(GatewaySignature.H_SIGNATURE);
+        if (rawTimestamp == null || signature == null) {
             return false;
         }
 
         long timestamp;
         try {
-            timestamp = Long.parseLong(timestampBruto.trim());
+            timestamp = Long.parseLong(rawTimestamp.trim());
         } catch (NumberFormatException e) {
             return false;
         }
 
-        if (!GatewaySignature.dentroDaJanela(timestamp, Instant.now().getEpochSecond(), toleranciaSegundos)) {
+        if (!GatewaySignature.withinWindow(timestamp, Instant.now().getEpochSecond(), toleranceSeconds)) {
             return false;
         }
 
-        String payload = GatewaySignature.payload(userId, orgId, role, nome, email, timestamp);
-        return GatewaySignature.verify(chaveAssinatura, payload, assinatura);
+        String payload = GatewaySignature.payload(userId, orgId, role, name, email, timestamp);
+        return GatewaySignature.verify(signingKey, payload, signature);
     }
 }

@@ -1,6 +1,6 @@
 package app.lexo.adapter.out.persistence;
 
-import app.lexo.common.domain.BaseEntity;
+import app.lexo.common.persistence.BaseEntity;
 import app.lexo.common.security.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

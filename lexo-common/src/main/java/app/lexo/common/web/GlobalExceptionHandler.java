@@ -31,18 +31,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex,
                                                               HttpServletRequest req) {
-        return build(HttpStatus.NOT_FOUND, ErrorCode.paraStatus(HttpStatus.NOT_FOUND), ex.getMessage(), req);
+        return build(HttpStatus.NOT_FOUND, ErrorCode.forStatus(HttpStatus.NOT_FOUND), ex.getMessage(), req);
     }
 
     @ExceptionHandler(InvalidDataException.class)
     public ResponseEntity<ErrorResponse> handleInvalidData(InvalidDataException ex, HttpServletRequest req) {
-        return build(HttpStatus.BAD_REQUEST, ErrorCode.paraStatus(HttpStatus.BAD_REQUEST), ex.getMessage(), req);
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.forStatus(HttpStatus.BAD_REQUEST), ex.getMessage(), req);
     }
 
     @ExceptionHandler(ServiceUnavailableException.class)
     public ResponseEntity<ErrorResponse> handleServiceUnavailable(ServiceUnavailableException ex,
                                                                    HttpServletRequest req) {
-        return build(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.paraStatus(HttpStatus.SERVICE_UNAVAILABLE),
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.forStatus(HttpStatus.SERVICE_UNAVAILABLE),
                 ex.getMessage(), req);
     }
 

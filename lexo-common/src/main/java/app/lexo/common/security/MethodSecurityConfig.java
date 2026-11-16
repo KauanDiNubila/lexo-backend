@@ -7,11 +7,6 @@ import org.springframework.security.access.expression.method.MethodSecurityExpre
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 
-/**
- * ADMIN inclui ADVOGADO, que inclui SECRETARIA — declarado uma vez so, em vez de
- * cada @PreAuthorize precisar enumerar "hasAnyRole('ADMIN', 'ADVOGADO')" e correr o
- * risco de esquecer um papel numa checagem nova.
- */
 @Configuration
 public class MethodSecurityConfig {
 

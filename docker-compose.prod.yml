@@ -197,6 +197,7 @@ services:
     environment:
       <<: *infra-env
       LEXO_EUREKA_HOSTNAME: api-gateway
+      LEXO_RATE_LIMIT_TRUSTED_PROXIES: "1"
     mem_limit: 512m
     depends_on:
       discovery-server:

@@ -8,82 +8,82 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DisplayName("Assinatura dos headers do gateway")
+@DisplayName("Gateway header signature")
 class GatewaySignatureTest {
 
-    private static final String CHAVE = "chave-de-teste-com-no-minimo-32-bytes-aqui";
-    private static final String OUTRA_CHAVE = "outra-chave-de-teste-com-no-minimo-32-bytes";
+    private static final String KEY = "chave-de-teste-com-no-minimo-32-bytes-aqui";
+    private static final String OTHER_KEY = "outra-chave-de-teste-com-no-minimo-32-bytes";
 
-    private String payloadPadrao(long ts) {
+    private String defaultPayload(long ts) {
         return GatewaySignature.payload("user-1", "org-1", "ADMIN", "Ana", "ana@x.com", ts);
     }
 
     @Test
-    @DisplayName("assinatura gerada e aceita pela verificacao")
-    void assinaEVerifica() {
-        String payload = payloadPadrao(1_700_000_000L);
-        String assinatura = GatewaySignature.sign(CHAVE, payload);
+    @DisplayName("a signature is accepted by the verification")
+    void signsAndVerifies() {
+        String payload = defaultPayload(1_700_000_000L);
+        String signature = GatewaySignature.sign(KEY, payload);
 
-        assertTrue(GatewaySignature.verify(CHAVE, payload, assinatura));
+        assertTrue(GatewaySignature.verify(KEY, payload, signature));
     }
 
     @Test
-    @DisplayName("mesma entrada produz sempre a mesma assinatura")
-    void deterministica() {
-        String payload = payloadPadrao(1_700_000_000L);
+    @DisplayName("the same input always gives the same signature")
+    void isDeterministic() {
+        String payload = defaultPayload(1_700_000_000L);
 
-        assertEquals(GatewaySignature.sign(CHAVE, payload), GatewaySignature.sign(CHAVE, payload));
+        assertEquals(GatewaySignature.sign(KEY, payload), GatewaySignature.sign(KEY, payload));
     }
 
     @Test
-    @DisplayName("assinatura de outra chave e recusada")
-    void chaveErradaFalha() {
-        String payload = payloadPadrao(1_700_000_000L);
-        String assinatura = GatewaySignature.sign(OUTRA_CHAVE, payload);
+    @DisplayName("a signature made with another key is refused")
+    void wrongKeyFails() {
+        String payload = defaultPayload(1_700_000_000L);
+        String signature = GatewaySignature.sign(OTHER_KEY, payload);
 
-        assertFalse(GatewaySignature.verify(CHAVE, payload, assinatura));
+        assertFalse(GatewaySignature.verify(KEY, payload, signature));
     }
 
     @Test
-    @DisplayName("trocar o papel invalida a assinatura")
-    void payloadAdulteradoFalha() {
-        String assinatura = GatewaySignature.sign(CHAVE, payloadPadrao(1_700_000_000L));
-        String adulterado = GatewaySignature.payload(
+    @DisplayName("changing the role invalidates the signature")
+    void tamperedPayloadFails() {
+        String signature = GatewaySignature.sign(KEY, defaultPayload(1_700_000_000L));
+        String tampered = GatewaySignature.payload(
                 "user-1", "org-1", "SECRETARIA", "Ana", "ana@x.com", 1_700_000_000L);
 
-        assertFalse(GatewaySignature.verify(CHAVE, adulterado, assinatura));
+        assertFalse(GatewaySignature.verify(KEY, tampered, signature));
     }
 
     @Test
-    @DisplayName("assinatura ausente ou vazia e recusada")
-    void assinaturaAusenteFalha() {
-        String payload = payloadPadrao(1_700_000_000L);
+    @DisplayName("a missing or blank signature is refused")
+    void missingSignatureFails() {
+        String payload = defaultPayload(1_700_000_000L);
 
-        assertFalse(GatewaySignature.verify(CHAVE, payload, null));
-        assertFalse(GatewaySignature.verify(CHAVE, payload, "  "));
+        assertFalse(GatewaySignature.verify(KEY, payload, null));
+        assertFalse(GatewaySignature.verify(KEY, payload, "  "));
     }
 
     @Test
-    @DisplayName("janela de tempo aceita o recente e recusa o antigo")
-    void janelaDeTempo() {
-        long agora = 1_700_000_000L;
+    @DisplayName("the time window accepts the recent and refuses the old")
+    void timeWindow() {
+        long now = 1_700_000_000L;
 
-        assertTrue(GatewaySignature.dentroDaJanela(agora - 30, agora, 60));
-        assertTrue(GatewaySignature.dentroDaJanela(agora + 5, agora, 60));
-        assertFalse(GatewaySignature.dentroDaJanela(agora - 120, agora, 60));
+        assertTrue(GatewaySignature.withinWindow(now - 30, now, 60));
+        assertTrue(GatewaySignature.withinWindow(now + 5, now, 60));
+        assertFalse(GatewaySignature.withinWindow(now - 120, now, 60));
     }
 
     @Test
-    @DisplayName("chave default so e aceita no profile dev")
-    void chaveDefaultForaDeDevFalha() {
+    @DisplayName("the default key is only accepted in the dev profile")
+    void defaultKeyOutsideDevFails() {
         assertThrows(IllegalStateException.class,
-                () -> GatewaySignature.exigirChaveSegura(GatewaySignature.CHAVE_DEV, false));
+                () -> GatewaySignature.requireSecureKey(GatewaySignature.DEV_KEY, false));
         assertThrows(IllegalStateException.class,
-                () -> GatewaySignature.exigirChaveSegura("", true));
+                () -> GatewaySignature.requireSecureKey("", true));
         assertThrows(IllegalStateException.class,
-                () -> GatewaySignature.exigirChaveSegura("curta-demais", true));
+                () -> GatewaySignature.requireSecureKey("curta-demais", true));
 
-        GatewaySignature.exigirChaveSegura(GatewaySignature.CHAVE_DEV, true);
-        GatewaySignature.exigirChaveSegura(CHAVE, false);
+        GatewaySignature.requireSecureKey(GatewaySignature.DEV_KEY, true);
+        GatewaySignature.requireSecureKey(KEY, false);
     }
 }
