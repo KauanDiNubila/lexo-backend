@@ -132,16 +132,20 @@ class GatewayBehaviorTest extends GatewayHttpTestBase {
     }
 
     @Test
-    @DisplayName("a signed token without organization or role claims still goes through, with those headers absent")
-    void tokenWithoutOrganization() {
-        String bare = Jwts.builder().subject("u-1").expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
-                .signWith(jwtKey()).compact();
+    @DisplayName("a signed token without the user, organization or role is refused")
+    void tokenWithoutRequiredClaims() {
+        var key = jwtKey();
+        var expiry = Date.from(Instant.now().plus(15, ChronoUnit.MINUTES));
+        String noOrganization = Jwts.builder().subject("u-1").claim("role", "ADMIN").expiration(expiry).signWith(key).compact();
+        String noRole = Jwts.builder().subject("u-1").claim("organizationId", "org-1").expiration(expiry).signWith(key).compact();
+        String noUser = Jwts.builder().claim("organizationId", "org-1").claim("role", "ADMIN").expiration(expiry).signWith(key).compact();
+        String blankOrganization = Jwts.builder().subject("u-1").claim("organizationId", " ").claim("role", "ADMIN")
+                .expiration(expiry).signWith(key).compact();
 
-        get("/api/clientes", bare).exchange().expectStatus().isOk();
-
-        assertThat(DOWNSTREAM.header("X-User-Id")).isEqualTo("u-1");
-        assertThat(DOWNSTREAM.header("X-Org-Id")).isNull();
-        assertThat(DOWNSTREAM.header("X-User-Role")).isNull();
+        get("/api/clientes", noOrganization).exchange().expectStatus().isUnauthorized();
+        get("/api/clientes", noRole).exchange().expectStatus().isUnauthorized();
+        get("/api/clientes", noUser).exchange().expectStatus().isUnauthorized();
+        get("/api/clientes", blankOrganization).exchange().expectStatus().isUnauthorized();
     }
 
     @Test

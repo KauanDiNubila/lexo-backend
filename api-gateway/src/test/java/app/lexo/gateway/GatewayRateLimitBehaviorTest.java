@@ -37,6 +37,27 @@ class GatewayRateLimitBehaviorTest extends GatewayHttpTestBase {
     }
 
     @Test
+    @DisplayName("clients behind the proxy are limited one by one, by the address the proxy saw")
+    void limitsEachClientBehindTheProxy() {
+        web.get().uri("/api/portal/x").header("X-Forwarded-For", "198.51.100.1").exchange().expectStatus().isOk();
+        web.get().uri("/api/portal/x").header("X-Forwarded-For", "198.51.100.1").exchange()
+                .expectStatus().isEqualTo(429);
+
+        web.get().uri("/api/portal/x").header("X-Forwarded-For", "198.51.100.2").exchange().expectStatus().isOk();
+    }
+
+    @Test
+    @DisplayName("an address the client invents in front of the proxy's own entry does not buy a new limit")
+    void inventedAddressesDoNotHelp() {
+        web.get().uri("/api/portal/x").header("X-Forwarded-For", "203.0.113.7").exchange().expectStatus().isOk();
+
+        web.get().uri("/api/portal/x").header("X-Forwarded-For", "10.9.9.9, 203.0.113.7").exchange()
+                .expectStatus().isEqualTo(429);
+        web.get().uri("/api/portal/x").header("X-Forwarded-For", "10.8.8.8, 203.0.113.7").exchange()
+                .expectStatus().isEqualTo(429);
+    }
+
+    @Test
     @DisplayName("a preflight is never counted against the limit")
     void preflightIsNotLimited() {
         for (int i = 0; i < 6; i++) {

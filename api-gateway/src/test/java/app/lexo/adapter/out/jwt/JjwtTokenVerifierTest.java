@@ -78,6 +78,14 @@ class JjwtTokenVerifierTest {
     }
 
     @Test
+    @DisplayName("a token without the user, organization or role is refused")
+    void missingRequiredClaims() {
+        assertThat(verifier.verify(claims().subject(null).signWith(key).compact())).isEmpty();
+        assertThat(verifier.verify(claims().claim("organizationId", null).signWith(key).compact())).isEmpty();
+        assertThat(verifier.verify(claims().claim("role", null).signWith(key).compact())).isEmpty();
+    }
+
+    @Test
     @DisplayName("a token without name or e-mail still verifies, with empty text")
     void noNameOrEmail() {
         String token = Jwts.builder().subject("u-1").claim("organizationId", "org-1").claim("role", "ADMIN")
