@@ -19,6 +19,18 @@ class WireContractTest {
     }
 
     @Test
+    @DisplayName("the five identity headers keep their names, shared by the gateway and the services")
+    void identityHeaderNames() {
+        assertEquals("X-User-Id", IdentityHeaders.H_USER_ID);
+        assertEquals("X-Org-Id", IdentityHeaders.H_ORG_ID);
+        assertEquals("X-User-Role", IdentityHeaders.H_ROLE);
+        assertEquals("X-User-Name", IdentityHeaders.H_NAME);
+        assertEquals("X-User-Email", IdentityHeaders.H_EMAIL);
+        assertEquals(java.util.List.of("X-User-Id", "X-Org-Id", "X-User-Role", "X-User-Name", "X-User-Email"),
+                IdentityHeaders.ALL);
+    }
+
+    @Test
     @DisplayName("the payload joins the six fields with a pipe, empty text for a missing one")
     void payloadFormat() {
         assertEquals("user-1|org-1|ADMIN|Ana|ana@x.com|1700000000",
