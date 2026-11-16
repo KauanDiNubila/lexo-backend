@@ -32,7 +32,7 @@ class AuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final List<String> IDENTITY_HEADERS = List.of(
             H_USER_ID, H_ORG_ID, H_ROLE, H_NAME, H_EMAIL,
-            GatewaySignature.H_TIMESTAMP, GatewaySignature.H_ASSINATURA);
+            GatewaySignature.H_TIMESTAMP, GatewaySignature.H_SIGNATURE);
 
     private final AuthenticateUseCase authenticate;
     private final String signingKey;
@@ -72,7 +72,7 @@ class AuthenticationFilter implements GlobalFilter, Ordered {
                 .header(H_NAME, encodedName)
                 .header(H_EMAIL, identity.email())
                 .header(GatewaySignature.H_TIMESTAMP, Long.toString(timestamp))
-                .header(GatewaySignature.H_ASSINATURA, GatewaySignature.sign(signingKey, payload));
+                .header(GatewaySignature.H_SIGNATURE, GatewaySignature.sign(signingKey, payload));
     }
 
     private Mono<Void> unauthorized(ServerWebExchange exchange) {

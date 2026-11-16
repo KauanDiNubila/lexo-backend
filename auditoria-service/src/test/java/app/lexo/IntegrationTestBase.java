@@ -87,7 +87,7 @@ public abstract class IntegrationTestBase {
         h.add("X-User-Name", name);
         h.add("X-User-Email", "");
         h.add(GatewaySignature.H_TIMESTAMP, Long.toString(timestamp));
-        h.add(GatewaySignature.H_ASSINATURA, GatewaySignature.sign(SIGNING_KEY, payload));
+        h.add(GatewaySignature.H_SIGNATURE, GatewaySignature.sign(SIGNING_KEY, payload));
         return h;
     }
 

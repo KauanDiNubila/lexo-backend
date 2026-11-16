@@ -1,7 +1,7 @@
 package app.lexo;
 
 import app.lexo.common.email.RabbitConfig;
-import app.lexo.common.email.TarefaEmail;
+import app.lexo.common.email.EmailTask;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -79,11 +79,11 @@ class EmailQueueBehaviorTest {
         return argThat((SimpleMailMessage m) -> m != null && m.getTo() != null && m.getTo()[0].equals(recipient));
     }
 
-    private TarefaEmail task(String recipient) {
-        return new TarefaEmail("CONVITE", recipient, "Assunto " + recipient, "Corpo para " + recipient);
+    private EmailTask task(String recipient) {
+        return new EmailTask("CONVITE", recipient, "Assunto " + recipient, "Corpo para " + recipient);
     }
 
-    private void enqueue(TarefaEmail task) {
+    private void enqueue(EmailTask task) {
         rabbit.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.ROUTING_KEY, task);
     }
 

@@ -15,18 +15,18 @@ import static org.mockito.Mockito.verify;
 @DisplayName("InternalKeyFilter")
 class InternalKeyFilterTest {
 
-    private static final String CHAVE = "chave-interna-de-teste";
+    private static final String KEY = "chave-interna-de-teste";
 
-    private final InternalKeyFilter filter = new InternalKeyFilter(CHAVE);
+    private final InternalKeyFilter filter = new InternalKeyFilter(KEY);
 
     @AfterEach
-    void limpar() {
+    void clear() {
         SecurityContextHolder.clearContext();
     }
 
     @Test
-    @DisplayName("rota interna sem a chave nao autentica")
-    void semChaveNaoAutentica() throws Exception {
+    @DisplayName("an internal route without the key does not authenticate")
+    void withoutKeyDoesNotAuthenticate() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest("GET", "/internal/clientes/1/existe");
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = Mockito.mock(FilterChain.class);
@@ -38,8 +38,8 @@ class InternalKeyFilterTest {
     }
 
     @Test
-    @DisplayName("rota interna com a chave errada nao autentica")
-    void chaveErradaNaoAutentica() throws Exception {
+    @DisplayName("an internal route with the wrong key does not authenticate")
+    void wrongKeyDoesNotAuthenticate() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest("GET", "/internal/clientes/1/existe");
         req.addHeader("X-Internal-Key", "chave-errada");
         MockHttpServletResponse res = new MockHttpServletResponse();
@@ -51,10 +51,10 @@ class InternalKeyFilterTest {
     }
 
     @Test
-    @DisplayName("rota interna com a chave certa autentica com ROLE_INTERNAL")
-    void chaveCertaAutentica() throws Exception {
+    @DisplayName("an internal route with the right key authenticates with ROLE_INTERNAL")
+    void rightKeyAuthenticates() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest("GET", "/internal/clientes/1/existe");
-        req.addHeader("X-Internal-Key", CHAVE);
+        req.addHeader("X-Internal-Key", KEY);
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = Mockito.mock(FilterChain.class);
 
@@ -68,10 +68,10 @@ class InternalKeyFilterTest {
     }
 
     @Test
-    @DisplayName("chave certa mas fora de /internal/** nao autentica")
-    void chaveCertaForaDoPrefixoNaoAutentica() throws Exception {
+    @DisplayName("the right key outside /internal/** does not authenticate")
+    void rightKeyOutsidePrefixDoesNotAuthenticate() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest("GET", "/api/clientes");
-        req.addHeader("X-Internal-Key", CHAVE);
+        req.addHeader("X-Internal-Key", KEY);
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = Mockito.mock(FilterChain.class);
 
@@ -81,15 +81,15 @@ class InternalKeyFilterTest {
     }
 
     @Test
-    @DisplayName("chave nao configurada (vazia) nunca autentica, mesmo com a chave certa enviada")
-    void semChaveConfiguradaNuncaAutentica() throws Exception {
-        InternalKeyFilter desabilitado = new InternalKeyFilter("");
+    @DisplayName("an unconfigured (blank) key never authenticates, even if a key is sent")
+    void unconfiguredKeyNeverAuthenticates() throws Exception {
+        InternalKeyFilter disabled = new InternalKeyFilter("");
         MockHttpServletRequest req = new MockHttpServletRequest("GET", "/internal/clientes/1/existe");
         req.addHeader("X-Internal-Key", "");
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = Mockito.mock(FilterChain.class);
 
-        desabilitado.doFilter(req, res, chain);
+        disabled.doFilter(req, res, chain);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(chain).doFilter(req, res);

@@ -1,6 +1,6 @@
 package app.lexo.adapter.out.persistence;
 
-import app.lexo.common.domain.BaseEntity;
+import app.lexo.common.persistence.BaseEntity;
 import app.lexo.domain.InvoiceStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;

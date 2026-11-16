@@ -1,4 +1,4 @@
-package app.lexo.common.domain;
+package app.lexo.common.persistence;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;

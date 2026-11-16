@@ -24,15 +24,15 @@ public class InternalKeyFilter extends OncePerRequestFilter {
     public static final String H_INTERNAL_KEY = "X-Internal-Key";
     public static final String ROLE_INTERNAL = "INTERNAL";
 
-    private static final String PREFIXO = "/internal/";
+    private static final String PREFIX = "/internal/";
 
-    private final byte[] chaveEsperada;
-    private final boolean habilitado;
+    private final byte[] expectedKey;
+    private final boolean enabled;
 
-    public InternalKeyFilter(@Value("${lexo.internal.api-key:}") String chaveInterna) {
-        this.habilitado = chaveInterna != null && !chaveInterna.isBlank();
-        this.chaveEsperada = this.habilitado
-                ? chaveInterna.getBytes(StandardCharsets.UTF_8)
+    public InternalKeyFilter(@Value("${lexo.internal.api-key:}") String internalKey) {
+        this.enabled = internalKey != null && !internalKey.isBlank();
+        this.expectedKey = this.enabled
+                ? internalKey.getBytes(StandardCharsets.UTF_8)
                 : new byte[0];
     }
 
@@ -42,7 +42,7 @@ public class InternalKeyFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        if (habilitado && request.getRequestURI().startsWith(PREFIXO) && chaveConfere(request)) {
+        if (enabled && request.getRequestURI().startsWith(PREFIX) && keyMatches(request)) {
             var authority = new SimpleGrantedAuthority("ROLE_" + ROLE_INTERNAL);
             var authentication = new UsernamePasswordAuthenticationToken(
                     "servico-interno", null, List.of(authority));
@@ -53,11 +53,11 @@ public class InternalKeyFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private boolean chaveConfere(HttpServletRequest request) {
-        String recebida = request.getHeader(H_INTERNAL_KEY);
-        if (recebida == null) {
+    private boolean keyMatches(HttpServletRequest request) {
+        String received = request.getHeader(H_INTERNAL_KEY);
+        if (received == null) {
             return false;
         }
-        return MessageDigest.isEqual(chaveEsperada, recebida.getBytes(StandardCharsets.UTF_8));
+        return MessageDigest.isEqual(expectedKey, received.getBytes(StandardCharsets.UTF_8));
     }
 }
