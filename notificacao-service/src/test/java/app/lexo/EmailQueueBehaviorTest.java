@@ -10,7 +10,9 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -64,6 +66,9 @@ class EmailQueueBehaviorTest {
     @Autowired
     private RabbitTemplate rabbit;
 
+    @Autowired
+    private RabbitProperties rabbitProperties;
+
     @BeforeEach
     void emptyDeadLetterQueue() {
         reset(mailSender);
@@ -111,8 +116,8 @@ class EmailQueueBehaviorTest {
     }
 
     @Test
-    @DisplayName("a task that cannot be sent is tried six times and then goes to the dead-letter queue")
-    void deadLettersAfterSixAttempts() {
+    @DisplayName("a task the mail server cannot take is retried up to the configured limit and then goes to the dead-letter queue")
+    void retriesAServerFailureThenDeadLetters() {
         String recipient = UUID.randomUUID() + "@cliente.com";
         doThrow(new MailSendException("smtp fora do ar")).when(mailSender).send(any(SimpleMailMessage.class));
 
@@ -120,7 +125,20 @@ class EmailQueueBehaviorTest {
 
         Message dead = deadLetterWith(recipient);
         assertThat(new String(dead.getBody(), StandardCharsets.UTF_8)).contains("Corpo para " + recipient);
-        verify(mailSender, times(6)).send(any(SimpleMailMessage.class));
+        verify(mailSender, times(rabbitProperties.getListener().getSimple().getRetry().getMaxAttempts()))
+                .send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    @DisplayName("a task that can never be sent goes to the dead-letter queue after one attempt")
+    void doesNotRetryAFailureThatCannotGoAway() {
+        String recipient = "sem-endereco-" + UUID.randomUUID();
+        doThrow(new MailParseException("endereco invalido")).when(mailSender).send(mailTo(recipient));
+
+        enqueue(task(recipient));
+
+        deadLetterWith(recipient);
+        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
     }
 
     @Test

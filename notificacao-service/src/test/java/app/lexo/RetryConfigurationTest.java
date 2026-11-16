@@ -2,43 +2,33 @@ package app.lexo;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.amqp.RabbitProperties.ListenerRetry;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Properties;
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Production retry policy for e-mail delivery")
 class RetryConfigurationTest {
 
-    private static Properties production() throws IOException {
-        Properties properties = new Properties();
-        try (InputStream in = Files.newInputStream(Path.of("src/main/resources/application.properties"))) {
-            properties.load(in);
-        }
-        return properties;
-    }
-
     @Test
-    @DisplayName("keeps trying for about a minute before giving up on a task")
+    @DisplayName("tries six times with a growing wait, about a minute in all")
     void backsOffForAboutAMinute() throws IOException {
-        Properties p = production();
-        String prefix = "spring.rabbitmq.listener.simple.retry.";
+        var production = new MapConfigurationPropertySource(
+                PropertiesLoaderUtils.loadProperties(new ClassPathResource("application.properties")));
 
-        int attempts = Integer.parseInt(p.getProperty(prefix + "max-attempts"));
-        long first = Long.parseLong(p.getProperty(prefix + "initial-interval"));
-        double multiplier = Double.parseDouble(p.getProperty(prefix + "multiplier"));
-        long max = Long.parseLong(p.getProperty(prefix + "max-interval"));
+        ListenerRetry retry = new Binder(production)
+                .bind("spring.rabbitmq.listener.simple.retry", ListenerRetry.class).get();
 
-        long waited = 0;
-        long interval = first;
-        for (int i = 1; i < attempts; i++) {
-            waited += Math.min(interval, max);
-            interval = (long) (interval * multiplier);
-        }
-        assertThat(waited).isBetween(45_000L, 90_000L);
+        assertThat(retry.isEnabled()).isTrue();
+        assertThat(retry.getMaxAttempts()).isEqualTo(6);
+        assertThat(retry.getInitialInterval()).isEqualTo(Duration.ofSeconds(2));
+        assertThat(retry.getMultiplier()).isEqualTo(2.0);
+        assertThat(retry.getMaxInterval()).isEqualTo(Duration.ofSeconds(30));
     }
 }
