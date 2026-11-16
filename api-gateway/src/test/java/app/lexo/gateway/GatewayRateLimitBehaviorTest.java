@@ -10,7 +10,7 @@ import org.testcontainers.containers.GenericContainer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestPropertySource(properties = {
-        "lexo.rate-limit.replenish-rate=1", "lexo.rate-limit.burst-capacity=2", "lexo.rate-limit.requested-tokens=2"})
+        "lexo.rate-limit.replenish-rate=1", "lexo.rate-limit.burst-capacity=2", "lexo.rate-limit.requested-tokens=2", "lexo.rate-limit.trusted-proxies=1"})
 @DisplayName("Gateway rate limit over HTTP")
 class GatewayRateLimitBehaviorTest extends GatewayHttpTestBase {
 

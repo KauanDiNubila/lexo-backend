@@ -131,21 +131,42 @@ class GatewayBehaviorTest extends GatewayHttpTestBase {
         assertThat(DOWNSTREAM.header("X-User-Id")).isEqualTo("u-bare");
     }
 
-    @Test
-    @DisplayName("a signed token without the user, organization or role is refused")
-    void tokenWithoutRequiredClaims() {
-        var key = jwtKey();
-        var expiry = Date.from(Instant.now().plus(15, ChronoUnit.MINUTES));
-        String noOrganization = Jwts.builder().subject("u-1").claim("role", "ADMIN").expiration(expiry).signWith(key).compact();
-        String noRole = Jwts.builder().subject("u-1").claim("organizationId", "org-1").expiration(expiry).signWith(key).compact();
-        String noUser = Jwts.builder().claim("organizationId", "org-1").claim("role", "ADMIN").expiration(expiry).signWith(key).compact();
-        String blankOrganization = Jwts.builder().subject("u-1").claim("organizationId", " ").claim("role", "ADMIN")
-                .expiration(expiry).signWith(key).compact();
+    private String signedTokenWith(String user, String organization, String role) {
+        var builder = Jwts.builder().expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)));
+        if (user != null) {
+            builder.subject(user);
+        }
+        if (organization != null) {
+            builder.claim("organizationId", organization);
+        }
+        if (role != null) {
+            builder.claim("role", role);
+        }
+        return builder.signWith(jwtKey()).compact();
+    }
 
-        get("/api/clientes", noOrganization).exchange().expectStatus().isUnauthorized();
-        get("/api/clientes", noRole).exchange().expectStatus().isUnauthorized();
-        get("/api/clientes", noUser).exchange().expectStatus().isUnauthorized();
-        get("/api/clientes", blankOrganization).exchange().expectStatus().isUnauthorized();
+    @Test
+    @DisplayName("a signed token without the user is refused")
+    void tokenWithoutUser() {
+        get("/api/clientes", signedTokenWith(null, "org-1", "ADMIN")).exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
+    @DisplayName("a signed token without the organization is refused")
+    void tokenWithoutOrganization() {
+        get("/api/clientes", signedTokenWith("u-1", null, "ADMIN")).exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
+    @DisplayName("a signed token with a blank organization is refused")
+    void tokenWithBlankOrganization() {
+        get("/api/clientes", signedTokenWith("u-1", " ", "ADMIN")).exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
+    @DisplayName("a signed token without the role is refused")
+    void tokenWithoutRole() {
+        get("/api/clientes", signedTokenWith("u-1", "org-1", null)).exchange().expectStatus().isUnauthorized();
     }
 
     @Test
