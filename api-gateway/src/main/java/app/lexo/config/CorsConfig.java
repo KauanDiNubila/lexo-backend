@@ -1,4 +1,4 @@
-package app.lexo.gateway;
+package app.lexo.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -11,10 +11,10 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
-public class CorsConfig {
+class CorsConfig {
 
     @Bean
-    public CorsWebFilter corsWebFilter(@Value("${lexo.cors.allowed-origins}") String allowedOrigins) {
+    CorsWebFilter corsWebFilter(@Value("${lexo.cors.allowed-origins}") String allowedOrigins) {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim).filter(s -> !s.isBlank()).toList());
