@@ -78,6 +78,31 @@ flowchart TB
 - **Kafka *e* RabbitMQ** — Kafka é um *log de eventos* durável para vários consumidores (auditoria); RabbitMQ é uma *fila de tarefas* com retry/DLQ para trabalho pontual (e-mail).
 - **Autenticação no gateway** — o JWT é validado uma vez na borda, que injeta a identidade nos serviços; eles não revalidam o token e permanecem simples e stateless.
 
+### Arquitetura interna dos serviços
+
+Cada serviço segue a arquitetura hexagonal (portas e adaptadores). O domínio não conhece framework; a
+aplicação orquestra casos de uso através de portas; os adaptadores falam com o mundo (HTTP, filas, banco,
+Gemini, Redis, SMTP).
+
+```
+app.lexo
+├── domain/                  # regras e tipos do negócio, Java puro
+├── application/
+│   ├── port/in/             # casos de uso (o que o serviço oferece)
+│   ├── port/out/            # o que o serviço precisa do mundo
+│   └── service/             # implementação dos casos de uso (único lugar com @Transactional)
+├── adapter/
+│   ├── in/                  # web, event, schedule, queue, gateway: traduzem para os casos de uso
+│   └── out/                 # persistence, gemini, redis, mail, jwt: implementam as portas de saída
+└── config/                  # configuração do Spring, CORS, segredos
+```
+
+As regras de dependência são checadas por testes de arquitetura (ArchUnit) em cada serviço: o domínio não
+importa Spring nem JPA, a aplicação não importa adaptadores, e adaptadores de entrada e de saída não se
+enxergam. A migração foi feita serviço a serviço, com os testes de comportamento escritos antes e rodando
+sem alteração depois. As decisões estão em [`docs/adr`](docs/adr/README.md). O `api-gateway` mantém as
+portas reativas (`Mono`), porque roda sobre Netty.
+
 ### Serviços
 
 | Serviço | Porta | Banco | Responsabilidade |
@@ -318,10 +343,11 @@ Passo a passo completo em [`docs/deploy.md`](docs/deploy.md).
 mvn test
 ```
 
-Testes unitários (validação CPF/CNPJ, risco de prazo, JWT, assinatura HMAC do gateway) e de integração
-(CRUD, multi-tenancy, hierarquia de papéis, identidade assinada) rodam sobre **H2 em memória** —
-sem Docker. O `api-gateway`, que valida token e assina os headers de identidade, tem cobertura
-dedicada usando `MockServerWebExchange`, sem precisar subir o contexto Spring inteiro.
+Os testes de domínio e de casos de uso rodam em memória, com fakes. Os de comportamento e de integração
+sobem a aplicação de verdade com **Testcontainers** (Postgres, Kafka, RabbitMQ e Redis, conforme o
+serviço), então **precisam do Docker rodando**. Cada serviço tem também um teste de arquitetura (ArchUnit).
+O `api-gateway` é testado só por HTTP: gateway real com as rotas de produção, Redis em contêiner e um
+serviço de destino simulado.
 
 ---
 
@@ -332,9 +358,10 @@ lexo-backend/
 ├── pom.xml                 # POM pai (multi-módulo + BOM Spring Cloud)
 ├── docker-compose.yml      # infraestrutura
 ├── scripts/                # dev-up / start-all / stop-all
-├── lexo-signing/           # assinatura HMAC dos headers (sem Spring, JDK puro)
-├── lexo-messaging/         # contratos de evento + topologia das filas de e-mail
-├── lexo-common/            # segurança, contrato de erro, OpenAPI — compartilhado
+├── lexo-signing/           # assinatura HMAC dos headers e chave de corte de sessão (JDK puro)
+├── lexo-messaging/         # contratos de evento, tarefa de e-mail e topologia das filas
+├── lexo-common/            # segurança, contrato de erro, paginação, BaseEntity, OpenAPI
+├── docs/adr/               # decisões de arquitetura (índice em docs/adr/README.md)
 ├── discovery-server/       # Eureka
 ├── api-gateway/            # Spring Cloud Gateway + validação de JWT
 ├── auth-service/           # autenticação, usuários, 2FA
