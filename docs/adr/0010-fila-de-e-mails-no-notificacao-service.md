@@ -11,9 +11,9 @@ A política de falha não está no código. Está em `application.properties`: t
 
 ## Decisão
 
-**O envio vira um caso de uso e o SMTP vira um adaptador.** `SendEmailUseCase` recebe um `SendEmailCommand` e `SendEmailService` entrega um `Email` (destinatário, assunto, corpo) à porta de saída `MailPort`. `SmtpMailAdapter` implementa a porta com o `JavaMailSender` e é o único que conhece o remetente (`lexo.email.from`) e o `SimpleMailMessage`.
+**O envio vira um caso de uso e o SMTP vira um adaptador.** `SendEmailUseCase` recebe um `SendEmailCommand` e `SendEmailService` entrega o mesmo comando à porta de saída `MailPort`. Não há tipo de domínio: o serviço não tem regra de negócio, e um `Email` sem regra só repetiria o comando. Ele nasce quando a validação do destinatário (nas correções) tiver o que proteger. `SmtpMailAdapter` implementa a porta com o `JavaMailSender` e é o único que conhece o remetente (`lexo.email.from`) e o `SimpleMailMessage`.
 
-**A mensagem do RabbitMQ fica no adaptador de entrada.** `EmailQueueListener` é o único que conhece `TarefaEmail` e `RabbitConfig`. A aplicação e o domínio não importam nada de `org.springframework.amqp`, `org.springframework.mail` nem de `app.lexo.common.email`; o ArchUnit garante.
+**A mensagem do RabbitMQ fica no adaptador de entrada.** `EmailQueueListener` é o único que conhece `TarefaEmail` e `RabbitConfig`. A aplicação não importa nada de `org.springframework.amqp`, `org.springframework.mail` nem de `app.lexo.common.email`; o ArchUnit garante.
 
 **Falha sobe até o broker.** Nem o caso de uso nem o listener capturam exceção. A repetição e a fila de mensagens mortas continuam sendo política do broker e do Spring AMQP, configurada em `application.properties`, como antes.
 

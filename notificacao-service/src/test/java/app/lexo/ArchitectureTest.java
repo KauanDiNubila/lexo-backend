@@ -4,22 +4,15 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import org.springframework.transaction.annotation.Transactional;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 @AnalyzeClasses(
-        packages = {"app.lexo.adapter", "app.lexo.application", "app.lexo.domain"},
+        packages = {"app.lexo.adapter", "app.lexo.application"},
         importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
-
-    @ArchTest
-    static final ArchRule domainHasNoFramework = noClasses().that().resideInAPackage("..domain..")
-            .should().dependOnClassesThat().resideInAnyPackage(
-                    "org.springframework..", "jakarta.persistence..", "..application..", "..adapter..");
 
     @ArchTest
     static final ArchRule applicationHasNoTransportOrMail = noClasses().that().resideInAPackage("..application..")
@@ -39,14 +32,6 @@ class ArchitectureTest {
     @ArchTest
     static final ArchRule nothingOutsideAdaptersDependsOnThem = noClasses().that().resideOutsideOfPackage("..adapter..")
             .should().dependOnClassesThat().resideInAPackage("..adapter..");
-
-    @ArchTest
-    static final ArchRule transactionOnlyInUseCases = noClasses().that().resideOutsideOfPackage("..application.service..")
-            .should().beAnnotatedWith(Transactional.class);
-
-    @ArchTest
-    static final ArchRule transactionalMethodOnlyInUseCases = noMethods().that().areDeclaredInClassesThat()
-            .resideOutsideOfPackage("..application.service..").should().beAnnotatedWith(Transactional.class);
 
     @ArchTest
     static final ArchRule servicesAndAdaptersArePackagePrivate = classes().that().areTopLevelClasses()

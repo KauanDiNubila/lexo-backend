@@ -1,7 +1,7 @@
 package app.lexo.adapter.out.mail;
 
 import app.lexo.application.port.out.MailPort;
-import app.lexo.domain.Email;
+import app.lexo.application.port.in.SendEmailUseCase.SendEmailCommand;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -19,12 +19,12 @@ class SmtpMailAdapter implements MailPort {
     }
 
     @Override
-    public void send(Email email) {
+    public void send(SendEmailCommand command) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(sender);
-        message.setTo(email.recipient());
-        message.setSubject(email.subject());
-        message.setText(email.body());
+        message.setTo(command.recipient());
+        message.setSubject(command.subject());
+        message.setText(command.body());
         mailSender.send(message);
     }
 }

@@ -1,8 +1,8 @@
 package app.lexo.application.port.out;
 
-import app.lexo.domain.Email;
+import app.lexo.application.port.in.SendEmailUseCase.SendEmailCommand;
 
 public interface MailPort {
 
-    void send(Email email);
+    void send(SendEmailCommand command);
 }

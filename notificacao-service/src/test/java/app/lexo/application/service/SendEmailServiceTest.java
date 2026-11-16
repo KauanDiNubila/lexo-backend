@@ -2,7 +2,6 @@ package app.lexo.application.service;
 
 import app.lexo.application.port.in.SendEmailUseCase.SendEmailCommand;
 import app.lexo.application.port.out.MailPort;
-import app.lexo.domain.Email;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,15 +15,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SendEmailServiceTest {
 
     private static class RecordingMail implements MailPort {
-        final List<Email> sent = new ArrayList<>();
+        final List<SendEmailCommand> sent = new ArrayList<>();
         RuntimeException failure;
 
         @Override
-        public void send(Email email) {
+        public void send(SendEmailCommand command) {
             if (failure != null) {
                 throw failure;
             }
-            sent.add(email);
+            sent.add(command);
         }
     }
 
@@ -32,11 +31,13 @@ class SendEmailServiceTest {
     private final SendEmailService service = new SendEmailService(mail);
 
     @Test
-    @DisplayName("hands the recipient, subject and body to the mail port")
+    @DisplayName("hands the command to the mail port")
     void sends() {
-        service.send(new SendEmailCommand("CONVITE", "ana@cliente.com", "Convite", "Entre no Lexo"));
+        SendEmailCommand command = new SendEmailCommand("CONVITE", "ana@cliente.com", "Convite", "Entre no Lexo");
 
-        assertThat(mail.sent).containsExactly(new Email("ana@cliente.com", "Convite", "Entre no Lexo"));
+        service.send(command);
+
+        assertThat(mail.sent).containsExactly(command);
     }
 
     @Test

@@ -1,6 +1,6 @@
 package app.lexo.adapter.out.mail;
 
-import app.lexo.domain.Email;
+import app.lexo.application.port.in.SendEmailUseCase.SendEmailCommand;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -24,7 +24,7 @@ class SmtpMailAdapterTest {
     @Test
     @DisplayName("sends a plain message from the configured sender")
     void sendsPlainMessage() {
-        adapter.send(new Email("ana@cliente.com", "Convite", "Entre no Lexo"));
+        adapter.send(new SendEmailCommand("CONVITE", "ana@cliente.com", "Convite", "Entre no Lexo"));
 
         ArgumentCaptor<SimpleMailMessage> sent = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mailSender).send(sent.capture());
@@ -40,6 +40,6 @@ class SmtpMailAdapterTest {
         MailSendException failure = new MailSendException("smtp fora do ar");
         doThrow(failure).when(mailSender).send(any(SimpleMailMessage.class));
 
-        assertThatThrownBy(() -> adapter.send(new Email("ana@cliente.com", "Convite", "Corpo"))).isSameAs(failure);
+        assertThatThrownBy(() -> adapter.send(new SendEmailCommand("CONVITE", "ana@cliente.com", "Convite", "Corpo"))).isSameAs(failure);
     }
 }

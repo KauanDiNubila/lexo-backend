@@ -22,6 +22,8 @@ import org.testcontainers.containers.RabbitMQContainer;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +31,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
@@ -62,8 +65,7 @@ class EmailQueueBehaviorTest {
     @BeforeEach
     void emptyDeadLetterQueue() {
         reset(mailSender);
-        while (rabbit.receive(RabbitConfig.DLQ) != null) {
-        }
+        rabbit.execute(channel -> channel.queuePurge(RabbitConfig.DLQ));
     }
 
     private static SimpleMailMessage mailTo(String recipient) {
@@ -79,10 +81,15 @@ class EmailQueueBehaviorTest {
     }
 
     private Message deadLetterWith(String text) {
-        return await().atMost(Duration.ofSeconds(30)).until(() -> {
+        List<Message> found = new ArrayList<>();
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             Message m = rabbit.receive(RabbitConfig.DLQ);
-            return m != null && new String(m.getBody(), StandardCharsets.UTF_8).contains(text) ? m : null;
-        }, m -> m != null);
+            if (m != null && new String(m.getBody(), StandardCharsets.UTF_8).contains(text)) {
+                found.add(m);
+            }
+            return !found.isEmpty();
+        });
+        return found.get(0);
     }
 
     @Test
@@ -125,7 +132,7 @@ class EmailQueueBehaviorTest {
         rabbit.send(RabbitConfig.EXCHANGE, RabbitConfig.ROUTING_KEY, garbage);
 
         deadLetterWith(marker);
-        verify(mailSender, times(0)).send(any(SimpleMailMessage.class));
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
     }
 
     @Test
