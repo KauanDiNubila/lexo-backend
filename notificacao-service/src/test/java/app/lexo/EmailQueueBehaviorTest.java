@@ -38,7 +38,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
-@TestPropertySource(properties = {"eureka.client.enabled=false", "management.health.mail.enabled=false"})
+@TestPropertySource(properties = {"eureka.client.enabled=false", "management.health.mail.enabled=false",
+        "spring.rabbitmq.listener.simple.retry.initial-interval=50ms",
+        "spring.rabbitmq.listener.simple.retry.multiplier=1"})
 @DisplayName("E-mail queue consumer with a real RabbitMQ broker")
 class EmailQueueBehaviorTest {
 
@@ -109,8 +111,8 @@ class EmailQueueBehaviorTest {
     }
 
     @Test
-    @DisplayName("a task that cannot be sent is tried three times and then goes to the dead-letter queue")
-    void deadLettersAfterThreeAttempts() {
+    @DisplayName("a task that cannot be sent is tried six times and then goes to the dead-letter queue")
+    void deadLettersAfterSixAttempts() {
         String recipient = UUID.randomUUID() + "@cliente.com";
         doThrow(new MailSendException("smtp fora do ar")).when(mailSender).send(any(SimpleMailMessage.class));
 
@@ -118,7 +120,7 @@ class EmailQueueBehaviorTest {
 
         Message dead = deadLetterWith(recipient);
         assertThat(new String(dead.getBody(), StandardCharsets.UTF_8)).contains("Corpo para " + recipient);
-        verify(mailSender, times(3)).send(any(SimpleMailMessage.class));
+        verify(mailSender, times(6)).send(any(SimpleMailMessage.class));
     }
 
     @Test
