@@ -1,0 +1,44 @@
+package app.lexo;
+
+import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.junit.AnalyzeClasses;
+import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchRule;
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
+
+@AnalyzeClasses(
+        packages = {"app.lexo.adapter", "app.lexo.application"},
+        importOptions = ImportOption.DoNotIncludeTests.class)
+class ArchitectureTest {
+
+    @ArchTest
+    static final ArchRule applicationHasNoTransportOrMail = noClasses().that().resideInAPackage("..application..")
+            .should().dependOnClassesThat().resideInAnyPackage(
+                    "..adapter..", "org.springframework.amqp..", "org.springframework.mail..",
+                    "jakarta.mail..", "app.lexo.common.email..");
+
+    @ArchTest
+    static final ArchRule inboundSeesOnlyInboundPorts = noClasses().that().resideInAPackage("..adapter.in..")
+            .should().dependOnClassesThat().resideInAnyPackage(
+                    "..adapter.out..", "..application.service..", "..application.port.out..");
+
+    @ArchTest
+    static final ArchRule outboundDoesNotSeeInboundOrServices = noClasses().that().resideInAPackage("..adapter.out..")
+            .should().dependOnClassesThat().resideInAnyPackage("..adapter.in..", "..application.service..");
+
+    @ArchTest
+    static final ArchRule nothingOutsideAdaptersDependsOnThem = noClasses().that().resideOutsideOfPackage("..adapter..")
+            .should().dependOnClassesThat().resideInAPackage("..adapter..");
+
+    @ArchTest
+    static final ArchRule servicesAndAdaptersArePackagePrivate = classes().that().areTopLevelClasses()
+            .and().areNotInterfaces()
+            .and().resideInAnyPackage("..application.service..", "..adapter..")
+            .should().notBePublic();
+
+    @ArchTest
+    static final ArchRule noCycles = slices().matching("app.lexo.(*)..").should().beFreeOfCycles();
+}
