@@ -23,7 +23,7 @@ A política de falha não está no código. Está em `application.properties`: t
 
 - `TarefaEmail`, `EnfileiradorEmail` e `RabbitConfig` continuam em português dentro do `lexo-messaging`, que os outros serviços também usam. Renomear é trabalho da limpeza das bibliotecas, não deste serviço.
 - A fila `lexo.email.dlq` não tem leitor nem monitoramento, como a `lexo.eventos-dlt` do Kafka (ADR 0009).
-- O serviço só envia texto simples. Nada valida o destinatário antes de tentar enviar, então um endereço vazio gasta as três tentativas antes de ir para a fila de mortas. Preservado de propósito e listado para as correções.
+- O serviço só envia texto simples. Um destinatário nulo, vazio ou com mais de um endereço falha no `JavaMailSender` antes de qualquer conexão SMTP e segue o mesmo caminho de qualquer outra falha: repetições e fila de mensagens mortas. Só um endereço sem arroba chega ao servidor SMTP, que o recusa.
 
 ## Referências
 
