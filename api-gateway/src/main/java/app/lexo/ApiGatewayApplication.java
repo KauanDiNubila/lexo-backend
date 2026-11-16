@@ -1,4 +1,4 @@
-package app.lexo.gateway;
+package app.lexo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
