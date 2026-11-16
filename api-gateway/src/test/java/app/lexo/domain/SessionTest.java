@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.OptionalLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Session and identity")
 class SessionTest {
@@ -29,6 +30,17 @@ class SessionTest {
     @DisplayName("a session without an issue time ends under any cutoff")
     void noIssueTime() {
         assertThat(new Session(identity, OptionalLong.empty()).isEndedBy(1)).isTrue();
+    }
+
+    @Test
+    @DisplayName("an identity needs a user, an organization and a role")
+    void requiredFields() {
+        assertThatThrownBy(() -> new Identity(null, "org-1", "ADMIN", "Ana", "a@x.com"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new Identity("u-1", " ", "ADMIN", "Ana", "a@x.com"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new Identity("u-1", "org-1", "", "Ana", "a@x.com"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

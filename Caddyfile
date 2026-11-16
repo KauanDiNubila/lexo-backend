@@ -6,7 +6,9 @@
 	encode zstd gzip
 
 	handle /api/* {
-		reverse_proxy api-gateway:8090
+		reverse_proxy api-gateway:8090 {
+			header_up X-Forwarded-For {remote_host}
+		}
 	}
 
 	handle {

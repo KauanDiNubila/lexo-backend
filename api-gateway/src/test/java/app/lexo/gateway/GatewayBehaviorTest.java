@@ -131,17 +131,42 @@ class GatewayBehaviorTest extends GatewayHttpTestBase {
         assertThat(DOWNSTREAM.header("X-User-Id")).isEqualTo("u-bare");
     }
 
+    private String signedTokenWith(String user, String organization, String role) {
+        var builder = Jwts.builder().expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)));
+        if (user != null) {
+            builder.subject(user);
+        }
+        if (organization != null) {
+            builder.claim("organizationId", organization);
+        }
+        if (role != null) {
+            builder.claim("role", role);
+        }
+        return builder.signWith(jwtKey()).compact();
+    }
+
     @Test
-    @DisplayName("a signed token without organization or role claims still goes through, with those headers absent")
+    @DisplayName("a signed token without the user is refused")
+    void tokenWithoutUser() {
+        get("/api/clientes", signedTokenWith(null, "org-1", "ADMIN")).exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
+    @DisplayName("a signed token without the organization is refused")
     void tokenWithoutOrganization() {
-        String bare = Jwts.builder().subject("u-1").expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
-                .signWith(jwtKey()).compact();
+        get("/api/clientes", signedTokenWith("u-1", null, "ADMIN")).exchange().expectStatus().isUnauthorized();
+    }
 
-        get("/api/clientes", bare).exchange().expectStatus().isOk();
+    @Test
+    @DisplayName("a signed token with a blank organization is refused")
+    void tokenWithBlankOrganization() {
+        get("/api/clientes", signedTokenWith("u-1", " ", "ADMIN")).exchange().expectStatus().isUnauthorized();
+    }
 
-        assertThat(DOWNSTREAM.header("X-User-Id")).isEqualTo("u-1");
-        assertThat(DOWNSTREAM.header("X-Org-Id")).isNull();
-        assertThat(DOWNSTREAM.header("X-User-Role")).isNull();
+    @Test
+    @DisplayName("a signed token without the role is refused")
+    void tokenWithoutRole() {
+        get("/api/clientes", signedTokenWith("u-1", "org-1", null)).exchange().expectStatus().isUnauthorized();
     }
 
     @Test

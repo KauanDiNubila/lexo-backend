@@ -22,10 +22,14 @@ class RateLimitFilterTest {
 
     private boolean allowed = true;
     private final List<String> clients = new ArrayList<>();
-    private final RateLimitFilter filter = new RateLimitFilter(client -> {
-        clients.add(client);
-        return Mono.just(allowed);
-    });
+    private final RateLimitFilter filter = filterBehind(1);
+
+    private RateLimitFilter filterBehind(int trustedProxies) {
+        return new RateLimitFilter(client -> {
+            clients.add(client);
+            return Mono.just(allowed);
+        }, trustedProxies);
+    }
 
     private static final class Chain implements GatewayFilterChain {
         final AtomicReference<ServerWebExchange> reached = new AtomicReference<>();
@@ -72,6 +76,26 @@ class RateLimitFilterTest {
         filter.filter(MockServerWebExchange.from(from("10.1.2.3")), new Chain()).block();
 
         assertThat(clients).containsExactly("10.1.2.3");
+    }
+
+    @Test
+    @DisplayName("behind a trusted proxy the client is the address the proxy appended, not what the client invented")
+    void forwardedAddress() throws Exception {
+        var exchange = MockServerWebExchange.from(from("10.0.0.5").header("X-Forwarded-For", "6.6.6.6, 198.51.100.9"));
+
+        filter.filter(exchange, new Chain()).block();
+
+        assertThat(clients).containsExactly("198.51.100.9");
+    }
+
+    @Test
+    @DisplayName("without trusted proxies the forwarded header is ignored")
+    void noTrustedProxies() throws Exception {
+        var exchange = MockServerWebExchange.from(from("10.0.0.5").header("X-Forwarded-For", "198.51.100.9"));
+
+        filterBehind(0).filter(exchange, new Chain()).block();
+
+        assertThat(clients).containsExactly("10.0.0.5");
     }
 
     @Test
