@@ -53,8 +53,8 @@ class TeamUseCasesTest {
         h = new AuthHarness();
         invite = new InviteUserService(h.store, h.store, h.store, h.store, h.emails, h.events, Fakes.CLOCK);
         revoke = new RevokeInviteService(h.store, h.store, h.events);
-        changeRole = new ChangeUserRoleService(h.store, h.store, h.store, h.cutoffs, h.events, Fakes.CLOCK);
-        remove = new RemoveUserService(h.store, h.store, h.store, h.cutoffs, h.events, Fakes.CLOCK);
+        changeRole = new ChangeUserRoleService(h.store, h.store, h.terminator, h.events);
+        remove = new RemoveUserService(h.store, h.store, h.terminator, h.events);
         accept = new AcceptInviteService(h.store, h.store, h.store, h.store, h.hasher, Fakes.CLOCK);
         organization = h.addOrganization("Escritorio Silva");
         admin = h.addUser(organization.id(), "Ana Admin", "ana@escritorio.com", Role.ADMIN);
