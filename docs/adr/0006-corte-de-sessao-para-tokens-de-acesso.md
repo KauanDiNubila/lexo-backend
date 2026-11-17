@@ -9,7 +9,7 @@ O token de acesso é um JWT de 15 minutos validado só pelo gateway, sem consult
 
 ## Decisão
 
-**O auth grava um corte por usuário no Redis.** Ao remover um usuário ou trocar o papel dele, o auth escreve a chave `session-cutoff:<userId>` com o instante da operação em segundos e um prazo de vida igual ao do token de acesso mais um minuto. Depois disso nenhum token emitido antes do corte deve valer.
+**O auth grava um corte por usuário no Redis.** Ao remover um usuário, trocar o papel dele ou ligar ou desligar o 2FA, o auth escreve a chave `session-cutoff:<userId>` com o instante da operação em segundos e um prazo de vida igual ao do token de acesso mais um minuto. Depois disso nenhum token emitido antes do corte deve valer.
 
 **O gateway recusa o que foi emitido até o corte.** Depois de validar a assinatura, o gateway lê a chave. Se existir e o `iat` do token for menor ou igual ao corte, responde 401. Um token sem `iat` é recusado quando há corte, porque não dá para provar que é posterior. A chave e seu formato ficam em `lexo-signing` (`SessionCutoff`), um só lugar para os dois lados.
 
@@ -22,7 +22,7 @@ O token de acesso é um JWT de 15 minutos validado só pelo gateway, sem consult
 - O custo é uma leitura no Redis por requisição autenticada no gateway. Ele já usa Redis em toda requisição para o limite de taxa.
 - Quem tem o token no momento do corte precisa entrar de novo. É o efeito desejado: o refresh também foi revogado.
 - O corte vale por 16 minutos. Depois disso todo token anterior já expirou sozinho e a chave some.
-- Não cobre a troca de senha nem o 2FA, que hoje não revogam sessões. Se isso mudar, usa o mesmo mecanismo.
+- Ligar e desligar o 2FA também encerram as sessões, pelo mesmo mecanismo: quem liga o 2FA cai e precisa entrar de novo, já com o código, e a falha em gravar o corte desfaz a mudança, como na troca de papel. A troca e a redefinição de senha também usam esse mecanismo (ADR 0016).
 
 ## Referências
 

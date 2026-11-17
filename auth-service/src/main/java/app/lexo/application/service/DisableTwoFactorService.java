@@ -22,14 +22,16 @@ class DisableTwoFactorService implements DisableTwoFactorUseCase {
     private final SaveUserPort saveUserPort;
     private final SecretCipherPort secretCipherPort;
     private final TotpPort totpPort;
+    private final SessionTerminator sessions;
     private final PublishEventPort publishEventPort;
 
     DisableTwoFactorService(LoadUserPort loadUserPort, SaveUserPort saveUserPort, SecretCipherPort secretCipherPort,
-                            TotpPort totpPort, PublishEventPort publishEventPort) {
+                            TotpPort totpPort, SessionTerminator sessions, PublishEventPort publishEventPort) {
         this.loadUserPort = loadUserPort;
         this.saveUserPort = saveUserPort;
         this.secretCipherPort = secretCipherPort;
         this.totpPort = totpPort;
+        this.sessions = sessions;
         this.publishEventPort = publishEventPort;
     }
 
@@ -45,6 +47,7 @@ class DisableTwoFactorService implements DisableTwoFactorUseCase {
         }
         user.disableTwoFactor();
         saveUserPort.save(user);
+        sessions.endAllOf(user.id());
         publishEventPort.publish(AccountEvent.twoFactorDisabled(command.organizationId(), command.actor()));
     }
 }
