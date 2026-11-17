@@ -3,7 +3,10 @@ package app.lexo.common.signing;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Signature wire contract between the gateway and the services")
@@ -26,8 +29,15 @@ class WireContractTest {
         assertEquals("X-User-Role", IdentityHeaders.H_ROLE);
         assertEquals("X-User-Name", IdentityHeaders.H_NAME);
         assertEquals("X-User-Email", IdentityHeaders.H_EMAIL);
-        assertEquals(java.util.List.of("X-User-Id", "X-Org-Id", "X-User-Role", "X-User-Name", "X-User-Email"),
+        assertEquals(List.of("X-User-Id", "X-Org-Id", "X-User-Role", "X-User-Name", "X-User-Email"),
                 IdentityHeaders.ALL);
+    }
+
+    @Test
+    @DisplayName("the client address header keeps its name and is not one of the identity headers the gateway strips")
+    void clientAddressHeaderName() {
+        assertEquals("X-Client-Address", IdentityHeaders.H_CLIENT_ADDRESS);
+        assertFalse(IdentityHeaders.ALL.contains(IdentityHeaders.H_CLIENT_ADDRESS));
     }
 
     @Test

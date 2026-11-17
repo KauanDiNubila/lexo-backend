@@ -7,6 +7,7 @@ import app.lexo.application.port.in.RefreshSessionCommand;
 import app.lexo.application.port.in.RefreshSessionUseCase;
 import app.lexo.application.port.in.RegisterOrganizationUseCase;
 import app.lexo.application.port.in.SessionResponse;
+import app.lexo.common.signing.IdentityHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -69,7 +70,7 @@ class AuthController {
     }
 
     private String clientAddress(HttpServletRequest request) {
-        String address = request.getHeader("X-Client-Address");
+        String address = request.getHeader(IdentityHeaders.H_CLIENT_ADDRESS);
         return address == null || address.isBlank() ? null : address.trim();
     }
 }
