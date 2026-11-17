@@ -61,7 +61,7 @@ class WireContractTest {
         assertThat(EventType.values()).extracting(EventType::code).containsExactly(
                 "CLIENTE_CRIADO", "CLIENTE_ATUALIZADO", "CLIENTE_EXCLUIDO", "PROCESSO_CRIADO", "PROCESSO_ATUALIZADO", "PROCESSO_EXCLUIDO",
                 "CONVIDOU_USUARIO", "REVOGOU_CONVITE", "ALTEROU_PAPEL", "REMOVEU_USUARIO", "ATIVOU_2FA",
-                "DESATIVOU_2FA");
+                "DESATIVOU_2FA", "ALTEROU_SENHA", "REDEFINIU_SENHA");
     }
 
     @Test

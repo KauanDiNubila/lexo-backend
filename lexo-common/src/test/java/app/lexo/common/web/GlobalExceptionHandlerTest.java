@@ -3,6 +3,7 @@ package app.lexo.common.web;
 import app.lexo.common.error.ConflictException;
 import app.lexo.common.error.InvalidDataException;
 import app.lexo.common.error.ServiceUnavailableException;
+import app.lexo.common.error.TooManyRequestsException;
 import app.lexo.common.error.ResourceNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,17 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(503);
         assertThat(response.getBody().code()).isEqualTo(ErrorCode.SERVICO_INDISPONIVEL);
         assertThat(response.getBody().error()).isEqualTo("try again");
+    }
+
+    @Test
+    @DisplayName("too many requests becomes 429 with the code REQUISICOES_EM_EXCESSO and the same message")
+    void tooManyRequests() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleTooManyRequests(new TooManyRequestsException("slow down"), request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(429);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.REQUISICOES_EM_EXCESSO);
+        assertThat(response.getBody().error()).isEqualTo("slow down");
     }
 
     @Test
