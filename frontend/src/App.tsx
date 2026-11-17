@@ -5,6 +5,8 @@ import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 
 const Layout = lazy(() => import("./components/Layout").then((m) => ({ default: m.Layout })));
+const EsqueciSenha = lazy(() => import("./pages/EsqueciSenha").then((m) => ({ default: m.EsqueciSenha })));
+const RedefinirSenha = lazy(() => import("./pages/RedefinirSenha").then((m) => ({ default: m.RedefinirSenha })));
 const Convite = lazy(() => import("./pages/Convite").then((m) => ({ default: m.Convite })));
 const PortalCliente = lazy(() => import("./pages/PortalCliente").then((m) => ({ default: m.PortalCliente })));
 const Dashboard = lazy(() => import("./pages/Dashboard").then((m) => ({ default: m.Dashboard })));
@@ -30,6 +32,8 @@ export default function App() {
 
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+        <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
         <Route path="/portal/:token" element={<PortalCliente />} />
         <Route path="/convite/:token" element={<Convite />} />
 
