@@ -21,6 +21,8 @@ x-infra-env: &infra-env
   AUTH_SECRET: ${AUTH_SECRET:?defina AUTH_SECRET no .env.prod}
   GATEWAY_SIGNING_KEY: ${GATEWAY_SIGNING_KEY:?defina GATEWAY_SIGNING_KEY no .env.prod}
   LEXO_INTERNAL_KEY: ${LEXO_INTERNAL_KEY:?defina LEXO_INTERNAL_KEY no .env.prod}
+  SPRINGDOC_API_DOCS_ENABLED: "false"
+  SPRINGDOC_SWAGGER_UI_ENABLED: "false"
 
 x-db-env: &db-env
   POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env.prod}
