@@ -1,5 +1,6 @@
 package app.lexo.adapter.in.gateway;
 
+import app.lexo.common.signing.IdentityHeaders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -16,7 +17,6 @@ import java.net.InetSocketAddress;
 @Component
 class ClientAddressFilter implements GlobalFilter, Ordered {
 
-    static final String HEADER = "X-Client-Address";
     static final String ATTRIBUTE = "lexo.client-address";
     static final String UNKNOWN_CLIENT = "desconhecido";
 
@@ -35,9 +35,9 @@ class ClientAddressFilter implements GlobalFilter, Ordered {
         exchange.getAttributes().put(ATTRIBUTE, address == null ? UNKNOWN_CLIENT : address);
 
         ServerHttpRequest request = exchange.getRequest().mutate().headers(headers -> {
-            headers.remove(HEADER);
+            headers.remove(IdentityHeaders.H_CLIENT_ADDRESS);
             if (address != null) {
-                headers.set(HEADER, address);
+                headers.set(IdentityHeaders.H_CLIENT_ADDRESS, address);
             }
         }).build();
         return chain.filter(exchange.mutate().request(request).build());

@@ -3,6 +3,7 @@ package app.lexo.adapter.in.gateway;
 import app.lexo.application.port.in.AuthenticateUseCase;
 import app.lexo.application.port.in.AuthenticateUseCase.Access;
 import app.lexo.common.signing.GatewaySignature;
+import app.lexo.common.signing.IdentityHeaders;
 import app.lexo.domain.Identity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -20,19 +21,13 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 class AuthenticationFilter implements GlobalFilter, Ordered {
 
-    private static final String H_USER_ID = "X-User-Id";
-    private static final String H_ORG_ID = "X-Org-Id";
-    private static final String H_ROLE = "X-User-Role";
-    private static final String H_NAME = "X-User-Name";
-    private static final String H_EMAIL = "X-User-Email";
-
-    private static final List<String> IDENTITY_HEADERS = List.of(
-            H_USER_ID, H_ORG_ID, H_ROLE, H_NAME, H_EMAIL,
-            GatewaySignature.H_TIMESTAMP, GatewaySignature.H_SIGNATURE);
+    private static final List<String> IDENTITY_HEADERS = Stream.concat(IdentityHeaders.ALL.stream(),
+            Stream.of(GatewaySignature.H_TIMESTAMP, GatewaySignature.H_SIGNATURE)).toList();
 
     private final AuthenticateUseCase authenticate;
     private final String signingKey;
@@ -66,11 +61,11 @@ class AuthenticationFilter implements GlobalFilter, Ordered {
         String payload = GatewaySignature.payload(identity.userId(), identity.organizationId(), identity.role(),
                 encodedName, identity.email(), timestamp);
         return request
-                .header(H_USER_ID, identity.userId())
-                .header(H_ORG_ID, identity.organizationId())
-                .header(H_ROLE, identity.role())
-                .header(H_NAME, encodedName)
-                .header(H_EMAIL, identity.email())
+                .header(IdentityHeaders.H_USER_ID, identity.userId())
+                .header(IdentityHeaders.H_ORG_ID, identity.organizationId())
+                .header(IdentityHeaders.H_ROLE, identity.role())
+                .header(IdentityHeaders.H_NAME, encodedName)
+                .header(IdentityHeaders.H_EMAIL, identity.email())
                 .header(GatewaySignature.H_TIMESTAMP, Long.toString(timestamp))
                 .header(GatewaySignature.H_SIGNATURE, GatewaySignature.sign(signingKey, payload));
     }

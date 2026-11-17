@@ -1,6 +1,7 @@
 package app.lexo.common.security;
 
 import app.lexo.common.signing.GatewaySignature;
+import app.lexo.common.signing.IdentityHeaders;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,12 +25,6 @@ import java.util.List;
 
 @Component
 public class HeaderAuthenticationFilter extends OncePerRequestFilter {
-
-    public static final String H_USER_ID = "X-User-Id";
-    public static final String H_ORG_ID = "X-Org-Id";
-    public static final String H_ROLE = "X-User-Role";
-    public static final String H_NAME = "X-User-Name";
-    public static final String H_EMAIL = "X-User-Email";
 
     private final String signingKey;
     private final long toleranceSeconds;
@@ -56,17 +51,17 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String userId = request.getHeader(H_USER_ID);
-        String orgId = request.getHeader(H_ORG_ID);
-        String role = request.getHeader(H_ROLE);
+        String userId = request.getHeader(IdentityHeaders.H_USER_ID);
+        String orgId = request.getHeader(IdentityHeaders.H_ORG_ID);
+        String role = request.getHeader(IdentityHeaders.H_ROLE);
 
         if (userId == null || orgId == null || role == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String name = request.getHeader(H_NAME);
-        String email = request.getHeader(H_EMAIL);
+        String name = request.getHeader(IdentityHeaders.H_NAME);
+        String email = request.getHeader(IdentityHeaders.H_EMAIL);
 
         if (!hasValidSignature(request, userId, orgId, role, name, email)) {
             SecurityContextHolder.clearContext();
