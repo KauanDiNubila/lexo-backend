@@ -70,9 +70,6 @@ class AuthController {
 
     private String clientAddress(HttpServletRequest request) {
         String address = request.getHeader("X-Client-Address");
-        if (address != null && !address.isBlank()) {
-            return address.trim();
-        }
-        return request.getRemoteAddr();
+        return address == null || address.isBlank() ? null : address.trim();
     }
 }

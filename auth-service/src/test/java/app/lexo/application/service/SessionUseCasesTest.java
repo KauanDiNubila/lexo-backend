@@ -134,9 +134,10 @@ class SessionUseCasesTest {
     private static final String PAIR_KEY = "login:email-ip:ana@escritorio.com|203.0.113.10";
     private static final String EMAIL_KEY = "login:email:ana@escritorio.com";
     private static final String ADDRESS_KEY = "login:ip:203.0.113.10";
+    private static final String UNKNOWN_PAIR_KEY = "login:email-ip:ana@escritorio.com|unknown";
 
     @Test
-    @DisplayName("login returns a session and clears the three attempt counters")
+    @DisplayName("login returns a session and clears only the counter of the email and address together")
     void logsIn() {
         User user = h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
 
@@ -144,7 +145,7 @@ class SessionUseCasesTest {
 
         assertThat(session.user().id()).isEqualTo(user.id().value());
         assertThat(session.user().role()).isEqualTo(Role.ADVOGADO);
-        assertThat(h.attempts.reset).containsExactly(PAIR_KEY, EMAIL_KEY, ADDRESS_KEY);
+        assertThat(h.attempts.reset).containsExactly(PAIR_KEY);
         assertThat(h.store.tokens).hasSize(1);
     }
 
@@ -160,15 +161,31 @@ class SessionUseCasesTest {
     }
 
     @Test
-    @DisplayName("without a client address only the email is counted, with the strict limit of 10")
+    @DisplayName("without a client address the pair uses an unknown address and no address counter exists")
     void withoutAddress() {
         h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
 
         login.login(loginAs(AuthHarness.PASSWORD, null, null));
 
-        assertThat(h.attempts.registered).containsExactly(EMAIL_KEY);
-        assertThat(h.attempts.limits).containsEntry(EMAIL_KEY, 10);
-        assertThat(h.attempts.reset).containsExactly(EMAIL_KEY);
+        assertThat(h.attempts.registered).containsExactly(UNKNOWN_PAIR_KEY, EMAIL_KEY);
+        assertThat(h.attempts.limits).containsEntry(UNKNOWN_PAIR_KEY, 10).containsEntry(EMAIL_KEY, 50);
+        assertThat(h.attempts.reset).containsExactly(UNKNOWN_PAIR_KEY);
+    }
+
+    @Test
+    @DisplayName("a good login cannot reset the counters of the email or of the address, which only expire")
+    void goodLoginKeepsTheSharedCounters() {
+        h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
+        h.attempts.counters.put(PAIR_KEY, 3);
+        h.attempts.counters.put(EMAIL_KEY, 20);
+        h.attempts.counters.put(ADDRESS_KEY, 29);
+
+        login.login(loginAs(AuthHarness.PASSWORD, null, "203.0.113.10"));
+
+        assertThat(h.attempts.counters).doesNotContainKey(PAIR_KEY)
+                .containsEntry(EMAIL_KEY, 21).containsEntry(ADDRESS_KEY, 30);
+        assertThatThrownBy(() -> login.login(loginAs(AuthHarness.PASSWORD, null, "203.0.113.10")))
+                .isInstanceOf(InvalidCredentialsException.class);
     }
 
     @Test
