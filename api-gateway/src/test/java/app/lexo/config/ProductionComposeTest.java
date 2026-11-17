@@ -70,6 +70,30 @@ class ProductionComposeTest {
     }
 
     @Test
+    @DisplayName("gives every service the same RabbitMQ user and password the broker is created with")
+    void servicesUseTheBrokerCredentials() throws IOException {
+        String compose = Files.readString(Path.of("..", "docker-compose.prod.yml"));
+        String sharedEnvironment = compose.substring(compose.indexOf("x-infra-env:"), compose.indexOf("x-db-env:"));
+
+        assertThat(serviceBlock(compose, "rabbitmq"))
+                .contains("RABBITMQ_DEFAULT_USER: ${RABBIT_USER:?defina RABBIT_USER no .env.prod}")
+                .contains("RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:?defina RABBIT_PASSWORD no .env.prod}");
+        assertThat(sharedEnvironment)
+                .contains("LEXO_RABBIT_USER: ${RABBIT_USER:?defina RABBIT_USER no .env.prod}")
+                .contains("LEXO_RABBIT_PASS: ${RABBIT_PASSWORD:?defina RABBIT_PASSWORD no .env.prod}");
+    }
+
+    @Test
+    @DisplayName("every service that talks to RabbitMQ takes that shared environment")
+    void everyRabbitServiceUsesTheSharedEnvironment() throws IOException {
+        String compose = Files.readString(Path.of("..", "docker-compose.prod.yml"));
+
+        for (String service : new String[] {"auth-service", "processo-service", "notificacao-service"}) {
+            assertThat(serviceBlock(compose, service)).as("%s environment", service).contains("<<: *infra-env");
+        }
+    }
+
+    @Test
     @DisplayName("the proxy overwrites X-Forwarded-For with the address of the connection")
     void caddyOverwritesTheHeader() throws IOException {
         String caddyfile = Files.readString(Path.of("..", "Caddyfile"));
