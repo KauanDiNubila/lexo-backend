@@ -32,8 +32,8 @@ class TwoFactorUseCasesTest {
     void wire() {
         h = new AuthHarness();
         start = new StartTwoFactorService(h.store, h.store, h.cipher, h.totp);
-        confirm = new ConfirmTwoFactorService(h.store, h.store, h.cipher, h.totp, h.store, h.cutoffs, h.events, Fakes.CLOCK);
-        disable = new DisableTwoFactorService(h.store, h.store, h.cipher, h.totp, h.store, h.cutoffs, h.events, Fakes.CLOCK);
+        confirm = new ConfirmTwoFactorService(h.store, h.store, h.cipher, h.totp, h.terminator, h.events);
+        disable = new DisableTwoFactorService(h.store, h.store, h.cipher, h.totp, h.terminator, h.events);
         organization = h.addOrganization("Escritorio");
         user = h.addUser(organization.id(), "Ana", "ana@escritorio.com", Role.ADVOGADO);
     }

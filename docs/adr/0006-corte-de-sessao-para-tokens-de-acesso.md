@@ -22,7 +22,7 @@ O token de acesso é um JWT de 15 minutos validado só pelo gateway, sem consult
 - O custo é uma leitura no Redis por requisição autenticada no gateway. Ele já usa Redis em toda requisição para o limite de taxa.
 - Quem tem o token no momento do corte precisa entrar de novo. É o efeito desejado: o refresh também foi revogado.
 - O corte vale por 16 minutos. Depois disso todo token anterior já expirou sozinho e a chave some.
-- Ligar e desligar o 2FA também encerram as sessões, pelo mesmo mecanismo: quem liga o 2FA cai e precisa entrar de novo, já com o código, e a falha em gravar o corte desfaz a mudança, como na troca de papel. Não existe troca de senha no sistema (nem "esqueci a senha"), então não há sessão a revogar nesse caso; quando existir, deve usar o mesmo mecanismo.
+- Ligar e desligar o 2FA também encerram as sessões, pelo mesmo mecanismo: quem liga o 2FA cai e precisa entrar de novo, já com o código, e a falha em gravar o corte desfaz a mudança, como na troca de papel. A troca e a redefinição de senha também usam esse mecanismo (ADR 0016).
 
 ## Referências
 

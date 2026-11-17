@@ -272,5 +272,22 @@ class TwoFactorApiBehaviorTest extends IntegrationTestBase {
 
         assertThat(userRow(account.userId()).get("totp_enabled")).isEqualTo(false);
         assertThat(refreshTokensAreRevoked(account.userId())).isFalse();
+        assertThat(publishedEvents()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("turning two factor off is refused and undone when the session cutoff cannot be recorded")
+    void disablingFailsClosedWithoutRedis() throws Exception {
+        Account account = registerAdmin();
+        String secret = enableTwoFactor(account);
+        doThrow(new IllegalStateException("redis down")).when(redisValues)
+                .set(anyString(), anyString(), any(Duration.class));
+
+        postAs(account, "/api/2fa/desativar", Map.of("code", totpCodeFor(secret)))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("SERVICO_INDISPONIVEL"));
+
+        assertThat(userRow(account.userId()).get("totp_enabled")).isEqualTo(true);
+        assertThat(publishedEvents().stream().map(event -> event.type()).toList()).doesNotContain("DESATIVOU_2FA");
     }
 }
