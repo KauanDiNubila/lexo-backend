@@ -24,8 +24,6 @@ import java.time.Clock;
 @Transactional
 class ResetPasswordService implements ResetPasswordUseCase {
 
-    private static final String INVALID_LINK = "Link inválido ou expirado";
-
     private final LoadPasswordResetPort loadPasswordResetPort;
     private final DeletePasswordResetsPort deletePasswordResetsPort;
     private final LoadUserPort loadUserPort;
@@ -60,7 +58,7 @@ class ResetPasswordService implements ResetPasswordUseCase {
         User user = loadPasswordResetPort.byTokenHash(TokenSecret.hash(command.token()))
                 .filter(reset -> !reset.isExpiredAt(clock.instant()))
                 .flatMap(reset -> loadUserPort.byId(reset.userId()))
-                .orElseThrow(() -> new InvalidDataException(INVALID_LINK));
+                .orElseThrow(() -> new InvalidDataException(ResetPasswordCommand.INVALID_LINK));
 
         user.changePassword(passwordHasher.hash(command.password()));
         saveUserPort.save(user);

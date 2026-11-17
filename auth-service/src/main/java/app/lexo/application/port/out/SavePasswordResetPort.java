@@ -4,5 +4,5 @@ import app.lexo.domain.PasswordReset;
 
 public interface SavePasswordResetPort {
 
-    PasswordReset save(PasswordReset reset);
+    void save(PasswordReset reset);
 }

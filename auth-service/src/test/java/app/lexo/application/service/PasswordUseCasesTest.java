@@ -165,8 +165,8 @@ class PasswordUseCasesTest {
     @Test
     @DisplayName("a token is valid up to its expiry instant and refused after it")
     void tokenExpires() {
-        h.store.save(PasswordReset.restore(null, user.id(), TokenSecret.hash("on-the-limit"), Fakes.NOW));
-        h.store.save(PasswordReset.restore(null, user.id(), TokenSecret.hash("too-late"),
+        h.store.save(PasswordReset.restore(user.id(), TokenSecret.hash("on-the-limit"), Fakes.NOW));
+        h.store.save(PasswordReset.restore(user.id(), TokenSecret.hash("too-late"),
                 Fakes.NOW.minusSeconds(1)));
 
         assertThatThrownBy(() -> resetWith("too-late", NEW_PASSWORD, NEW_PASSWORD))
@@ -310,7 +310,7 @@ class PasswordUseCasesTest {
     @Test
     @DisplayName("a token that expired long ago is refused even for an existing user")
     void ancientToken() {
-        h.store.save(PasswordReset.restore(null, user.id(), TokenSecret.hash("ancient"),
+        h.store.save(PasswordReset.restore(user.id(), TokenSecret.hash("ancient"),
                 Instant.parse("2020-01-01T00:00:00Z")));
 
         assertThatThrownBy(() -> resetWith("ancient", NEW_PASSWORD, NEW_PASSWORD))

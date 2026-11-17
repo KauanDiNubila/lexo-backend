@@ -2,7 +2,7 @@ package app.lexo.application.port.out;
 
 public interface SendPasswordEmailPort {
 
-    boolean sendResetLink(PasswordResetEmail email);
+    void sendResetLink(PasswordResetEmail email);
 
-    boolean sendChangedNotice(PasswordChangedEmail email);
+    void sendChangedNotice(PasswordChangedEmail email);
 }

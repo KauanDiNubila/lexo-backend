@@ -203,10 +203,8 @@ class InMemoryAuth implements SaveUserPort, LoadUserPort, UserExistsPort, ListUs
     }
 
     @Override
-    public PasswordReset save(PasswordReset reset) {
-        String id = reset.id() == null ? nextId("reset") : reset.id();
-        passwordResets.put(id, PasswordReset.restore(id, reset.userId(), reset.tokenHash(), reset.expiresAt()));
-        return passwordResets.get(id);
+    public void save(PasswordReset reset) {
+        passwordResets.put(nextId("reset"), reset);
     }
 
     @Override

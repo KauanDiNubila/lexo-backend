@@ -159,15 +159,13 @@ final class Fakes {
         final List<PasswordChangedEmail> notices = new ArrayList<>();
 
         @Override
-        public boolean sendResetLink(PasswordResetEmail email) {
+        public void sendResetLink(PasswordResetEmail email) {
             links.add(email);
-            return true;
         }
 
         @Override
-        public boolean sendChangedNotice(PasswordChangedEmail email) {
+        public void sendChangedNotice(PasswordChangedEmail email) {
             notices.add(email);
-            return true;
         }
     }
 

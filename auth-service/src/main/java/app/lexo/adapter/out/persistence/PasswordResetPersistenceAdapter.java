@@ -20,12 +20,12 @@ class PasswordResetPersistenceAdapter implements SavePasswordResetPort, LoadPass
     }
 
     @Override
-    public PasswordReset save(PasswordReset reset) {
+    public void save(PasswordReset reset) {
         PasswordResetJpaEntity entity = new PasswordResetJpaEntity();
         entity.userId = reset.userId().value();
         entity.tokenHash = reset.tokenHash();
         entity.expiresAt = reset.expiresAt();
-        return toDomain(repository.save(entity));
+        repository.save(entity);
     }
 
     @Override
@@ -39,6 +39,6 @@ class PasswordResetPersistenceAdapter implements SavePasswordResetPort, LoadPass
     }
 
     private static PasswordReset toDomain(PasswordResetJpaEntity entity) {
-        return PasswordReset.restore(entity.getId(), new UserId(entity.userId), entity.tokenHash, entity.expiresAt);
+        return PasswordReset.restore(new UserId(entity.userId), entity.tokenHash, entity.expiresAt);
     }
 }

@@ -21,8 +21,8 @@ class PasswordEmailAdapter implements SendPasswordEmailPort {
     }
 
     @Override
-    public boolean sendResetLink(PasswordResetEmail email) {
-        return queue.enqueue(new EmailTask("REDEFINICAO_SENHA", email.to().value(),
+    public void sendResetLink(PasswordResetEmail email) {
+        queue.enqueue(new EmailTask("REDEFINICAO_SENHA", email.to().value(),
                 "Redefinição de senha no Lexo",
                 "Olá " + email.name() + ", recebemos um pedido para redefinir a sua senha. Acesse: "
                         + baseUrl + "/redefinir-senha/" + email.token()
@@ -31,8 +31,8 @@ class PasswordEmailAdapter implements SendPasswordEmailPort {
     }
 
     @Override
-    public boolean sendChangedNotice(PasswordChangedEmail email) {
-        return queue.enqueue(new EmailTask("SENHA_ALTERADA", email.to().value(),
+    public void sendChangedNotice(PasswordChangedEmail email) {
+        queue.enqueue(new EmailTask("SENHA_ALTERADA", email.to().value(),
                 "Sua senha do Lexo foi alterada",
                 "Olá " + email.name() + ", a senha da sua conta no Lexo foi alterada. Se não foi você, "
                         + "use \"Esqueci minha senha\" na tela de login e avise o administrador do escritório."));
