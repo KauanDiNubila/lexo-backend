@@ -10,7 +10,7 @@ import app.lexo.application.port.out.SaveRefreshTokenPort;
 import app.lexo.domain.ExpiredRefreshTokenException;
 import app.lexo.domain.InvalidRefreshTokenException;
 import app.lexo.domain.RefreshToken;
-import app.lexo.domain.RefreshTokenSecret;
+import app.lexo.domain.TokenSecret;
 import app.lexo.domain.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +50,7 @@ class RefreshSessionService implements RefreshSessionUseCase {
         if (raw == null || raw.isBlank()) {
             throw new InvalidRefreshTokenException();
         }
-        RefreshToken current = loadRefreshTokenPort.byHash(RefreshTokenSecret.hash(raw))
+        RefreshToken current = loadRefreshTokenPort.byHash(TokenSecret.hash(raw))
                 .orElseThrow(InvalidRefreshTokenException::new);
         Instant now = clock.instant();
 

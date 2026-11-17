@@ -4,7 +4,7 @@ import app.lexo.application.port.in.LogoutCommand;
 import app.lexo.application.port.in.LogoutUseCase;
 import app.lexo.application.port.out.LoadRefreshTokenPort;
 import app.lexo.application.port.out.SaveRefreshTokenPort;
-import app.lexo.domain.RefreshTokenSecret;
+import app.lexo.domain.TokenSecret;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +31,7 @@ class LogoutService implements LogoutUseCase {
         if (raw == null || raw.isBlank()) {
             return;
         }
-        loadRefreshTokenPort.byHash(RefreshTokenSecret.hash(raw)).ifPresent(token -> {
+        loadRefreshTokenPort.byHash(TokenSecret.hash(raw)).ifPresent(token -> {
             token.revoke(clock.instant());
             saveRefreshTokenPort.save(token);
         });
