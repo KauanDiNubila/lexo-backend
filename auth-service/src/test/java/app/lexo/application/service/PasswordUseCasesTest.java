@@ -102,16 +102,32 @@ class PasswordUseCasesTest {
     }
 
     @Test
-    @DisplayName("a new request replaces the previous token")
-    void newRequestReplacesThePreviousToken() {
+    @DisplayName("a new request keeps the previous link valid, and using one link ends all of them")
+    void newRequestKeepsThePreviousLink() {
         String first = requestLink();
         String second = requestLink();
 
-        assertThat(h.store.passwordResets).hasSize(1);
-        assertThatThrownBy(() -> resetWith(first, NEW_PASSWORD, NEW_PASSWORD))
-                .isInstanceOf(InvalidDataException.class);
-        resetWith(second, NEW_PASSWORD, NEW_PASSWORD);
+        assertThat(h.store.passwordResets).hasSize(2);
+        resetWith(first, NEW_PASSWORD, NEW_PASSWORD);
         assertThat(h.hasher.matches(NEW_PASSWORD, stored().passwordHash())).isTrue();
+        assertThat(h.store.passwordResets).isEmpty();
+        assertThatThrownBy(() -> resetWith(second, "third-password-3", "third-password-3"))
+                .isInstanceOf(InvalidDataException.class);
+    }
+
+    @Test
+    @DisplayName("a new request clears the expired links of the same user and leaves other users alone")
+    void newRequestClearsExpiredLinks() {
+        User other = h.addUser(organization.id(), "Bia", "bia@escritorio.com", Role.ADVOGADO);
+        h.store.save(PasswordReset.restore(user.id(), TokenSecret.hash("expired"), Fakes.NOW.minusSeconds(1)));
+        h.store.save(PasswordReset.restore(other.id(), TokenSecret.hash("others-expired"),
+                Fakes.NOW.minusSeconds(1)));
+
+        requestLink();
+
+        assertThat(h.store.passwordResets.values()).extracting(PasswordReset::tokenHash)
+                .doesNotContain(TokenSecret.hash("expired")).contains(TokenSecret.hash("others-expired"))
+                .hasSize(2);
     }
 
     @Test

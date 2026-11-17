@@ -218,6 +218,11 @@ class InMemoryAuth implements SaveUserPort, LoadUserPort, UserExistsPort, ListUs
     }
 
     @Override
+    public void expiredOf(UserId userId, Instant now) {
+        passwordResets.values().removeIf(reset -> reset.userId().equals(userId) && reset.isExpiredAt(now));
+    }
+
+    @Override
     public void delete(OrganizationId organizationId, InviteId id) {
         UserInvite invite = invites.get(id.value());
         if (invite != null && invite.organizationId().equals(organizationId)) {

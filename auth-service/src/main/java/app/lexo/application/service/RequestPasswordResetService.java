@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 
 @Service
 @Transactional
@@ -53,9 +54,10 @@ class RequestPasswordResetService implements RequestPasswordResetUseCase {
     }
 
     private void issueFor(User user) {
+        Instant now = clock.instant();
         String rawToken = TokenSecret.generate();
-        deletePasswordResetsPort.ofUser(user.id());
-        savePasswordResetPort.save(PasswordReset.issue(user.id(), TokenSecret.hash(rawToken), clock.instant()));
+        deletePasswordResetsPort.expiredOf(user.id(), now);
+        savePasswordResetPort.save(PasswordReset.issue(user.id(), TokenSecret.hash(rawToken), now));
         sendPasswordEmailPort.sendResetLink(new PasswordResetEmail(user.email(), user.name(), rawToken));
     }
 }

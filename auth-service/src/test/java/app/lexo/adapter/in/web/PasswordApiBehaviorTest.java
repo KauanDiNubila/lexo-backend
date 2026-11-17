@@ -125,17 +125,33 @@ class PasswordApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("a new request replaces the previous link, which stops working")
-    void newRequestReplacesThePrevious() throws Exception {
+    @DisplayName("a new request keeps the previous link valid, and using one link ends all of them")
+    void newRequestKeepsThePreviousLink() throws Exception {
         Account admin = registerAdmin();
         String first = forgot(admin.email());
         String second = forgot(admin.email());
 
-        assertThat(pendingResets(admin.userId())).isEqualTo(1);
+        assertThat(pendingResets(admin.userId())).isEqualTo(2);
+        reset(first, NEW_PASSWORD, NEW_PASSWORD);
+        assertThat(pendingResets(admin.userId())).isZero();
         postPublic("/api/auth/senha/redefinir",
-                Map.of("token", first, "password", NEW_PASSWORD, "confirmPassword", NEW_PASSWORD))
+                Map.of("token", second, "password", "third-password-3", "confirmPassword", "third-password-3"))
                 .andExpect(status().isBadRequest());
-        reset(second, NEW_PASSWORD, NEW_PASSWORD);
+    }
+
+    @Test
+    @DisplayName("a new request clears the expired links of that user only")
+    void newRequestClearsExpiredLinks() throws Exception {
+        Account admin = registerAdmin();
+        Account member = insertMember(admin, "ADVOGADO");
+        forgot(admin.email());
+        forgot(member.email());
+        jdbc.update("update password_resets set expires_at = now() - interval '1 minute'");
+
+        forgot(admin.email());
+
+        assertThat(pendingResets(admin.userId())).isEqualTo(1);
+        assertThat(pendingResets(member.userId())).isEqualTo(1);
     }
 
     @Test

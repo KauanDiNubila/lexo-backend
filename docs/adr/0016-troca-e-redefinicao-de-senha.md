@@ -11,7 +11,7 @@ O sistema não tinha como trocar a senha nem como recuperar o acesso de quem a e
 
 **Três operações no auth.** `POST /api/auth/senha/esqueci` pede o link, `POST /api/auth/senha/redefinir` define a senha nova com o link, e `PUT /api/conta/senha` troca a senha de quem está logado. As duas primeiras são públicas (auth e gateway).
 
-**O link carrega um token que só existe no e-mail.** São 32 bytes aleatórios (`TokenSecret`, o mesmo gerador do token de renovação). O banco guarda só o SHA-256, na tabela `password_resets`. O token vale 1 hora e só uma vez: a linha é apagada ao usar. Um pedido novo apaga o anterior, então cada usuário tem no máximo um link vivo. A linha também some junto com o usuário (`on delete cascade`).
+**O link carrega um token que só existe no e-mail.** São 32 bytes aleatórios (`TokenSecret`, o mesmo gerador do token de renovação). O banco guarda só o SHA-256, na tabela `password_resets`. O token vale 1 hora e só uma vez: a linha é apagada ao usar. Um pedido novo não invalida os links anteriores, porque senão quem pedisse links com o e-mail de outra pessoa derrubaria o link que ela já recebeu. Usar qualquer link apaga todos os do usuário, e cada pedido apaga os links expirados dele. A linha também some junto com o usuário (`on delete cascade`).
 
 **O pedido de link não revela quem tem conta.** A resposta é 204 para qualquer e-mail válido. O limite de 3 pedidos por hora conta por e-mail, existindo conta ou não. Uma falha na fila de e-mail não muda a resposta. Com o Redis fora a resposta é 503 para todos, porque o limite não pode ser verificado. Todo token inválido, expirado, já usado ou de usuário removido responde a mesma mensagem, "Link inválido ou expirado".
 

@@ -7,6 +7,7 @@ import app.lexo.domain.PasswordReset;
 import app.lexo.domain.UserId;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Component
@@ -36,6 +37,11 @@ class PasswordResetPersistenceAdapter implements SavePasswordResetPort, LoadPass
     @Override
     public void ofUser(UserId userId) {
         repository.deleteByUserId(userId.value());
+    }
+
+    @Override
+    public void expiredOf(UserId userId, Instant now) {
+        repository.deleteByUserIdAndExpiresAtBefore(userId.value(), now);
     }
 
     private static PasswordReset toDomain(PasswordResetJpaEntity entity) {

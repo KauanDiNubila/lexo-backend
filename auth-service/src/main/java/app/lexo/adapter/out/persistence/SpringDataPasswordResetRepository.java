@@ -2,6 +2,7 @@ package app.lexo.adapter.out.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.Instant;
 import java.util.Optional;
 
 interface SpringDataPasswordResetRepository extends JpaRepository<PasswordResetJpaEntity, String> {
@@ -9,4 +10,6 @@ interface SpringDataPasswordResetRepository extends JpaRepository<PasswordResetJ
     Optional<PasswordResetJpaEntity> findByTokenHash(String tokenHash);
 
     void deleteByUserId(String userId);
+
+    void deleteByUserIdAndExpiresAtBefore(String userId, Instant now);
 }
