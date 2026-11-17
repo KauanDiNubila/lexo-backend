@@ -21,8 +21,10 @@ import java.time.Duration;
 @Transactional
 class LoginService implements LoginUseCase {
 
-    private static final int ATTEMPTS_PER_EMAIL = 10;
+    private static final int ATTEMPTS_PER_EMAIL_AND_ADDRESS = 10;
+    private static final int ATTEMPTS_PER_EMAIL = 50;
     private static final int ATTEMPTS_PER_ADDRESS = 30;
+    private static final String UNKNOWN_ADDRESS = "unknown";
     private static final Duration WINDOW = Duration.ofMinutes(15);
 
     private final LoadUserPort loadUserPort;
@@ -44,13 +46,16 @@ class LoginService implements LoginUseCase {
 
     @Override
     public SessionResponse login(LoginCommand command) {
-        String emailKey = "login:email:" + command.email().value();
-        String addressKey = command.clientAddress() == null ? null : "login:ip:" + command.clientAddress();
+        String email = command.email().value();
+        String address = command.clientAddress();
+        String pairKey = "login:email-ip:" + email + "|" + (address == null ? UNKNOWN_ADDRESS : address);
 
-        boolean emailWithinLimit = loginAttemptsPort.register(emailKey, ATTEMPTS_PER_EMAIL, WINDOW);
-        boolean addressWithinLimit = addressKey == null
-                || loginAttemptsPort.register(addressKey, ATTEMPTS_PER_ADDRESS, WINDOW);
-        if (!emailWithinLimit || !addressWithinLimit) {
+        boolean withinLimits = register(pairKey, ATTEMPTS_PER_EMAIL_AND_ADDRESS);
+        withinLimits &= register("login:email:" + email, ATTEMPTS_PER_EMAIL);
+        if (address != null) {
+            withinLimits &= register("login:ip:" + address, ATTEMPTS_PER_ADDRESS);
+        }
+        if (!withinLimits) {
             throw new InvalidCredentialsException();
         }
 
@@ -66,11 +71,12 @@ class LoginService implements LoginUseCase {
             requireValidTwoFactorCode(user, command.totpCode());
         }
 
-        loginAttemptsPort.reset(emailKey);
-        if (addressKey != null) {
-            loginAttemptsPort.reset(addressKey);
-        }
+        loginAttemptsPort.reset(pairKey);
         return sessions.start(user);
+    }
+
+    private boolean register(String key, int max) {
+        return loginAttemptsPort.register(key, max, WINDOW);
     }
 
     private void requireValidTwoFactorCode(User user, String code) {

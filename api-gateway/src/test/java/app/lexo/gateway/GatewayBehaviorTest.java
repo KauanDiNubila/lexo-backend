@@ -181,6 +181,17 @@ class GatewayBehaviorTest extends GatewayHttpTestBase {
     }
 
     @Test
+    @DisplayName("without a trusted proxy the service gets the address of the connection and the forwarded header is ignored")
+    void withoutATrustedProxyTheConnectionWins() {
+        web.post().uri("/api/auth/login")
+                .header("X-Forwarded-For", "198.51.100.4")
+                .header("X-Client-Address", "6.6.6.6")
+                .exchange().expectStatus().isOk();
+
+        assertThat(DOWNSTREAM.header("X-Client-Address")).isNotIn("198.51.100.4", "6.6.6.6");
+    }
+
+    @Test
     @DisplayName("a public prefix (client portal, invite info, docs) needs no token")
     void publicPrefixRoutes() {
         web.get().uri("/api/portal/algum-token").exchange().expectStatus().isOk();

@@ -228,22 +228,45 @@ class AuthApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("login counts attempts per email and per client address with a 15 minute window")
+    @DisplayName("login without X-Client-Address counts the email and an unknown address, never the connection address")
     void loginCountsAttempts() throws Exception {
         String email = uniqueEmail();
         registerAdmin(email);
 
         login(email, PASSWORD, null).andExpect(status().isOk());
 
+        verify(redis).execute(ArgumentMatchers.<RedisScript<Long>>any(),
+                eq(List.of("ratelimit:login:email-ip:" + email + "|unknown")), eq("900"));
         verify(redis).execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:email:" + email)),
                 eq("900"));
-        verify(redis).execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:ip:127.0.0.1")),
-                eq("900"));
+        verify(redis, never()).execute(ArgumentMatchers.<RedisScript<Long>>any(),
+                eq(List.of("ratelimit:login:ip:127.0.0.1")), ArgumentMatchers.<Object>any());
+    }
+
+    private org.springframework.test.web.servlet.ResultActions loginFrom(String email, String address)
+            throws Exception {
+        return mvc.perform(post("/api/auth/login").header("X-Client-Address", address)
+                .contentType("application/json")
+                .content(json.writeValueAsString(Map.of("email", email, "password", PASSWORD))));
     }
 
     @Test
-    @DisplayName("login uses the last address of X-Forwarded-For as the client address")
-    void loginUsesLastForwardedAddress() throws Exception {
+    @DisplayName("login uses the client address the gateway sends in X-Client-Address")
+    void loginUsesTheGatewayAddress() throws Exception {
+        String email = uniqueEmail();
+        registerAdmin(email);
+
+        loginFrom(email, "198.51.100.7").andExpect(status().isOk());
+
+        verify(redis).execute(ArgumentMatchers.<RedisScript<Long>>any(),
+                eq(List.of("ratelimit:login:ip:198.51.100.7")), eq("900"));
+        verify(redis).execute(ArgumentMatchers.<RedisScript<Long>>any(),
+                eq(List.of("ratelimit:login:email-ip:" + email + "|198.51.100.7")), eq("900"));
+    }
+
+    @Test
+    @DisplayName("login ignores X-Forwarded-For, which behind the gateway is only the address of the gateway's peer")
+    void loginIgnoresForwardedFor() throws Exception {
         String email = uniqueEmail();
         registerAdmin(email);
 
@@ -253,19 +276,22 @@ class AuthApiBehaviorTest extends IntegrationTestBase {
                 .andExpect(status().isOk());
 
         verify(redis).execute(ArgumentMatchers.<RedisScript<Long>>any(),
-                eq(List.of("ratelimit:login:ip:198.51.100.7")), eq("900"));
+                eq(List.of("ratelimit:login:email-ip:" + email + "|unknown")), eq("900"));
+        verify(redis, never()).execute(ArgumentMatchers.<RedisScript<Long>>any(),
+                eq(List.of("ratelimit:login:ip:127.0.0.1")), ArgumentMatchers.<Object>any());
     }
 
     @Test
-    @DisplayName("a successful login clears both counters")
-    void loginClearsCounters() throws Exception {
+    @DisplayName("a successful login clears only the counter of the email and address together")
+    void loginClearsOnlyThePairCounter() throws Exception {
         String email = uniqueEmail();
         registerAdmin(email);
 
-        login(email, PASSWORD, null).andExpect(status().isOk());
+        loginFrom(email, "198.51.100.7").andExpect(status().isOk());
 
-        verify(redis).delete("ratelimit:login:email:" + email);
-        verify(redis).delete("ratelimit:login:ip:127.0.0.1");
+        verify(redis).delete("ratelimit:login:email-ip:" + email + "|198.51.100.7");
+        verify(redis, never()).delete("ratelimit:login:email:" + email);
+        verify(redis, never()).delete("ratelimit:login:ip:198.51.100.7");
     }
 
     @Test
@@ -292,16 +318,31 @@ class AuthApiBehaviorTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("the counter limit is 10 per email")
-    void loginLimitIsTenPerEmail() throws Exception {
+    @DisplayName("the counter limit is 10 per email and address together")
+    void loginLimitIsTenPerEmailAndAddress() throws Exception {
         String email = uniqueEmail();
         registerAdmin(email);
-        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:email:" + email)),
+        String key = "ratelimit:login:email-ip:" + email + "|unknown";
+        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of(key)),
                 ArgumentMatchers.<Object>any())).thenReturn(10L);
         login(email, PASSWORD, null).andExpect(status().isOk());
 
-        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:email:" + email)),
+        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of(key)),
                 ArgumentMatchers.<Object>any())).thenReturn(11L);
+        login(email, PASSWORD, null).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("the counter limit is 50 per email, from any address")
+    void loginLimitIsFiftyPerEmail() throws Exception {
+        String email = uniqueEmail();
+        registerAdmin(email);
+        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:email:" + email)),
+                ArgumentMatchers.<Object>any())).thenReturn(50L);
+        login(email, PASSWORD, null).andExpect(status().isOk());
+
+        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:email:" + email)),
+                ArgumentMatchers.<Object>any())).thenReturn(51L);
         login(email, PASSWORD, null).andExpect(status().isUnauthorized());
     }
 
@@ -310,13 +351,13 @@ class AuthApiBehaviorTest extends IntegrationTestBase {
     void loginLimitIsThirtyPerAddress() throws Exception {
         String email = uniqueEmail();
         registerAdmin(email);
-        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:ip:127.0.0.1")),
+        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:ip:198.51.100.7")),
                 ArgumentMatchers.<Object>any())).thenReturn(30L);
-        login(email, PASSWORD, null).andExpect(status().isOk());
+        loginFrom(email, "198.51.100.7").andExpect(status().isOk());
 
-        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:ip:127.0.0.1")),
+        when(redis.execute(ArgumentMatchers.<RedisScript<Long>>any(), eq(List.of("ratelimit:login:ip:198.51.100.7")),
                 ArgumentMatchers.<Object>any())).thenReturn(31L);
-        login(email, PASSWORD, null).andExpect(status().isUnauthorized());
+        loginFrom(email, "198.51.100.7").andExpect(status().isUnauthorized());
     }
 
     @Test

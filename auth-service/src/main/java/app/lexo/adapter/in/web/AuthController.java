@@ -69,11 +69,7 @@ class AuthController {
     }
 
     private String clientAddress(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            String[] parts = forwarded.split(",");
-            return parts[parts.length - 1].trim();
-        }
-        return request.getRemoteAddr();
+        String address = request.getHeader("X-Client-Address");
+        return address == null || address.isBlank() ? null : address.trim();
     }
 }
