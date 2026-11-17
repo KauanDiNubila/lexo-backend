@@ -4,7 +4,7 @@ import app.lexo.application.port.in.ChangePasswordCommand;
 import app.lexo.application.port.in.ChangePasswordUseCase;
 import app.lexo.application.port.out.AccountEvent;
 import app.lexo.application.port.out.LoadUserPort;
-import app.lexo.application.port.out.LoginAttemptsPort;
+import app.lexo.application.port.out.AttemptCounterPort;
 import app.lexo.application.port.out.PasswordChangedEmail;
 import app.lexo.application.port.out.PasswordHasher;
 import app.lexo.application.port.out.PublishEventPort;
@@ -29,18 +29,18 @@ class ChangePasswordService implements ChangePasswordUseCase {
 
     private final LoadUserPort loadUserPort;
     private final SaveUserPort saveUserPort;
-    private final LoginAttemptsPort loginAttemptsPort;
+    private final AttemptCounterPort attemptCounterPort;
     private final PasswordHasher passwordHasher;
     private final SessionTerminator sessions;
     private final PublishEventPort publishEventPort;
     private final SendPasswordEmailPort sendPasswordEmailPort;
 
-    ChangePasswordService(LoadUserPort loadUserPort, SaveUserPort saveUserPort, LoginAttemptsPort loginAttemptsPort,
+    ChangePasswordService(LoadUserPort loadUserPort, SaveUserPort saveUserPort, AttemptCounterPort attemptCounterPort,
                           PasswordHasher passwordHasher, SessionTerminator sessions,
                           PublishEventPort publishEventPort, SendPasswordEmailPort sendPasswordEmailPort) {
         this.loadUserPort = loadUserPort;
         this.saveUserPort = saveUserPort;
-        this.loginAttemptsPort = loginAttemptsPort;
+        this.attemptCounterPort = attemptCounterPort;
         this.passwordHasher = passwordHasher;
         this.sessions = sessions;
         this.publishEventPort = publishEventPort;
@@ -53,7 +53,7 @@ class ChangePasswordService implements ChangePasswordUseCase {
             throw new PasswordMismatchException();
         }
         String attemptsKey = "password-change:" + command.actor().userId().value();
-        if (!loginAttemptsPort.register(attemptsKey, ATTEMPTS, WINDOW)) {
+        if (!attemptCounterPort.register(attemptsKey, ATTEMPTS, WINDOW)) {
             throw new TooManyRequestsException("Muitas tentativas. Tente novamente em alguns minutos.");
         }
         User user = loadUserPort.inOrganization(command.organizationId(), command.actor().userId())
@@ -67,7 +67,7 @@ class ChangePasswordService implements ChangePasswordUseCase {
 
         user.changePassword(passwordHasher.hash(command.newPassword()));
         saveUserPort.save(user);
-        loginAttemptsPort.reset(attemptsKey);
+        attemptCounterPort.reset(attemptsKey);
         sessions.endAllOf(user.id());
         publishEventPort.publish(AccountEvent.passwordChanged(command.organizationId(), command.actor()));
         sendPasswordEmailPort.sendChangedNotice(new PasswordChangedEmail(user.email(), user.name()));
