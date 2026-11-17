@@ -3,11 +3,14 @@ package app.lexo.common.web;
 import app.lexo.common.error.ConflictException;
 import app.lexo.common.error.InvalidDataException;
 import app.lexo.common.error.ServiceUnavailableException;
+import app.lexo.common.error.TooManyRequestsException;
 import app.lexo.common.error.ResourceNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,6 +52,29 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(503);
         assertThat(response.getBody().code()).isEqualTo(ErrorCode.SERVICO_INDISPONIVEL);
         assertThat(response.getBody().error()).isEqualTo("try again");
+    }
+
+    @Test
+    @DisplayName("too many requests becomes 429 with the code REQUISICOES_EM_EXCESSO and the same message")
+    void tooManyRequests() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleTooManyRequests(new TooManyRequestsException("slow down"), request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(429);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.REQUISICOES_EM_EXCESSO);
+        assertThat(response.getBody().error()).isEqualTo("slow down");
+    }
+
+    @Test
+    @DisplayName("a path that nothing serves becomes 404 with the code NAO_ENCONTRADO, not an internal error")
+    void noResource() {
+        ResponseEntity<ErrorResponse> response = handler.handleNoResource(
+                new NoResourceFoundException(HttpMethod.GET, "v3/api-docs"), request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.NAO_ENCONTRADO);
+        assertThat(response.getBody().error()).isEqualTo("Recurso não encontrado");
+        assertThat(response.getBody().path()).isEqualTo("/api/clientes/1");
     }
 
     @Test

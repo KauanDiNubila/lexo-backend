@@ -4,7 +4,7 @@ import app.lexo.application.port.in.LoginCommand;
 import app.lexo.application.port.in.LoginUseCase;
 import app.lexo.application.port.in.SessionResponse;
 import app.lexo.application.port.out.LoadUserPort;
-import app.lexo.application.port.out.LoginAttemptsPort;
+import app.lexo.application.port.out.AttemptCounterPort;
 import app.lexo.application.port.out.PasswordHasher;
 import app.lexo.application.port.out.SecretCipherPort;
 import app.lexo.application.port.out.TotpPort;
@@ -21,21 +21,23 @@ import java.time.Duration;
 @Transactional
 class LoginService implements LoginUseCase {
 
-    private static final int ATTEMPTS_PER_EMAIL = 10;
+    private static final int ATTEMPTS_PER_EMAIL_AND_ADDRESS = 10;
+    private static final int ATTEMPTS_PER_EMAIL = 50;
     private static final int ATTEMPTS_PER_ADDRESS = 30;
+    private static final String UNKNOWN_ADDRESS = "unknown";
     private static final Duration WINDOW = Duration.ofMinutes(15);
 
     private final LoadUserPort loadUserPort;
-    private final LoginAttemptsPort loginAttemptsPort;
+    private final AttemptCounterPort attemptCounterPort;
     private final PasswordHasher passwordHasher;
     private final SecretCipherPort secretCipherPort;
     private final TotpPort totpPort;
     private final SessionIssuer sessions;
 
-    LoginService(LoadUserPort loadUserPort, LoginAttemptsPort loginAttemptsPort, PasswordHasher passwordHasher,
+    LoginService(LoadUserPort loadUserPort, AttemptCounterPort attemptCounterPort, PasswordHasher passwordHasher,
                  SecretCipherPort secretCipherPort, TotpPort totpPort, SessionIssuer sessions) {
         this.loadUserPort = loadUserPort;
-        this.loginAttemptsPort = loginAttemptsPort;
+        this.attemptCounterPort = attemptCounterPort;
         this.passwordHasher = passwordHasher;
         this.secretCipherPort = secretCipherPort;
         this.totpPort = totpPort;
@@ -44,13 +46,16 @@ class LoginService implements LoginUseCase {
 
     @Override
     public SessionResponse login(LoginCommand command) {
-        String emailKey = "login:email:" + command.email().value();
-        String addressKey = command.clientAddress() == null ? null : "login:ip:" + command.clientAddress();
+        String email = command.email().value();
+        String address = command.clientAddress();
+        String pairKey = "login:email-ip:" + email + "|" + (address == null ? UNKNOWN_ADDRESS : address);
 
-        boolean emailWithinLimit = loginAttemptsPort.register(emailKey, ATTEMPTS_PER_EMAIL, WINDOW);
-        boolean addressWithinLimit = addressKey == null
-                || loginAttemptsPort.register(addressKey, ATTEMPTS_PER_ADDRESS, WINDOW);
-        if (!emailWithinLimit || !addressWithinLimit) {
+        boolean withinLimits = register(pairKey, ATTEMPTS_PER_EMAIL_AND_ADDRESS);
+        withinLimits &= register("login:email:" + email, ATTEMPTS_PER_EMAIL);
+        if (address != null) {
+            withinLimits &= register("login:ip:" + address, ATTEMPTS_PER_ADDRESS);
+        }
+        if (!withinLimits) {
             throw new InvalidCredentialsException();
         }
 
@@ -66,11 +71,12 @@ class LoginService implements LoginUseCase {
             requireValidTwoFactorCode(user, command.totpCode());
         }
 
-        loginAttemptsPort.reset(emailKey);
-        if (addressKey != null) {
-            loginAttemptsPort.reset(addressKey);
-        }
+        attemptCounterPort.reset(pairKey);
         return sessions.start(user);
+    }
+
+    private boolean register(String key, int max) {
+        return attemptCounterPort.register(key, max, WINDOW);
     }
 
     private void requireValidTwoFactorCode(User user, String code) {

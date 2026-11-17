@@ -22,14 +22,16 @@ class ConfirmTwoFactorService implements ConfirmTwoFactorUseCase {
     private final SaveUserPort saveUserPort;
     private final SecretCipherPort secretCipherPort;
     private final TotpPort totpPort;
+    private final SessionTerminator sessions;
     private final PublishEventPort publishEventPort;
 
     ConfirmTwoFactorService(LoadUserPort loadUserPort, SaveUserPort saveUserPort, SecretCipherPort secretCipherPort,
-                            TotpPort totpPort, PublishEventPort publishEventPort) {
+                            TotpPort totpPort, SessionTerminator sessions, PublishEventPort publishEventPort) {
         this.loadUserPort = loadUserPort;
         this.saveUserPort = saveUserPort;
         this.secretCipherPort = secretCipherPort;
         this.totpPort = totpPort;
+        this.sessions = sessions;
         this.publishEventPort = publishEventPort;
     }
 
@@ -44,6 +46,7 @@ class ConfirmTwoFactorService implements ConfirmTwoFactorUseCase {
         }
         user.confirmTwoFactorSetup();
         saveUserPort.save(user);
+        sessions.endAllOf(user.id());
         publishEventPort.publish(AccountEvent.twoFactorEnabled(command.organizationId(), command.actor()));
     }
 }

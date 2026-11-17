@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { api } from "../lib/api";
+import { AlterarSenhaForm } from "../components/AlterarSenhaForm";
+import { useAuth } from "../lib/auth";
 
 type OrganizacaoInfo = { id: string; name: string; plan: string; trialEndsAt: string | null; membros: number };
 type PerfilInfo = { id: string; name: string; email: string; role: string; totpEnabled: boolean };
@@ -118,6 +121,8 @@ function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode
 }
 
 export function Configuracoes() {
+  const { sair } = useAuth();
+  const navigate = useNavigate();
   const [conta, setConta] = useState<Conta | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<Aviso>(null);
@@ -197,11 +202,8 @@ export function Configuracoes() {
     setBusy(true);
     try {
       await api.post("/api/2fa/confirmar", { code: codigo });
-      setSegredo(null);
-      setOtpauth("");
-      setCodigo("");
-      setConta((c) => (c ? { ...c, usuario: { ...c.usuario, totpEnabled: true } } : c));
-      flash({ tipo: "ok", texto: "2FA ativado com sucesso! 🎉" });
+      await sair();
+      navigate("/login?doisfatores=ativado");
     } catch (e) {
       flash({ tipo: "erro", texto: (e as Error).message });
     } finally {
@@ -213,9 +215,8 @@ export function Configuracoes() {
     setBusy(true);
     try {
       await api.post("/api/2fa/desativar", { code: codigoOff });
-      setCodigoOff("");
-      setConta((c) => (c ? { ...c, usuario: { ...c.usuario, totpEnabled: false } } : c));
-      flash({ tipo: "ok", texto: "2FA desativado." });
+      await sair();
+      navigate("/login?doisfatores=desativado");
     } catch (e) {
       flash({ tipo: "erro", texto: (e as Error).message });
     } finally {
@@ -285,6 +286,10 @@ export function Configuracoes() {
             <Linha rotulo="Papel">
               <Badge texto={conta.usuario.role} cor={corPapel[conta.usuario.role] || "var(--color-text-muted)"} />
             </Linha>
+          </Secao>
+
+          <Secao titulo="Senha" descricao="Troque a senha de acesso. Você precisa informar a senha atual.">
+            <AlterarSenhaForm />
           </Secao>
 
           <Secao

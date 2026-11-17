@@ -14,6 +14,8 @@ class PublicPathsTest {
         assertThat(PublicPaths.isPublic("/api/auth/login")).isTrue();
         assertThat(PublicPaths.isPublic("/api/auth/register")).isTrue();
         assertThat(PublicPaths.isPublic("/api/auth/refresh")).isTrue();
+        assertThat(PublicPaths.isPublic("/api/auth/senha/esqueci")).isTrue();
+        assertThat(PublicPaths.isPublic("/api/auth/senha/redefinir")).isTrue();
         assertThat(PublicPaths.isPublic("/api/auth/logout")).isTrue();
         assertThat(PublicPaths.isPublic("/api/convites/aceitar")).isTrue();
         assertThat(PublicPaths.isPublic("/api/auth/login/extra")).isFalse();

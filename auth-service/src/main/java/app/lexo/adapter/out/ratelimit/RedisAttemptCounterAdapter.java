@@ -1,6 +1,6 @@
 package app.lexo.adapter.out.ratelimit;
 
-import app.lexo.application.port.out.LoginAttemptsPort;
+import app.lexo.application.port.out.AttemptCounterPort;
 import app.lexo.common.error.ServiceUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +13,9 @@ import java.time.Duration;
 import java.util.List;
 
 @Component
-class RedisLoginAttemptsAdapter implements LoginAttemptsPort {
+class RedisAttemptCounterAdapter implements AttemptCounterPort {
 
-    private static final Logger log = LoggerFactory.getLogger(RedisLoginAttemptsAdapter.class);
+    private static final Logger log = LoggerFactory.getLogger(RedisAttemptCounterAdapter.class);
 
     private static final String PREFIX = "ratelimit:";
     private static final RedisScript<Long> INCREMENT_WITH_TTL = new DefaultRedisScript<>(
@@ -25,7 +25,7 @@ class RedisLoginAttemptsAdapter implements LoginAttemptsPort {
 
     private final StringRedisTemplate redis;
 
-    RedisLoginAttemptsAdapter(StringRedisTemplate redis) {
+    RedisAttemptCounterAdapter(StringRedisTemplate redis) {
         this.redis = redis;
     }
 

@@ -109,7 +109,7 @@ portas reativas (`Mono`), porque roda sobre Netty.
 |---------|-------|-------|------------------|
 | **discovery-server** | 8761 | — | Eureka: registro e descoberta de serviços |
 | **api-gateway** | 8090 | — | Porta de entrada única; valida JWT e roteia |
-| **auth-service** | 8082 | `lexo-auth-db` (5434) | Autenticação, usuários, organizações, 2FA, equipe |
+| **auth-service** | 8082 | `lexo-auth-db` (5434) | Autenticação, usuários, organizações, senha, 2FA, equipe |
 | **cliente-service** | 8083 | `lexo-cliente-db` (5435) | Clientes (CPF/CNPJ) + agregação do portal do cliente |
 | **processo-service** | 8086 | `lexo-processo-db` (5437) | Processos, agenda (prazos) e andamentos |
 | **financeiro-service** | 8081 | `lexo-financeiro-db` (5438) | Honorários |
@@ -178,6 +178,9 @@ Cada um dos 6 serviços de negócio gera sua própria especificação OpenAPI a 
 
 **http://localhost:8090/swagger-ui.html**
 
+Em produção o Swagger vem desligado: o `docker-compose.prod.yml` define `SPRINGDOC_API_DOCS_ENABLED` e
+`SPRINGDOC_SWAGGER_UI_ENABLED` como `false` para todos os serviços. Só o ambiente de desenvolvimento o serve.
+
 O seletor no topo troca entre os serviços. O botão **Authorize** aceita o `accessToken` de
 `POST /api/auth/login` — como cada spec declara o gateway como `servers`, testar por ali passa de
 verdade pelo `AutenticacaoGatewayFilter`, então o Bearer descrito na doc é o mesmo que a aplicação usa
@@ -191,7 +194,7 @@ já que o gateway nem as roteia.
 
 SPA em **React + Vite + TypeScript**, tema escuro, componentes shadcn/ui, que consome o backend via gateway:
 
-- **Landing page** pública e **app do escritório** — dashboard com KPIs reais, clientes, processos, agenda, financeiro (com relatório por período), equipe e configurações (organização, perfil, 2FA e auditoria).
+- **Landing page** pública e **app do escritório** — dashboard com KPIs reais, clientes, processos, agenda, financeiro (com relatório por período), equipe e configurações (organização, perfil, senha, 2FA e auditoria).
 - **Lexo IA**: chat jurídico e rascunho de petição na mesma tela, em abas; respostas renderizadas em markdown.
 - **Convite de equipe por e-mail**: quem convida define o papel; o convidado recebe um link (`/convite/:token`) que expira, ativa a conta e cai direto no login.
 - **Portal do cliente**: página pública `/portal/:token` onde o cliente acompanha processos, prazos, andamentos e situação financeira — sem login.
