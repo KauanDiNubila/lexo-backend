@@ -13,11 +13,13 @@ export function RedefinirSenha() {
   const [senha, setSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+  const [falhouNoServidor, setFalhouNoServidor] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
   async function enviar(e: FormEvent) {
     e.preventDefault();
     setErro(null);
+    setFalhouNoServidor(false);
     if (senha !== confirmacao) {
       setErro("As senhas não coincidem");
       return;
@@ -28,6 +30,7 @@ export function RedefinirSenha() {
       navigate("/login?senha=redefinida");
     } catch (err) {
       setErro((err as Error).message);
+      setFalhouNoServidor(true);
     } finally {
       setEnviando(false);
     }
@@ -71,7 +74,7 @@ export function RedefinirSenha() {
         {erro && (
           <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
             {erro}{" "}
-            {erro.startsWith("Link") && (
+            {falhouNoServidor && (
               <Link to="/esqueci-senha" className="font-semibold underline">
                 Pedir um novo link
               </Link>
