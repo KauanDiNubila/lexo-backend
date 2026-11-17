@@ -40,7 +40,7 @@ function Secao({ id, children, className = "" }: { id?: string; children: React.
 const SUPERFICIES = {
   base: "bg-background",
   elevada: "bg-[#0a0a0a] border-y border-border",
-  marca: "bg-[#08293d]",
+  marca: "bg-[#161616]",
 } as const;
 
 function Bloco({
@@ -198,7 +198,7 @@ export function Landing() {
         >
           <Suspense fallback={null}>
             <Silk
-              color="#0b3450"
+              color="#2a2a2a"
               speed={5}
               scale={1.3}
               noiseIntensity={1.1}
@@ -266,7 +266,7 @@ export function Landing() {
           </div>
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/15 bg-white/15 self-center md:col-span-5">
             {lexoIA.metricas.map((m) => (
-              <div key={m.rotulo} className="bg-[#08293d] p-6 text-center">
+              <div key={m.rotulo} className="bg-[#161616] p-6 text-center">
                 <div className="text-3xl font-extrabold text-white">{m.valor}</div>
                 <div className="mt-1 text-xs text-white/60">{m.rotulo}</div>
               </div>

@@ -80,14 +80,14 @@ export function Login() {
 
   return (
     <div className="grid min-h-screen md:grid-cols-2">
-      <div className="relative hidden overflow-hidden bg-[#08293d] md:flex">
+      <div className="relative hidden overflow-hidden bg-[#161616] md:flex">
         <div
           aria-hidden
           className={`pointer-events-none absolute inset-0 h-full w-full ${silkPronto ? "animate-in fade-in duration-500" : ""}`}
         >
           <Suspense fallback={null}>
             <Silk
-              color="#0b3450"
+              color="#2a2a2a"
               speed={5}
               scale={1.3}
               noiseIntensity={1.1}
@@ -130,7 +130,7 @@ export function Login() {
           </p>
 
           {aviso && !emTotp && (
-            <div className="mt-5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-700 dark:text-emerald-400">
+            <div className="mt-5 rounded-lg border border-border bg-muted px-3 py-2.5 text-sm text-foreground">
               {aviso}
             </div>
           )}

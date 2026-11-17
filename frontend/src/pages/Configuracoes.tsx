@@ -224,7 +224,7 @@ export function Configuracoes() {
     }
   }
 
-  const corPapel: Record<string, string> = { ADMIN: "var(--color-primary)", ADVOGADO: "#34d399", SECRETARIA: "#fbbf24" };
+  const corPapel: Record<string, string> = { ADMIN: "var(--color-primary)", ADVOGADO: "var(--color-text)", SECRETARIA: "var(--color-text-muted)" };
   const ehAdmin = conta?.usuario.role === "ADMIN";
 
   return (
@@ -232,7 +232,7 @@ export function Configuracoes() {
       <div style={{ marginBottom: 22 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Configurações</h1>
         <p style={{ color: "var(--color-text-muted)", margin: "4px 0 0", fontSize: 14 }}>
-          Escritório, perfil e segurança · via <code>auth-service</code>
+          Escritório, perfil e segurança
         </p>
       </div>
 
@@ -244,9 +244,9 @@ export function Configuracoes() {
             fontSize: 14,
             padding: "0.7rem 1rem",
             borderRadius: 8,
-            color: aviso.tipo === "ok" ? "#34d399" : "var(--color-danger)",
-            background: aviso.tipo === "ok" ? "rgba(52,211,153,0.1)" : "rgba(248,113,113,0.1)",
-            border: `1px solid ${aviso.tipo === "ok" ? "rgba(52,211,153,0.3)" : "rgba(248,113,113,0.3)"}`,
+            color: aviso.tipo === "ok" ? "var(--color-text)" : "var(--color-danger)",
+            background: aviso.tipo === "ok" ? "var(--color-surface-2)" : "color-mix(in srgb, var(--color-danger) 10%, transparent)",
+            border: `1px solid ${aviso.tipo === "ok" ? "var(--color-border)" : "color-mix(in srgb, var(--color-danger) 35%, transparent)"}`,
           }}
         >
           {aviso.texto}
@@ -299,7 +299,7 @@ export function Configuracoes() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <span style={{ fontSize: 13, color: "var(--color-text-muted)", fontWeight: 600 }}>Status:</span>
               {conta.usuario.totpEnabled ? (
-                <Badge texto="✓ Ativado" cor="#34d399" />
+                <Badge texto="✓ Ativado" cor="var(--color-text)" />
               ) : (
                 <Badge texto="Desativado" cor="var(--color-text-muted)" />
               )}

@@ -3,6 +3,7 @@ import { Sparkles } from "lucide-react";
 import { api, type Pagina } from "../lib/api";
 import { Paginacao } from "../components/Paginacao";
 import { Markdown } from "../components/Markdown";
+import { Status, tomProcesso } from "../components/Status";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,13 +33,6 @@ type Processo = {
 type Cliente = { id: string; name: string };
 
 const STATUS = ["ATIVO", "SUSPENSO", "ARQUIVADO", "ENCERRADO"];
-
-const corStatus: Record<string, string> = {
-  ATIVO: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  SUSPENSO: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  ARQUIVADO: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
-  ENCERRADO: "bg-red-500/10 text-red-700 dark:text-red-400",
-};
 
 const FORM_VAZIO = { clientId: "", numero: "", area: "", status: "ATIVO" };
 
@@ -238,8 +232,7 @@ export function Processos() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Processos</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {busca || filtroStatus ? `${totalRegistros} encontrado(s)` : `${totalRegistros} processo(s)`} · via{" "}
-            <code>processo-service</code>
+            {busca || filtroStatus ? `${totalRegistros} encontrado(s)` : `${totalRegistros} processo(s)`}
           </p>
         </div>
         <Button size="lg" onClick={abrirNovo}>
@@ -297,9 +290,7 @@ export function Processos() {
                   <td className="px-5 py-3.5 text-muted-foreground">{nomeCliente(p.clientId)}</td>
                   <td className="px-5 py-3.5 text-muted-foreground">{p.area || "—"}</td>
                   <td className="px-5 py-3.5">
-                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", corStatus[p.status] || corStatus.ARQUIVADO)}>
-                      {p.status}
-                    </span>
+                    <Status rotulo={p.status} tom={tomProcesso(p.status)} />
                   </td>
                   <td className="px-5 py-3.5 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-3.5">

@@ -31,7 +31,7 @@ function AcaoLinha({ tom = "muted", ...props }: React.ComponentProps<"button"> &
   const tons = {
     muted: "text-muted-foreground hover:text-foreground",
     primary: "text-primary hover:underline",
-    success: "text-emerald-600 hover:underline dark:text-emerald-400",
+    success: "text-primary hover:underline",
     destructive: "text-destructive hover:underline",
   };
   return <button className={cn("text-[13px] font-medium", tons[tom])} {...props} />;
@@ -160,8 +160,7 @@ Envie para ${c.name} acompanhar o processo.
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {busca ? `${totalRegistros} encontrado(s)` : `${totalRegistros} cadastrado(s)`} · via{" "}
-            <code>cliente-service</code>
+            {busca ? `${totalRegistros} encontrado(s)` : `${totalRegistros} cadastrado(s)`}
           </p>
         </div>
         <Button size="lg" onClick={abrirNovo}>

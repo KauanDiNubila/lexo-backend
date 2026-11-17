@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Briefcase, CalendarClock, Wallet, History, Lock, type LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Status, tomHonorario, tomProcesso } from "../components/Status";
 import { cn } from "@/lib/utils";
 
 const BASE = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8090";
@@ -20,30 +21,9 @@ type Portal = {
 const moeda = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 const data = (iso: string) => new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 
-const corProcesso: Record<string, string> = {
-  ATIVO: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  SUSPENSO: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  ARQUIVADO: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
-  ENCERRADO: "bg-red-500/10 text-red-700 dark:text-red-400",
-};
-const corHonorario: Record<string, string> = {
-  PAGO: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  PENDENTE: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  ATRASADO: "bg-red-500/10 text-red-700 dark:text-red-400",
-  CANCELADO: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
-};
-
-function Badge({ texto, className }: { texto: string; className?: string }) {
-  return (
-    <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold", className)}>
-      {texto}
-    </span>
-  );
-}
-
 function IconeChip({ icone: Icone }: { icone: LucideIcon }) {
   return (
-    <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+    <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-muted text-foreground/70">
       <Icone size={20} />
     </div>
   );
@@ -123,7 +103,7 @@ export function PortalCliente() {
                         <div className="text-[15px] font-semibold">{p.number}</div>
                         <div className="text-sm text-muted-foreground">{p.area || "Área não informada"}</div>
                       </div>
-                      <Badge texto={p.status} className={corProcesso[p.status] || corProcesso.ARQUIVADO} />
+                      <Status rotulo={p.status} tom={tomProcesso(p.status)} />
                     </div>
                     {p.prazos.length > 0 && (
                       <div className="mt-3 border-t border-border pt-3">
@@ -184,7 +164,7 @@ export function PortalCliente() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-bold">{moeda(h.amount)}</span>
-                      <Badge texto={h.status} className={corHonorario[h.status] || corHonorario.CANCELADO} />
+                      <Status rotulo={h.status} tom={tomHonorario(h.status)} />
                     </div>
                   </div>
                 ))}

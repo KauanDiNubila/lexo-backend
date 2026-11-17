@@ -39,13 +39,13 @@ export function MacOSSidebar({
       <motion.div
         animate={{ width: isOpen ? 240 : 68 }}
         transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-        className="flex shrink-0 flex-col overflow-hidden border-r border-border bg-card p-3"
+        className="flex shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar p-3"
       >
         <div className={cn("flex items-center gap-2 p-2", isOpen ? "justify-between" : "justify-center")}>
           {header && <div className="min-w-0">{header(isOpen)}</div>}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="grid size-7 shrink-0 place-items-center rounded-md text-foreground/70 hover:bg-muted hover:text-foreground"
           >
             <HugeiconsIcon icon={SidebarLeftIcon} className="size-[18px]" />
           </button>
@@ -75,7 +75,7 @@ export function MacOSSidebar({
                   {active && (
                     <motion.div
                       layoutId="sidebar-active-bg"
-                      className="absolute inset-0 z-0 rounded-md bg-muted"
+                      className="absolute inset-0 z-0 rounded-md bg-accent"
                       transition={{ duration: 0.2, ease: "easeOut" }}
                     />
                   )}
@@ -90,14 +90,14 @@ export function MacOSSidebar({
                     icon={item.icon}
                     className={cn(
                       "relative z-10 size-[18px] shrink-0",
-                      active ? "text-foreground" : "text-muted-foreground"
+                      active ? "text-accent-foreground" : "text-foreground/70"
                     )}
                   />
                   {isOpen && (
                     <span
                       className={cn(
                         "relative z-10 truncate text-sm tracking-tight",
-                        active ? "font-semibold text-foreground" : "text-muted-foreground"
+                        active ? "font-semibold text-accent-foreground" : "text-foreground/80"
                       )}
                     >
                       {item.label}

@@ -10,10 +10,13 @@ import {
   UserGroupIcon,
   Setting07Icon,
   Logout03Icon,
+  Sun03Icon,
+  Moon02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { MacOSSidebar, type SidebarNavItem } from "@/components/ui/macos-sidebar";
 import { useAuth } from "../lib/auth";
+import { useAplicarTema, useTema } from "../lib/tema";
 import { cn } from "@/lib/utils";
 
 const navItens: (SidebarNavItem & { apenasAdmin: boolean })[] = [
@@ -28,6 +31,8 @@ const navItens: (SidebarNavItem & { apenasAdmin: boolean })[] = [
 
 export function Layout({ children }: { children: ReactNode }) {
   const { usuario, sair } = useAuth();
+  const { tema, alternar } = useTema();
+  useAplicarTema();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -67,16 +72,27 @@ export function Layout({ children }: { children: ReactNode }) {
             to="/app/configuracoes"
             className={cn(
               "flex items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm",
-              emConfiguracoes ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              emConfiguracoes ? "bg-accent font-semibold text-accent-foreground" : "text-foreground/80 hover:bg-muted hover:text-foreground",
               !isOpen && "justify-center px-0"
             )}
           >
             <HugeiconsIcon icon={Setting07Icon} className="size-[18px] shrink-0" />
             {isOpen && "Configurações"}
           </Link>
+          <button
+            onClick={alternar}
+            title={tema === "claro" ? "Usar tema escuro" : "Usar tema claro"}
+            className={cn(
+              "flex items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm text-foreground/80 hover:bg-muted hover:text-foreground",
+              !isOpen && "justify-center px-0"
+            )}
+          >
+            <HugeiconsIcon icon={tema === "claro" ? Moon02Icon : Sun03Icon} className="size-[18px] shrink-0" />
+            {isOpen && (tema === "claro" ? "Tema escuro" : "Tema claro")}
+          </button>
           <div className="flex flex-col gap-1 border-t border-border pt-3">
             <div className={cn("flex items-center gap-2.5 px-1", !isOpen && "justify-center px-0")}>
-              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
                 {iniciais}
               </div>
               {isOpen && (
@@ -90,7 +106,7 @@ export function Layout({ children }: { children: ReactNode }) {
               onClick={logout}
               title="Sair"
               className={cn(
-                "flex items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
+                "flex items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm text-foreground/80 hover:bg-muted hover:text-foreground",
                 !isOpen && "justify-center px-0"
               )}
             >
