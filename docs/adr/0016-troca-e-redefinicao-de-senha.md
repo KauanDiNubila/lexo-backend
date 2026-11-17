@@ -25,7 +25,7 @@ O sistema não tinha como trocar a senha nem como recuperar o acesso de quem a e
 
 ## Consequências
 
-- Os limites reaproveitam o `LoginAttemptsPort`, cujo nome é de login. Renomear para algo neutro fica para depois da correção do limite de login, que também mexe nesse arquivo.
+- Os limites usam o `AttemptCounterPort`, o contador de tentativas por janela que o login já usava (antes `LoginAttemptsPort`, nome de login).
 - O limite do pedido de link conta só por e-mail. O limite por endereço já existe no gateway, que vale para toda rota.
 - O pedido de link para uma conta existente faz um insert e enfileira um e-mail, então pode levar alguns milissegundos a mais que para um e-mail sem conta. Não é um canal fácil de medir pela internet, mas existe.
 - O link aponta para `BASE_URL` (`/redefinir-senha/<token>`). Se essa variável estiver errada em produção, os links também estarão.

@@ -4,7 +4,7 @@ import app.lexo.application.port.in.LoginCommand;
 import app.lexo.application.port.in.LoginUseCase;
 import app.lexo.application.port.in.SessionResponse;
 import app.lexo.application.port.out.LoadUserPort;
-import app.lexo.application.port.out.LoginAttemptsPort;
+import app.lexo.application.port.out.AttemptCounterPort;
 import app.lexo.application.port.out.PasswordHasher;
 import app.lexo.application.port.out.SecretCipherPort;
 import app.lexo.application.port.out.TotpPort;
@@ -28,16 +28,16 @@ class LoginService implements LoginUseCase {
     private static final Duration WINDOW = Duration.ofMinutes(15);
 
     private final LoadUserPort loadUserPort;
-    private final LoginAttemptsPort loginAttemptsPort;
+    private final AttemptCounterPort attemptCounterPort;
     private final PasswordHasher passwordHasher;
     private final SecretCipherPort secretCipherPort;
     private final TotpPort totpPort;
     private final SessionIssuer sessions;
 
-    LoginService(LoadUserPort loadUserPort, LoginAttemptsPort loginAttemptsPort, PasswordHasher passwordHasher,
+    LoginService(LoadUserPort loadUserPort, AttemptCounterPort attemptCounterPort, PasswordHasher passwordHasher,
                  SecretCipherPort secretCipherPort, TotpPort totpPort, SessionIssuer sessions) {
         this.loadUserPort = loadUserPort;
-        this.loginAttemptsPort = loginAttemptsPort;
+        this.attemptCounterPort = attemptCounterPort;
         this.passwordHasher = passwordHasher;
         this.secretCipherPort = secretCipherPort;
         this.totpPort = totpPort;
@@ -71,12 +71,12 @@ class LoginService implements LoginUseCase {
             requireValidTwoFactorCode(user, command.totpCode());
         }
 
-        loginAttemptsPort.reset(pairKey);
+        attemptCounterPort.reset(pairKey);
         return sessions.start(user);
     }
 
     private boolean register(String key, int max) {
-        return loginAttemptsPort.register(key, max, WINDOW);
+        return attemptCounterPort.register(key, max, WINDOW);
     }
 
     private void requireValidTwoFactorCode(User user, String code) {

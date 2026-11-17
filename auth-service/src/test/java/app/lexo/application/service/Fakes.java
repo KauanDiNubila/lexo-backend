@@ -3,7 +3,7 @@ package app.lexo.application.service;
 import app.lexo.application.port.out.AccountEvent;
 import app.lexo.application.port.out.InviteEmail;
 import app.lexo.application.port.out.IssueAccessTokenPort;
-import app.lexo.application.port.out.LoginAttemptsPort;
+import app.lexo.application.port.out.AttemptCounterPort;
 import app.lexo.application.port.out.PasswordChangedEmail;
 import app.lexo.application.port.out.PasswordHasher;
 import app.lexo.application.port.out.PasswordResetEmail;
@@ -99,7 +99,7 @@ final class Fakes {
         }
     }
 
-    static class Attempts implements LoginAttemptsPort {
+    static class Attempts implements AttemptCounterPort {
 
         final Map<String, Integer> counters = new HashMap<>();
         final List<String> registered = new ArrayList<>();

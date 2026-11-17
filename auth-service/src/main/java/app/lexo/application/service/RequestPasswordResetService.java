@@ -4,7 +4,7 @@ import app.lexo.application.port.in.RequestPasswordResetCommand;
 import app.lexo.application.port.in.RequestPasswordResetUseCase;
 import app.lexo.application.port.out.DeletePasswordResetsPort;
 import app.lexo.application.port.out.LoadUserPort;
-import app.lexo.application.port.out.LoginAttemptsPort;
+import app.lexo.application.port.out.AttemptCounterPort;
 import app.lexo.application.port.out.PasswordResetEmail;
 import app.lexo.application.port.out.SavePasswordResetPort;
 import app.lexo.application.port.out.SendPasswordEmailPort;
@@ -26,18 +26,18 @@ class RequestPasswordResetService implements RequestPasswordResetUseCase {
     private static final Duration WINDOW = Duration.ofHours(1);
 
     private final LoadUserPort loadUserPort;
-    private final LoginAttemptsPort loginAttemptsPort;
+    private final AttemptCounterPort attemptCounterPort;
     private final DeletePasswordResetsPort deletePasswordResetsPort;
     private final SavePasswordResetPort savePasswordResetPort;
     private final SendPasswordEmailPort sendPasswordEmailPort;
     private final Clock clock;
 
-    RequestPasswordResetService(LoadUserPort loadUserPort, LoginAttemptsPort loginAttemptsPort,
+    RequestPasswordResetService(LoadUserPort loadUserPort, AttemptCounterPort attemptCounterPort,
                                 DeletePasswordResetsPort deletePasswordResetsPort,
                                 SavePasswordResetPort savePasswordResetPort,
                                 SendPasswordEmailPort sendPasswordEmailPort, Clock clock) {
         this.loadUserPort = loadUserPort;
-        this.loginAttemptsPort = loginAttemptsPort;
+        this.attemptCounterPort = attemptCounterPort;
         this.deletePasswordResetsPort = deletePasswordResetsPort;
         this.savePasswordResetPort = savePasswordResetPort;
         this.sendPasswordEmailPort = sendPasswordEmailPort;
@@ -46,7 +46,7 @@ class RequestPasswordResetService implements RequestPasswordResetUseCase {
 
     @Override
     public void request(RequestPasswordResetCommand command) {
-        if (!loginAttemptsPort.register("password-reset:email:" + command.email().value(), REQUESTS_PER_EMAIL,
+        if (!attemptCounterPort.register("password-reset:email:" + command.email().value(), REQUESTS_PER_EMAIL,
                 WINDOW)) {
             return;
         }
