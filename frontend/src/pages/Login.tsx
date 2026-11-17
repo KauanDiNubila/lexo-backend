@@ -9,10 +9,19 @@ import { Label } from "@/components/ui/label";
 
 const Silk = lazy(() => import("@/components/ui/silk"));
 
+const AVISOS: Record<string, string> = {
+  "senha=alterada": "Senha alterada. Entre novamente com a nova senha.",
+  "senha=redefinida": "Senha redefinida. Entre com a nova senha.",
+  "doisfatores=ativado": "2FA ativado. Entre novamente com o código do app.",
+  "doisfatores=desativado": "2FA desativado. Entre novamente.",
+  "convite=aceito": "Acesso ativado. Entre com o email do convite e a senha que você acabou de definir.",
+};
+
 export function Login() {
   const { login, registrar } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const aviso = ["senha", "doisfatores", "convite"].map((nome) => AVISOS[`${nome}=${params.get(nome)}`]).find(Boolean);
   const [modo, setModo] = useState<"login" | "registro">(
     params.get("modo") === "registro" ? "registro" : "login"
   );
@@ -120,17 +129,9 @@ export function Login() {
                 : "Crie a conta do seu escritório em poucos minutos."}
           </p>
 
-          {params.get("senha") && !emTotp && (
+          {aviso && !emTotp && (
             <div className="mt-5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-700 dark:text-emerald-400">
-              {params.get("senha") === "alterada"
-                ? "Senha alterada. Entre novamente com a nova senha."
-                : "Senha redefinida. Entre com a nova senha."}
-            </div>
-          )}
-
-          {params.get("convite") === "aceito" && !emTotp && (
-            <div className="mt-5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-700 dark:text-emerald-400">
-              Acesso ativado. Entre com o email do convite e a senha que você acabou de definir.
+              {aviso}
             </div>
           )}
 
