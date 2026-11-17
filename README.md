@@ -178,6 +178,9 @@ Cada um dos 6 serviços de negócio gera sua própria especificação OpenAPI a 
 
 **http://localhost:8090/swagger-ui.html**
 
+Em produção o Swagger vem desligado: o `docker-compose.prod.yml` define `SPRINGDOC_API_DOCS_ENABLED` e
+`SPRINGDOC_SWAGGER_UI_ENABLED` como `false` para todos os serviços. Só o ambiente de desenvolvimento o serve.
+
 O seletor no topo troca entre os serviços. O botão **Authorize** aceita o `accessToken` de
 `POST /api/auth/login` — como cada spec declara o gateway como `servers`, testar por ali passa de
 verdade pelo `AutenticacaoGatewayFilter`, então o Bearer descrito na doc é o mesmo que a aplicação usa

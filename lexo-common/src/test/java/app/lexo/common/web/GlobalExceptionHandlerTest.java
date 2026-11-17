@@ -7,8 +7,10 @@ import app.lexo.common.error.TooManyRequestsException;
 import app.lexo.common.error.ResourceNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,6 +63,18 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(429);
         assertThat(response.getBody().code()).isEqualTo(ErrorCode.REQUISICOES_EM_EXCESSO);
         assertThat(response.getBody().error()).isEqualTo("slow down");
+    }
+
+    @Test
+    @DisplayName("a path that nothing serves becomes 404 with the code NAO_ENCONTRADO, not an internal error")
+    void noResource() {
+        ResponseEntity<ErrorResponse> response = handler.handleNoResource(
+                new NoResourceFoundException(HttpMethod.GET, "v3/api-docs"), request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.NAO_ENCONTRADO);
+        assertThat(response.getBody().error()).isEqualTo("Recurso não encontrado");
+        assertThat(response.getBody().path()).isEqualTo("/api/clientes/1");
     }
 
     @Test

@@ -200,6 +200,13 @@ class GatewayBehaviorTest extends GatewayHttpTestBase {
     }
 
     @Test
+    @DisplayName("the Swagger UI is served unless the deployment turns it off")
+    void swaggerIsServedByDefault() {
+        web.get().uri("/swagger-ui.html").exchange().expectStatus().is3xxRedirection();
+        web.get().uri("/v3/api-docs").exchange().expectStatus().isOk();
+    }
+
+    @Test
     @DisplayName("a path that only looks like a public one still needs a token")
     void lookalikeIsPrivate() {
         web.get().uri("/api/convites/info").exchange().expectStatus().isUnauthorized();
