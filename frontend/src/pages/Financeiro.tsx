@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, type Pagina } from "../lib/api";
 import { Paginacao } from "../components/Paginacao";
+import { Status, tomHonorario } from "../components/Status";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 
 type Honorario = {
   id: string;
@@ -37,13 +37,6 @@ type Relatorio = {
 };
 
 const STATUS = ["PENDENTE", "PAGO", "ATRASADO", "CANCELADO"];
-
-const corStatus: Record<string, string> = {
-  PAGO: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  PENDENTE: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  ATRASADO: "bg-red-500/10 text-red-700 dark:text-red-400",
-  CANCELADO: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
-};
 
 const SEM_PROCESSO = "__sem_processo__";
 
@@ -178,8 +171,7 @@ export function Financeiro() {
           <h1 className="text-2xl font-bold tracking-tight">Financeiro</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {itens.length} honorário(s) · recebido:{" "}
-            <strong className="text-emerald-600 dark:text-emerald-400">{moeda(total)}</strong> · via{" "}
-            <code>financeiro-service</code>
+            <strong className="text-foreground">{moeda(total)}</strong>
           </p>
         </div>
         <Button size="lg" onClick={() => setAberto(true)}>
@@ -223,13 +215,13 @@ export function Financeiro() {
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {[
-            { rotulo: "Recebido", valor: relatorio?.totalPago, cor: "text-emerald-700 dark:text-emerald-400" },
-            { rotulo: "A receber", valor: relatorio?.totalPendente, cor: "text-amber-700 dark:text-amber-400" },
-            { rotulo: "Atrasado", valor: relatorio?.totalAtrasado, cor: "text-red-700 dark:text-red-400" },
+            { rotulo: "Recebido", valor: relatorio?.totalPago },
+            { rotulo: "A receber", valor: relatorio?.totalPendente },
+            { rotulo: "Atrasado", valor: relatorio?.totalAtrasado },
           ].map((t) => (
             <div key={t.rotulo} className="rounded-xl border border-border bg-muted/40 px-4 py-3.5">
               <div className="text-xs font-semibold text-muted-foreground">{t.rotulo}</div>
-              <div className={cn("mt-1 text-xl font-bold tabular-nums", t.cor)}>
+              <div className="mt-1 text-xl font-bold tabular-nums">
                 {carregandoRelatorio ? "—" : moeda(t.valor ?? 0)}
               </div>
             </div>
@@ -265,9 +257,7 @@ export function Financeiro() {
                     {new Date(i.dueDate).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", corStatus[i.status] || corStatus.CANCELADO)}>
-                      {i.status}
-                    </span>
+                    <Status rotulo={i.status} tom={tomHonorario(i.status)} />
                   </td>
                 </tr>
               ))}

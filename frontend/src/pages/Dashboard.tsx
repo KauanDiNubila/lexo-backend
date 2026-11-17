@@ -11,10 +11,10 @@ type Prazo = { id: string; title: string; status: string; date: string; risk: st
 const moeda = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
 const corStatusProcesso: Record<string, string> = {
-  ATIVO: "bg-emerald-500",
-  SUSPENSO: "bg-amber-500",
-  ARQUIVADO: "bg-zinc-500",
-  ENCERRADO: "bg-red-500",
+  ATIVO: "bg-foreground",
+  SUSPENSO: "bg-foreground/55",
+  ARQUIVADO: "bg-foreground/35",
+  ENCERRADO: "bg-foreground/20",
 };
 
 function formatarData(iso: string) {
@@ -35,7 +35,7 @@ function KpiCard({ m }: { m: Metrica }) {
       <Card className="gap-2.5 p-5 transition-colors hover:bg-muted/40">
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-semibold text-muted-foreground">{m.rotulo}</span>
-          <div className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-primary/10 text-primary">
+          <div className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-muted text-foreground/70">
             <m.icone size={18} strokeWidth={2.2} />
           </div>
         </div>
@@ -49,8 +49,7 @@ function KpiCard({ m }: { m: Metrica }) {
 function TituloSecao({ texto, link, para }: { texto: string; link: string; para: string }) {
   return (
     <div className="mb-4 flex items-center justify-between">
-      <h2 className="flex items-center gap-2 text-[15px] font-bold">
-        <span className="h-4 w-1 rounded-sm bg-primary" />
+      <h2 className="text-[15px] font-bold">
         {texto}
       </h2>
       <Link to={para} className="text-[13px] text-primary hover:underline">
@@ -111,7 +110,7 @@ export function Dashboard() {
     <div>
       <h1 className="text-[26px] font-bold tracking-tight">Olá, {primeiroNome}</h1>
       <p className="mt-1 mb-6 text-muted-foreground">
-        Visão geral do seu escritório — dados dos microserviços via API Gateway.
+        Visão geral do seu escritório.
       </p>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(215px,1fr))] gap-4">
@@ -123,7 +122,7 @@ export function Dashboard() {
       {!carregando && (
         <Card className="mt-4 gap-1.5 p-5">
           <div className="flex items-center gap-2">
-            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-muted text-foreground/70">
               <Sparkles size={13} strokeWidth={2.2} />
             </span>
             <span className="text-xs font-bold tracking-wide text-muted-foreground">RESUMO DO DIA</span>
@@ -173,7 +172,7 @@ export function Dashboard() {
                       <span
                         className={cn(
                           "size-2 shrink-0 rounded-full",
-                          vencido ? "bg-destructive" : "bg-primary"
+                          vencido ? "bg-destructive" : "bg-foreground/40"
                         )}
                       />
                       <span className="truncate text-sm font-semibold">{p.title}</span>

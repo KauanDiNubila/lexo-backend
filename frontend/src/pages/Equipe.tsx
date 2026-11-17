@@ -98,7 +98,7 @@ export function Equipe() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Equipe</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {usuarios.length} usuário(s) · via <code>auth-service</code>
+            {usuarios.length} usuário(s)
           </p>
         </div>
         <Button size="lg" onClick={() => setAberto(true)}>
@@ -147,7 +147,7 @@ export function Equipe() {
                   </td>
                   <td className="px-5 py-3.5">
                     {u.totpEnabled ? (
-                      <span className="text-emerald-600 dark:text-emerald-400">●</span>
+                      <span className="text-foreground">●</span>
                     ) : (
                       <span className="text-muted-foreground">○</span>
                     )}

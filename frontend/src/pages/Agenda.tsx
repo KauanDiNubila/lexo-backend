@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, type Pagina } from "../lib/api";
 import { Paginacao } from "../components/Paginacao";
+import { Status, tomRisco } from "../components/Status";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,14 +30,6 @@ type Prazo = {
 type Processo = { id: string; number: string };
 
 const TIPOS = ["PRAZO", "AUDIENCIA", "REUNIAO", "OUTRO"];
-
-const corRisco: Record<string, string> = {
-  CRITICO: "text-red-600 dark:text-red-400",
-  URGENTE: "text-orange-600 dark:text-orange-400",
-  ALTO: "text-amber-600 dark:text-amber-400",
-  MEDIO: "text-blue-600 dark:text-blue-400",
-  BAIXO: "text-emerald-600 dark:text-emerald-400",
-};
 
 export function Agenda() {
   const [prazos, setPrazos] = useState<Prazo[]>([]);
@@ -120,7 +113,7 @@ export function Agenda() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Agenda</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {prazos.length} compromisso(s) · via <code>processo-service</code>
+            {prazos.length} compromisso(s)
           </p>
         </div>
         <Button size="lg" onClick={() => setAberto(true)}>
@@ -165,7 +158,7 @@ export function Agenda() {
                   </td>
                   <td className="px-5 py-3.5">
                     {p.risk ? (
-                      <span className={cn("text-xs font-bold", corRisco[p.risk] || "text-muted-foreground")}>{p.risk}</span>
+                      <Status rotulo={p.risk} tom={tomRisco(p.risk)} />
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}

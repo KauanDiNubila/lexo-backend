@@ -271,7 +271,7 @@ export function LexoIA() {
           Lexo IA
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Converse, resuma processos e rascunhe petições · via <code>ia-service</code>
+          Converse, resuma processos e rascunhe petições
         </p>
       </div>
 
