@@ -5,7 +5,7 @@ import app.lexo.application.port.in.UserInfo;
 import app.lexo.application.port.out.IssueAccessTokenPort;
 import app.lexo.application.port.out.SaveRefreshTokenPort;
 import app.lexo.domain.RefreshToken;
-import app.lexo.domain.RefreshTokenSecret;
+import app.lexo.domain.TokenSecret;
 import app.lexo.domain.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -30,8 +30,8 @@ class SessionIssuer {
     }
 
     SessionResponse start(User user) {
-        String rawRefreshToken = RefreshTokenSecret.generate();
-        saveRefreshTokenPort.save(RefreshToken.issue(user.id(), RefreshTokenSecret.hash(rawRefreshToken),
+        String rawRefreshToken = TokenSecret.generate();
+        saveRefreshTokenPort.save(RefreshToken.issue(user.id(), TokenSecret.hash(rawRefreshToken),
                 clock.instant().plus(refreshValidityDays, ChronoUnit.DAYS)));
         return new SessionResponse(issueAccessTokenPort.issue(user), UserInfo.of(user), rawRefreshToken);
     }

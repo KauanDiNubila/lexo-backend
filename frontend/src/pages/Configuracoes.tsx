@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { api } from "../lib/api";
+import { AlterarSenhaForm } from "../components/AlterarSenhaForm";
 
 type OrganizacaoInfo = { id: string; name: string; plan: string; trialEndsAt: string | null; membros: number };
 type PerfilInfo = { id: string; name: string; email: string; role: string; totpEnabled: boolean };
@@ -285,6 +286,10 @@ export function Configuracoes() {
             <Linha rotulo="Papel">
               <Badge texto={conta.usuario.role} cor={corPapel[conta.usuario.role] || "var(--color-text-muted)"} />
             </Linha>
+          </Secao>
+
+          <Secao titulo="Senha" descricao="Troque a senha de acesso. Você precisa informar a senha atual.">
+            <AlterarSenhaForm />
           </Secao>
 
           <Secao

@@ -19,7 +19,7 @@ O auth-service foi o quarto serviço migrado e o primeiro com segurança no cent
 
 **Eventos do auth entram no `EventType`.** As seis ações (`CONVIDOU_USUARIO`, `REVOGOU_CONVITE`, `ALTEROU_PAPEL`, `REMOVEU_USUARIO`, `ATIVOU_2FA`, `DESATIVOU_2FA`) viraram valores do enum, com o código gravado no Kafka como valor, como nos outros serviços. O teste de contrato em `lexo-messaging` fixa a lista.
 
-**Tempo e aleatoriedade.** Todo serviço recebe um `Clock`. O token de acesso, a validade do convite e a do token de renovação usam esse relógio. A geração do token de renovação e o hash SHA-256 são Java puro e ficam no domínio (`RefreshTokenSecret`), porque não dependem de framework. A cifra do segredo TOTP, o TOTP em si, o BCrypt e o contador no Redis ficam atrás de portas.
+**Tempo e aleatoriedade.** Todo serviço recebe um `Clock`. O token de acesso, a validade do convite e a do token de renovação usam esse relógio. A geração do token de renovação e o hash SHA-256 são Java puro e ficam no domínio (`TokenSecret`), porque não dependem de framework. A cifra do segredo TOTP, o TOTP em si, o BCrypt e o contador no Redis ficam atrás de portas.
 
 ## Consequências
 

@@ -3,17 +3,20 @@ package app.lexo.application.service;
 import app.lexo.application.port.out.CountUsersPort;
 import app.lexo.application.port.out.DeleteExpiredRefreshTokensPort;
 import app.lexo.application.port.out.DeleteInvitePort;
+import app.lexo.application.port.out.DeletePasswordResetsPort;
 import app.lexo.application.port.out.DeleteUserPort;
 import app.lexo.application.port.out.ListPendingInvitesPort;
 import app.lexo.application.port.out.ListUsersPort;
 import app.lexo.application.port.out.LoadInvitePort;
 import app.lexo.application.port.out.LoadOrganizationPort;
+import app.lexo.application.port.out.LoadPasswordResetPort;
 import app.lexo.application.port.out.LoadRefreshTokenPort;
 import app.lexo.application.port.out.LoadUserPort;
 import app.lexo.application.port.out.PendingInviteExistsPort;
 import app.lexo.application.port.out.RevokeUserRefreshTokensPort;
 import app.lexo.application.port.out.SaveInvitePort;
 import app.lexo.application.port.out.SaveOrganizationPort;
+import app.lexo.application.port.out.SavePasswordResetPort;
 import app.lexo.application.port.out.SaveRefreshTokenPort;
 import app.lexo.application.port.out.SaveUserPort;
 import app.lexo.application.port.out.UserExistsPort;
@@ -21,6 +24,7 @@ import app.lexo.domain.EmailAddress;
 import app.lexo.domain.InviteId;
 import app.lexo.domain.Organization;
 import app.lexo.domain.OrganizationId;
+import app.lexo.domain.PasswordReset;
 import app.lexo.domain.RefreshToken;
 import app.lexo.domain.User;
 import app.lexo.domain.UserId;
@@ -36,7 +40,8 @@ import java.util.Optional;
 class InMemoryAuth implements SaveUserPort, LoadUserPort, UserExistsPort, ListUsersPort, CountUsersPort,
         DeleteUserPort, SaveOrganizationPort, LoadOrganizationPort, SaveRefreshTokenPort, LoadRefreshTokenPort,
         RevokeUserRefreshTokensPort, SaveInvitePort, LoadInvitePort, ListPendingInvitesPort,
-        PendingInviteExistsPort, DeleteInvitePort, DeleteExpiredRefreshTokensPort {
+        PendingInviteExistsPort, DeleteInvitePort, DeleteExpiredRefreshTokensPort, SavePasswordResetPort,
+        LoadPasswordResetPort, DeletePasswordResetsPort {
 
     static final Instant CREATED = Instant.parse("2026-01-01T00:00:00Z");
 
@@ -44,6 +49,7 @@ class InMemoryAuth implements SaveUserPort, LoadUserPort, UserExistsPort, ListUs
     final Map<String, Organization> organizations = new LinkedHashMap<>();
     final Map<String, RefreshToken> tokens = new LinkedHashMap<>();
     final Map<String, UserInvite> invites = new LinkedHashMap<>();
+    final Map<String, PasswordReset> passwordResets = new LinkedHashMap<>();
     private int sequence;
 
     private String nextId(String prefix) {
@@ -194,6 +200,26 @@ class InMemoryAuth implements SaveUserPort, LoadUserPort, UserExistsPort, ListUs
         return invites.values().stream().anyMatch(invite -> invite.email().equals(email)
                 && invite.organizationId().equals(organizationId) && invite.acceptedAt() == null
                 && invite.expiresAt().isAfter(now));
+    }
+
+    @Override
+    public void save(PasswordReset reset) {
+        passwordResets.put(nextId("reset"), reset);
+    }
+
+    @Override
+    public Optional<PasswordReset> byTokenHash(String tokenHash) {
+        return passwordResets.values().stream().filter(reset -> reset.tokenHash().equals(tokenHash)).findFirst();
+    }
+
+    @Override
+    public void ofUser(UserId userId) {
+        passwordResets.values().removeIf(reset -> reset.userId().equals(userId));
+    }
+
+    @Override
+    public void expiredOf(UserId userId, Instant now) {
+        passwordResets.values().removeIf(reset -> reset.userId().equals(userId) && reset.isExpiredAt(now));
     }
 
     @Override

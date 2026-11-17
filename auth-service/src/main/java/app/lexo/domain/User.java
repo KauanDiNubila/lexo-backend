@@ -11,7 +11,7 @@ public class User {
     private final OrganizationId organizationId;
     private String name;
     private final EmailAddress email;
-    private final String passwordHash;
+    private String passwordHash;
     private Role role;
     private String twoFactorSecret;
     private boolean twoFactorEnabled;
@@ -51,6 +51,10 @@ public class User {
 
     public void changeRole(Role newRole) {
         this.role = newRole;
+    }
+
+    public void changePassword(String newPasswordHash) {
+        this.passwordHash = newPasswordHash;
     }
 
     public boolean requiresTwoFactor() {

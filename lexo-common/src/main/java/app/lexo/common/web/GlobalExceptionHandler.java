@@ -3,6 +3,7 @@ package app.lexo.common.web;
 import app.lexo.common.error.ConflictException;
 import app.lexo.common.error.InvalidDataException;
 import app.lexo.common.error.ServiceUnavailableException;
+import app.lexo.common.error.TooManyRequestsException;
 import app.lexo.common.error.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -44,6 +45,11 @@ public class GlobalExceptionHandler {
                                                                    HttpServletRequest req) {
         return build(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.forStatus(HttpStatus.SERVICE_UNAVAILABLE),
                 ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(TooManyRequestsException ex, HttpServletRequest req) {
+        return build(HttpStatus.TOO_MANY_REQUESTS, ErrorCode.REQUISICOES_EM_EXCESSO, ex.getMessage(), req);
     }
 
     @ExceptionHandler(ConflictException.class)

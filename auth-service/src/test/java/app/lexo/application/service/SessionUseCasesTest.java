@@ -15,7 +15,7 @@ import app.lexo.domain.InvalidTwoFactorCodeException;
 import app.lexo.domain.Organization;
 import app.lexo.domain.PasswordMismatchException;
 import app.lexo.domain.RefreshToken;
-import app.lexo.domain.RefreshTokenSecret;
+import app.lexo.domain.TokenSecret;
 import app.lexo.domain.TwoFactorRequiredException;
 import app.lexo.domain.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,7 +93,7 @@ class SessionUseCasesTest {
                 AuthHarness.PASSWORD));
 
         RefreshToken stored = h.store.tokens.values().iterator().next();
-        assertThat(stored.tokenHash()).isEqualTo(RefreshTokenSecret.hash(session.refreshToken()))
+        assertThat(stored.tokenHash()).isEqualTo(TokenSecret.hash(session.refreshToken()))
                 .isNotEqualTo(session.refreshToken());
         assertThat(stored.expiresAt()).isEqualTo(Fakes.NOW.plus(30, ChronoUnit.DAYS));
         assertThat(stored.isRevoked()).isFalse();
@@ -259,8 +259,8 @@ class SessionUseCasesTest {
 
         assertThat(next.refreshToken()).isNotEqualTo(first);
         assertThat(next.user().id()).isEqualTo(user.id().value());
-        assertThat(h.store.byHash(RefreshTokenSecret.hash(first)).orElseThrow().revokedAt()).isEqualTo(Fakes.NOW);
-        assertThat(h.store.byHash(RefreshTokenSecret.hash(next.refreshToken())).orElseThrow().isRevoked()).isFalse();
+        assertThat(h.store.byHash(TokenSecret.hash(first)).orElseThrow().revokedAt()).isEqualTo(Fakes.NOW);
+        assertThat(h.store.byHash(TokenSecret.hash(next.refreshToken())).orElseThrow().isRevoked()).isFalse();
         assertThat(refresh.refresh(new RefreshSessionCommand(next.refreshToken())).accessToken()).isNotBlank();
     }
 
@@ -291,13 +291,13 @@ class SessionUseCasesTest {
     @DisplayName("an expired token is refused with its own error and is not rotated")
     void refreshExpired() {
         User user = h.addUser(h.addOrganization("Escritorio").id(), "Ana", EMAIL.value(), Role.ADVOGADO);
-        String raw = RefreshTokenSecret.generate();
-        h.store.save(RefreshToken.issue(user.id(), RefreshTokenSecret.hash(raw), Fakes.NOW));
+        String raw = TokenSecret.generate();
+        h.store.save(RefreshToken.issue(user.id(), TokenSecret.hash(raw), Fakes.NOW));
 
         assertThatThrownBy(() -> refresh.refresh(new RefreshSessionCommand(raw)))
                 .isInstanceOf(ExpiredRefreshTokenException.class);
 
-        assertThat(h.store.byHash(RefreshTokenSecret.hash(raw)).orElseThrow().isRevoked()).isFalse();
+        assertThat(h.store.byHash(TokenSecret.hash(raw)).orElseThrow().isRevoked()).isFalse();
     }
 
     @Test
@@ -325,7 +325,7 @@ class SessionUseCasesTest {
         assertThatThrownBy(() -> refresh.refresh(new RefreshSessionCommand(token)))
                 .isInstanceOf(InvalidRefreshTokenException.class);
 
-        assertThat(h.store.byHash(RefreshTokenSecret.hash(token)).orElseThrow().isRevoked()).isTrue();
+        assertThat(h.store.byHash(TokenSecret.hash(token)).orElseThrow().isRevoked()).isTrue();
     }
 
     @Test
@@ -337,8 +337,8 @@ class SessionUseCasesTest {
 
         logout.logout(new LogoutCommand(first));
 
-        assertThat(h.store.byHash(RefreshTokenSecret.hash(first)).orElseThrow().isRevoked()).isTrue();
-        assertThat(h.store.byHash(RefreshTokenSecret.hash(other)).orElseThrow().isRevoked()).isFalse();
+        assertThat(h.store.byHash(TokenSecret.hash(first)).orElseThrow().isRevoked()).isTrue();
+        assertThat(h.store.byHash(TokenSecret.hash(other)).orElseThrow().isRevoked()).isFalse();
     }
 
     @Test

@@ -5,14 +5,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("RefreshTokenSecret")
-class RefreshTokenSecretTest {
+@DisplayName("TokenSecret")
+class TokenSecretTest {
 
     @Test
     @DisplayName("generated secrets are url-safe and different every time")
     void generatesDifferentSecrets() {
-        String first = RefreshTokenSecret.generate();
-        String second = RefreshTokenSecret.generate();
+        String first = TokenSecret.generate();
+        String second = TokenSecret.generate();
 
         assertThat(first).isNotEqualTo(second).matches("[A-Za-z0-9_-]{43}");
     }
@@ -20,8 +20,8 @@ class RefreshTokenSecretTest {
     @Test
     @DisplayName("the hash is a stable SHA-256 in hex and never the secret itself")
     void hashesWithSha256() {
-        assertThat(RefreshTokenSecret.hash("abc"))
+        assertThat(TokenSecret.hash("abc"))
                 .isEqualTo("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
-        assertThat(RefreshTokenSecret.hash("abc")).isEqualTo(RefreshTokenSecret.hash("abc"));
+        assertThat(TokenSecret.hash("abc")).isEqualTo(TokenSecret.hash("abc"));
     }
 }

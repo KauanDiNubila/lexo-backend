@@ -21,6 +21,8 @@ class AuthHarness {
     final Fakes.Events events = new Fakes.Events();
     final Fakes.AccessCutoffs cutoffs = new Fakes.AccessCutoffs();
     final Fakes.InviteEmails emails = new Fakes.InviteEmails();
+    final Fakes.PasswordEmails passwordEmails = new Fakes.PasswordEmails();
+    final SessionTerminator terminator = new SessionTerminator(store, cutoffs, Fakes.CLOCK);
     final SessionIssuer sessions = new SessionIssuer(store, accessTokens, Fakes.CLOCK, 30);
 
     Organization addOrganization(String name) {

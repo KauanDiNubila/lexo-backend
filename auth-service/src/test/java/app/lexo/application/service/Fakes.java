@@ -4,11 +4,14 @@ import app.lexo.application.port.out.AccountEvent;
 import app.lexo.application.port.out.InviteEmail;
 import app.lexo.application.port.out.IssueAccessTokenPort;
 import app.lexo.application.port.out.LoginAttemptsPort;
+import app.lexo.application.port.out.PasswordChangedEmail;
 import app.lexo.application.port.out.PasswordHasher;
+import app.lexo.application.port.out.PasswordResetEmail;
 import app.lexo.application.port.out.PublishEventPort;
 import app.lexo.application.port.out.RevokeAccessTokensPort;
 import app.lexo.application.port.out.SecretCipherPort;
 import app.lexo.application.port.out.SendInviteEmailPort;
+import app.lexo.application.port.out.SendPasswordEmailPort;
 import app.lexo.application.port.out.TotpPort;
 import app.lexo.common.error.ServiceUnavailableException;
 import app.lexo.domain.EmailAddress;
@@ -147,6 +150,22 @@ final class Fakes {
         @Override
         public boolean send(InviteEmail email) {
             return false;
+        }
+    }
+
+    static class PasswordEmails implements SendPasswordEmailPort {
+
+        final List<PasswordResetEmail> links = new ArrayList<>();
+        final List<PasswordChangedEmail> notices = new ArrayList<>();
+
+        @Override
+        public void sendResetLink(PasswordResetEmail email) {
+            links.add(email);
+        }
+
+        @Override
+        public void sendChangedNotice(PasswordChangedEmail email) {
+            notices.add(email);
         }
     }
 

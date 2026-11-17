@@ -34,6 +34,16 @@ public record AccountEvent(EventType type, OrganizationId organizationId, String
                 "Removeu " + user.name() + " (" + user.email().value() + ")", actor);
     }
 
+    public static AccountEvent passwordChanged(OrganizationId organizationId, Actor actor) {
+        return new AccountEvent(EventType.PASSWORD_CHANGED, organizationId, null, null,
+                "Alterou a própria senha", actor);
+    }
+
+    public static AccountEvent passwordReset(User user) {
+        return new AccountEvent(EventType.PASSWORD_RESET, user.organizationId(), null, null,
+                "Redefiniu a senha pelo link enviado por e-mail", new Actor(user.id(), user.name()));
+    }
+
     public static AccountEvent twoFactorEnabled(OrganizationId organizationId, Actor actor) {
         return new AccountEvent(EventType.TWO_FACTOR_ENABLED, organizationId, null, null,
                 "Ativou verificação em dois fatores", actor);

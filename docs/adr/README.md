@@ -19,3 +19,4 @@ hexagonal seguiu o fluxo da ADR 0001.
 | [0012](0012-gateway-em-hexagonal-e-reativo.md) | Gateway em hexagonal, mantendo o fluxo reativo |
 | [0013](0013-limite-por-cliente-e-identidade-completa-no-gateway.md) | Limite por cliente atrás do proxy e identidade completa no gateway |
 | [0014](0014-nomes-em-ingles-nas-bibliotecas-compartilhadas.md) | Nomes em inglês nas bibliotecas compartilhadas |
+| [0016](0016-troca-e-redefinicao-de-senha.md) | Troca e redefinição de senha |
